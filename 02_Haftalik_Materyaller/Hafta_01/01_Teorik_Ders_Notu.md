@@ -169,9 +169,9 @@ Bu, veritabanı tablosunun birebir kopyası olmak zorunda değildir. Birden fazl
 
 Bu üç adın içinde benzer harfler görmek kafa karıştırabilir:
 
-- **API** geliştireceğimiz arayüzün genel kavramıdır.
-- **FastAPI** Python ile web API geliştirmemize yardımcı olan çatıdır.
-- **Postman** bir API’ye istek hazırlamak ve yanıtı incelemek için kullanacağımız istemci aracıdır.
+- **API**, bir yazılımın başka yazılımlara hangi işlemleri sunduğunu ve bu işlemlerin nasıl kullanılacağını tanımlayan arayüzdür. Örneğin kitap uygulamamızda “kitapları listele” ve “numarası verilen kitabın bilgilerini getir” işlemleri API üzerinden kullanılabilir.
+- **FastAPI**, bu işlemleri karşılayan sunucu uygulamasını Python ile geliştirmek için kullanacağımız araçtır.
+- **Postman**, geliştirdiğimiz API’ye istek gönderip dönen yanıtları incelemek için kullanacağımız araçtır.
 
 Bir aşçılık benzetmesi yaparsak, API sunduğumuz hizmetin kullanım düzenine, FastAPI o hizmeti hazırlarken kullandığımız araç takımına daha yakındır. Postman ise hazırladığımız hizmeti deneyebilmek için kullandığımız araçlardan biridir. Aracı bilmek, kavramı bildiğimiz anlamına gelmez; kavramı öğrenince farklı araçları anlamak kolaylaşır.
 
