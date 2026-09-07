@@ -1,0 +1,23 @@
+# Yerel kimlik bilgileri ve ortam dosyaları
+.env
+.env.*
+!.env.example
+
+# Python çalışma ortamları ve önbellekleri
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# İşletim sistemi ve geçici düzenleyici dosyaları
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*.tmp
+~$*
