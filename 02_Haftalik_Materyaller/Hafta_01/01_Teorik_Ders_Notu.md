@@ -855,20 +855,21 @@ Bu açıklamayı ezberlemek yerine, her cümlenin şemadaki hangi parçaya karş
 <a id="bolum-14"></a>
 ## 14. Sık karıştırılan noktalar
 
-| Yanılgı | Daha doğru düşünce |
+| Yanılgı | Doğru açıklama |
 |---|---|
-| “API bir internet sitesidir.” | Bazı API’lere web üzerinden ulaşılır; API kavramı bir web sayfasından daha geniştir. |
-| “API mutlaka internette çalışır.” | Yerel bilgisayarda veya kurum ağında da kullanılabilir. |
-| “Sunucu, veritabanının diğer adıdır.” | İsteği işleyen uygulama ile veriyi saklayan sistem farklı sorumluluklardır. |
-| “Postman API’yi oluşturur.” | Bu derste Postman istek gönderip yanıtı incelemek için kullanılan istemcidir. |
-| “JSON bir programlama dilidir.” | JSON veri değişim biçimidir; kendi başına iş mantığı çalıştırmaz. |
-| “REST, JSON’un diğer adıdır.” | REST mimari yaklaşım, JSON veri biçimidir. |
-| “Public API herkesin her veriyi görebilmesidir.” | Erişim, ücret, kota ve yetki koşulları ayrıca tanımlanabilir. |
-| “JSON geldiyse işlem başarılıdır.” | Hata açıklaması da JSON olabilir; durum ve gövde birlikte okunur. |
-| “404 gördüm, sunucu hiç cevap vermedi.” | Bir HTTP yanıtı alınmıştır; hedef kaynak bulunmamış olabilir. |
-| “`false`, `null` ve `0` aynıdır.” | Bunlar farklı tür ve anlamlara sahip değerlerdir. |
-| “API, veritabanındaki bütün alanları döndürür.” | Dışarıya sunulan temsil, seçilmiş alanlardan oluşabilir. |
-| “API kullanan iki uygulama aynı dilde olmalıdır.” | Ortak iletişim ve veri kuralları sayesinde farklı dillerle yazılabilirler. |
+| “API bir internet sitesidir.” | Web sitesi, insanın tarayıcı üzerinden kullandığı sayfalar sunar. API ise yazılımların kullanacağı işlemleri tanımlar. Örneğin kitap sitesinde arama kutusunu sen kullanırsın; siteyi çalıştıran yazılım kitapları aramak için bir API’ye istek gönderebilir. |
+| “API mutlaka internette çalışır.” | API kullanmak için genel internete bağlanmak zorunlu değildir. Örneğin kendi bilgisayarında çalışan bir API sunucusuna, aynı bilgisayardaki Postman ile istek gönderebilirsin. |
+| “Sunucu, veritabanının diğer adıdır.” | Bu örnekte sunucu uygulaması isteği karşılar, gerekli işlemleri yapar ve yanıtı hazırlar. Veritabanı kitap kayıtlarını saklar ve sorgulara cevap verir. Sunucu uygulaması kitabı bulmak için veritabanına başvurabilir; bunlar aynı görev değildir. |
+| “Postman API’yi oluşturur.” | Bu derste API’nin işlemlerini Python ve FastAPI ile yazacağız. Postman’ı ise bu işlemlere istek göndermek ve dönen yanıtları incelemek için kullanacağız. |
+| “JSON bir programlama dilidir.” | JSON, veriyi metin olarak belirli kurallarla yazma biçimidir. Örneğin `{"fiyat": 100}` bir fiyat bilgisi taşır. Bu fiyat üzerinden indirim hesaplayan işlemi JSON değil, onu kullanan program yapar. |
+| “REST, JSON’un diğer adıdır.” | REST, API’nin kaynaklar ve işlemler etrafında nasıl tasarlandığıyla ilgili bir mimari stildir. JSON ise gönderilen verinin yazım biçimidir. Örneğin kitap kaynağını `GET /kitaplar/42` ile istemek kaynak odaklı tasarımı, kitap bilgilerini `{"id": 42}` olarak göndermek JSON kullanımını gösterir. Bu örnek tek başına bütün REST koşullarının sağlandığını kanıtlamaz. |
+| “Public API herkesin her veriyi görebilmesidir.” | Public API, dış geliştiricilerin kullanımına sunulan API’dir. Kullanıcılar yalnızca API’nin sunduğu ve erişim izni verdiği verileri alabilir. Örneğin kitap kataloğu herkese açıkken kullanıcıların ödünç kayıtları korumalı olabilir. Ayrıca kayıt, API anahtarı veya ücret gerekebilir. |
+| “JSON geldiyse işlem başarılıdır.” | Başarısız bir isteğin yanıtı da JSON olabilir. Örneğin `404` durumuyla birlikte `{"hata": "Kitap bulunamadı"}` gelebilir. Sonucu anlamak için HTTP durum koduna ve yanıtın içeriğine birlikte bakarız. |
+| “404 gördüm, sunucu hiç cevap vermedi.” | `404`, sunucudan gelen bir HTTP yanıtının durum kodudur; dolayısıyla cevap alınmıştır. Kitap örneğimizde istenen kitap bulunamamıştır. Bazı hizmetler ise kaynağın varlığını açıklamamak için aynı kodu kullanır. |
+| “`false`, `null` ve `0` aynıdır.” | `false` mantıksal değer, `null` özel bir boş/yok değeri, `0` ise sayıdır. Örneğin `odunc_alinabilir: false` kitabın ödünç alınamayacağını, `puan: null` puan değerinin verilmediğini, `yorum_sayisi: 0` hiç yorum bulunmadığını anlatır. |
+| “API, veritabanındaki bütün alanları döndürür.” | API yanıtında hangi alanların bulunacağını uygulamanın tasarımı ve erişim kuralları belirler. Örneğin veritabanında kitabın adı, yazarı ve satın alma bedeli bulunurken API yalnızca adını ve yazarını döndürebilir. |
+| “API kullanan iki uygulama aynı dilde olmalıdır.” | Bir web API üzerinden iletişim kuran uygulamaların aynı programlama dilini kullanması gerekmez. Örneğin JavaScript ile yazılmış bir istemci, Python ile yazılmış sunucuya HTTP isteği gönderebilir ve sunucunun döndürdüğü JSON’u okuyabilir. |
+
 
 <a id="bolum-15"></a>
 ## 15. Kısa terimler sözlüğü
