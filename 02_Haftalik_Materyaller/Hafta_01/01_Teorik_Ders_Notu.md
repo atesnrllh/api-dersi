@@ -6,7 +6,7 @@
 **Süre:** 3 ders saati teori  
 **Düzey:** API konusunda başlangıç  
 **Belgenin amacı:** Konuyu kendi başına okuyarak anlamak ve ilk haftanın teorik dersine hazırlanmak  
-**Sürüm:** 1.0 — 6 Eylül 2026
+**Sürüm:** 1.1 — 7 Eylül 2026
 
 > **Bu not nasıl okunmalı?** Önce örneği oku, sonra kavramın tanımına dön. Kod kutularını çalıştırman gerekmiyor; bu haftaki amaç onların ne anlattığını okuyabilmek. “Dur ve düşün” bölümlerinde cevaba geçmeden önce kendi cümleni kur. Son bölümde cevap anahtarı var.
 
@@ -312,6 +312,8 @@ Content-Type: application/json
 
 Hata açıklamasının JSON biçiminde olması, işlemin başarılı olduğu anlamına gelmez. İlk baktığımız sorulardan biri durum kodudur; sonra gövdeyi yorumlarız. Aynı zamanda `hata` adlı alanın evrensel bir HTTP standardı olmadığını unutma. Başka bir API başka bir hata yapısı kullanabilir.
 
+> **404 her zaman kaynağın bulunmadığını kesin olarak göstermez.** Bazı hizmetler, erişim izni olmayan bir istemciye kaynağın varlığını açıklamamak için de `404` döndürür. Örneğin GitHub, özel bir depoya uygun kimlik doğrulaması olmadan erişildiğinde bu yanıtı verebilir. Bu nedenle adresi ve erişim bilgilerini birlikte kontrol ederiz. Kitap örneğimizde ise `404`, belirtilen kitabın bulunamadığını anlatır. [GitHub — Var olan bir kaynak için 404](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource)
+
 İlk hafta için üç kodu tanımamız yeterlidir: `200` başarıyla karşılanan isteği, `404` bulunamayan kaynağı, `500` sunucunun isteği tamamlamasını engelleyen beklenmedik bir durumu anlatır. Bunlar bütün olasılıklar değildir. Ayrıntılı kod ailelerini ve metotları ikinci haftada inceleyeceğiz. [RFC 9110 — Durum kodları](https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes)
 
 > **Dur ve düşün 4:** İstemci `200` aldı ama gövdede beklediği `ad` alanı yok. “Durum kodu başarılı, dolayısıyla uygulamam mutlaka doğru çalışır” diyebilir miyiz? Teknik başarı ile beklenen veri yapısını ayrı düşün.
@@ -526,6 +528,8 @@ Bir metnin içinde çift tırnak kullanmak istiyorsak bunu kaçış karakteriyle
 Bir JSON yanıtı gördüğünde ilk işin bütün satırları ezberlemek olmasın. Önce şu soruyu sor: **Dış yapı nesne mi, dizi mi, yoksa tekil bir değer mi?** JSON metninin üst düzeyde mutlaka nesne olması gerekmez; örneklerimiz çoğunlukla nesne ve dizi kullanır.
 
 Aşağıdaki kitap gösterimi nesneyle başlar:
+
+> **Örnekteki yapı değişikliği:** Önceki örneklerde `yazar` alanını `"Deniz Kaya"` biçiminde tek bir metin olarak kullandık. İç içe nesneleri öğrenmek için bu örnekte yazar bilgisini `ad` ve `soyad` alanlarına ayırıyoruz. Bu, önceki yapının yanlış olduğu anlamına gelmez; farklı bir veri modeli gösteriyoruz. Gerçek bir API'de istemciler belirli bir yapı beklediğinden böyle bir değişiklik uyumluluk açısından değerlendirilmelidir. Bölüm 13'teki listeleme örneğinde yeniden metin biçimini kullanacağız.
 
 ```json
 {
@@ -1088,5 +1092,6 @@ Bu not, aşağıdaki teknik kaynaklarla doğrulanan kavramlar üzerine hazırlan
 | [MDN — Working with JSON](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/JSON) | İç içe JSON yapılarının okunması. |
 | [Python — json](https://docs.python.org/3/library/json.html) | Serileştirme, ayrıştırma ve dildeki değerlerin JSON karşılıkları. |
 | [FastAPI — First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/) | Çatı ile API kavramının ayrımı ve ileriki haftaya hazırlık. |
+| [GitHub — REST API sorun giderme](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource) | Özel kaynakların varlığını gizlemek için 404 kullanımı; 7 Eylül 2026 tarihinde kontrol edildi. |
 
-**Görseller hakkında:** `Gorseller` klasöründeki PNG dosyaları bu belgeye gömülüdür; internet bağlantısı gerektirmez. Aynı adla bulunan SVG dosyaları düzenlenebilir vektör kaynaklarıdır. Belgeyi başka yere taşırken `Gorseller` klasörünü de yanında tut.
+**Görseller hakkında:** `Gorseller` klasöründeki PNG dosyaları bu belgede göreli bağlantılarla gösterilir. Belge ve görseller birlikte bilgisayarına indirildiğinde çevrimdışı görüntülenebilir. Aynı adla bulunan SVG dosyaları düzenlenebilir vektör kaynaklarıdır. Belgeyi başka yere taşırken `Gorseller` klasörünü de yanında tut.
