@@ -15,7 +15,7 @@ Bu iki tablo ayrı tutulur. Haftalık plana araç sütunu eklenmez.
 
 | Hafta | Teorik ders notu | Uygulama föyü |
 |---|---|---|
-| 01 | [API temelleri, istemci–sunucu mimarisi ve JSON](02_Haftalik_Materyaller/Hafta_01/01_Teorik_Ders_Notu.md) — hazır | [İlk API isteği](02_Haftalik_Materyaller/Hafta_01/02_Uygulama_Foyu.md) — hazır; Postman veya curl ile 90 dakikalık çalışma |
+| 01 | [API temelleri, istemci–sunucu mimarisi ve JSON](02_Haftalik_Materyaller/Hafta_01/01_Teorik_Ders_Notu.md) — üzerinde çalışılıyor | [İlk kitap kataloğu API'si](02_Haftalik_Materyaller/Hafta_01/02_Uygulama_Foyu.md) — üzerinde çalışılıyor; VS Code'da Python sunucusu ve istemcisiyle yönlendirilmiş çalışma |
 
 İlk haftanın teorik notu açıklamalar, beş şema, örnekler ve cevaplı değerlendirme soruları içerir. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
 
