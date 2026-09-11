@@ -6,13 +6,28 @@
 **Süre:** 3 ders saati teori  
 **Düzey:** API konusunda başlangıç  
 **Belgenin amacı:** Konuyu kendi başına okuyarak anlamak ve ilk haftanın teorik dersine hazırlanmak  
-**Sürüm:** 1.1 — 7 Eylül 2026
+**Sürüm:** 1.2 — 11 Eylül 2026
 
-> **Bu not nasıl okunmalı?** Önce örneği oku, sonra kavramın tanımına dön. Kod kutularını çalıştırman gerekmiyor; bu haftaki amaç onların ne anlattığını okuyabilmek. “Dur ve düşün” bölümlerinde cevaba geçmeden önce kendi cümleni kur. Son bölümde cevap anahtarı var.
+> **Bu not nasıl okunmalı?** Önce örneği oku, sonra kavramın tanımına dön. Bu teorik nottaki kod ve mesaj kutularını önce anlamları üzerinden oku; çalışan sunucu ve istemciyi ayrı uygulama föyünde adım adım kuracaksın. “Dur ve düşün” bölümlerinde cevaba geçmeden önce kendi cümleni kur. Son bölümde cevap anahtarı var.
 
-Bu bölümün ortak örneği, bir **kitap kataloğu uygulaması**. Örnek kitaplar ve adresler öğretim için oluşturulmuştur. `kutuphane.example` bir anlatım adresidir; çalışan bir API değildir. Kitap örneğini kullanmamız, dönem projesinin konusunu kesinleştirdiğimiz anlamına gelmez.
+Bu bölümün ortak örneği, bir **kitap kataloğu uygulaması**. `kutuphane.example` kullanılan kutularda anlatım adresidir; çalışan uygulama ise `http://127.0.0.1:8000` adresinde yerel olarak kurulacaktır. Kitap örneğini kullanmamız, dönem projesinin konusunu kesinleştirdiğimiz anlamına gelmez.
 
-İlk haftanın sonunda bir API sunucusu yazman beklenmiyor. Önce neyi, neden kuracağımızı anlayacağız. Ayrıntılı HTTP metotları ikinci haftada, kendi ilk uç noktalarımız üçüncü haftada gelecek. Bu nottaki kısa HTTP örnekleri, iletişimin bütününü görebilmek içindir.
+Teoride kavramları öğrendikten sonra ilk haftanın uygulamasında küçük bir FastAPI sunucusu ve ona istek gönderen HTTPX istemcisi yazacağız. Veri şimdilik Python belleğinde tutulacak; veritabanı eklenmeyecek. HTTP metotlarını ve mesaj yapılarını ikinci haftada sistemli biçimde inceleyecek, üçüncü haftada dönem projesinin ilk uç noktalarını tasarlayacağız.
+
+### Teorideki adlar ile çalışan koddaki adlar
+
+Kavramları ilk okumada kolaylaştırmak için bazı teorik örneklerde Türkçe adlar kullanılır. Çalışan Python kodunda ise İngilizce adları kullanacağız:
+
+| Teorik örnek | Çalışan uygulama | Anlamı |
+|---|---|---|
+| `kitaplar` | `books` | Kitap koleksiyonu |
+| `kitap_id` | `book_id` | Kitap kimliği |
+| `ad` | `title` | Kitap başlığı |
+| `yazar` | `author` | Yazar bilgisi |
+| `odunc_alinabilir` | `available` | Ödünç alınabilirlik |
+| `etiketler` | `tags` | Etiket dizisi |
+| `puan` | `rating` | Puan bilgisi |
+| `/api/kitaplar` | `/api/books` | Kitap koleksiyonunun yolu |
 
 ## İçindekiler
 
@@ -51,6 +66,8 @@ Bu notu bitirdiğinde aşağıdaki işleri yapabilmelisin:
 - REST, SOAP ve GraphQL’i giriş düzeyinde karşılaştırmak.
 - Basit bir JSON içindeki nesne, dizi, metin, sayı, mantıksal değer ve `null` değerini okumak.
 - Bir yanıtın sözdizimsel olarak geçerli olmasıyla uygulama açısından doğru olmasının farklı şeyler olduğunu görmek.
+- Aynı bilgisayarda çalışan Python istemcisiyle FastAPI sunucusunun rollerini ayırmak.
+- Başarılı boş listeyi, bulunamayan kaynağı, geçersiz yol değerini ve bağlantı kurulamamasını birbirinden ayırmak.
 
 Üç ders saatini üç düşünce etrafında toplayabiliriz:
 
@@ -165,17 +182,19 @@ Veritabanında bir kitap için çok sayıda alan bulunduğunu düşün: başlık
 
 Bu, veritabanı tablosunun birebir kopyası olmak zorunda değildir. Birden fazla tablodan gelen bilgi tek yanıtta birleşebilir. Ayrıca her API’nin arkasında veritabanı bulunması da gerekmez: verilen iki sayıyı toplayan bir hizmet, sonucu yalnızca hesaplayarak üretebilir.
 
-### 4.3. API, FastAPI veya Postman demek değildir
+### 4.3. API, kullandığımız araçlardan biri değildir
 
 Bu üç adın içinde benzer harfler görmek kafa karıştırabilir:
 
 - **API**, bir yazılımın başka yazılımlara hangi işlemleri sunduğunu ve bu işlemlerin nasıl kullanılacağını tanımlayan arayüzdür. Örneğin kitap uygulamamızda “kitapları listele” ve “numarası verilen kitabın bilgilerini getir” işlemleri API üzerinden kullanılabilir.
 - **FastAPI**, bu işlemleri karşılayan sunucu uygulamasını Python ile geliştirmek için kullanacağımız araçtır.
-- **Postman**, geliştirdiğimiz API’ye istek gönderip dönen yanıtları incelemek için kullanacağımız araçtır.
+- **Uvicorn**, FastAPI uygulamasını çalıştırıp bağlantıları dinleyen uygulama sunucusudur.
+- **HTTPX**, Python kodundan HTTP isteği göndermek için kullanacağımız istemci kütüphanesidir.
+- **Postman**, istekleri elle hazırlayıp yanıtları incelemek için kullanacağımız araçtır.
 
-Bir aşçılık benzetmesi yaparsak, API sunduğumuz hizmetin kullanım düzenine, FastAPI o hizmeti hazırlarken kullandığımız araç takımına daha yakındır. Postman ise hazırladığımız hizmeti deneyebilmek için kullandığımız araçlardan biridir. Aracı bilmek, kavramı bildiğimiz anlamına gelmez; kavramı öğrenince farklı araçları anlamak kolaylaşır.
+Bir aşçılık benzetmesi yaparsak, API sunduğumuz hizmetin kullanım düzenine, FastAPI o hizmeti hazırlarken kullandığımız araç takımına daha yakındır. HTTPX ve Postman ise hazırladığımız hizmeti kullanan istemciler oluşturmamıza yardım eder. Aracı bilmek, kavramı bildiğimiz anlamına gelmez; kavramı öğrenince farklı araçları anlamak kolaylaşır.
 
-FastAPI’nin başlangıç rehberinde tek bir yol ve onu karşılayan fonksiyonla küçük bir uygulama gösterilir. Bu ayrıntıya üçüncü haftada döneceğiz. Şimdilik bir **API işleminin arkasında çalışan kod** bulunduğunu bilmek yeterlidir. [FastAPI — First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
+İlk haftanın uygulamasında FastAPI ile bir yol ve onu karşılayan fonksiyon yazıp bu kodun gerçekten çalıştığını göreceğiz. Üçüncü haftada aynı fikri dönem projesinin tasarlanmış uç noktalarına taşıyacağız. [FastAPI — First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
 
 > **Dur ve düşün 2:** Sunucu, veritabanındaki iç denetim notunu mobil uygulamaya göndermiyorsa API hatalı mı çalışıyor, yoksa bilinçli bir sınır mı koyuyor? İstemcinin gerçekten hangi bilgiye ihtiyacı olduğunu düşün.
 
@@ -184,13 +203,13 @@ FastAPI’nin başlangıç rehberinde tek bir yol ve onu karşılayan fonksiyonl
 
 ### 5.1. İstemci kimdir?
 
-**İstemci (client)**, bu iletişimde bir hizmete istek gönderen yazılımdır. Kullanıcı bir insan olabilir; fakat ağ isteğini oluşturan ve yanıtı alan taraf yazılımdır. Bir tarayıcı, mobil uygulama, Postman veya başka bir sunucuda çalışan program istemci rolünü üstlenebilir.
+**İstemci (client)**, bu iletişimde bir hizmete istek gönderen yazılımdır. Kullanıcı bir insan olabilir; fakat ağ isteğini oluşturan ve yanıtı alan taraf yazılımdır. Bir tarayıcı, mobil uygulama, Postman, HTTPX kullanan `client.py` veya başka bir sunucuda çalışan program istemci rolünü üstlenebilir.
 
 **Sunucu (server)**, belirli istekleri karşılamak üzere çalışan yazılımı ve bağlama göre bu yazılımı barındıran sistemi ifade eder. İlk haftada “sunucu isteği alır” dediğimizde esas olarak isteği karşılayan yazılım rolünü kastediyoruz. Web üzerindeki istemci–sunucu iletişiminin temel modeli HTTP isteği ve HTTP yanıtıdır. [MDN — HTTP’ye genel bakış](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview)
 
 ### 5.2. Bu roller cihaz türü değildir
 
-“Telefon istemcidir; büyük bilgisayar sunucudur” diye ezberlemek yanıltır. Kendi bilgisayarında bir API uygulaması çalıştırıp yine aynı bilgisayardaki Postman ile ona istek gönderebilirsin. Cihaz aynı olsa da iki farklı program rolü vardır.
+“Telefon istemcidir; büyük bilgisayar sunucudur” diye ezberlemek yanıltır. İlk uygulamada aynı bilgisayarda `server.py` istekleri karşılayacak, `client.py` ise istek gönderecektir. Cihaz aynı olsa da iki farklı program rolü vardır.
 
 Aynı yazılım bir görüşmede sunucu, başka bir görüşmede istemci olabilir. Kitap uygulamamıza gelen isteği karşılayan sunucu, kapak bilgisi için harici bir hizmete başvurursa bu ikinci ilişkide istemci olur. Rolü belirlemek için “bu mesajı kim başlatıyor, hangi yazılım karşılıyor?” sorusunu sormak daha yararlıdır.
 
@@ -230,7 +249,7 @@ Sunucudaki uygulama gelen isteği karşılayacak işlemi bulur. İstenen adres t
 
 ### 6.3. Gerekli iş yapılır
 
-Örneğimizde uygulama veritabanından kitap kaydını ister. Başka bir senaryoda bir hesaplama yapabilir, bir dosyayı okuyabilir veya başka hizmete başvurabilir. Sunucu tarafında yapılan iş ile istemcinin göreceği yanıtın biçimi ayrı konulardır. [MDN — İstemci–sunucu etkileşimi](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview)
+İlk uygulamada sunucu, kitapları `server.py` içindeki Python listesinde arar. Daha sonra aynı işlem veritabanından kayıt okuyabilir; başka bir senaryoda hesaplama yapabilir, dosya okuyabilir veya başka hizmete başvurabilir. Sunucu tarafında yapılan iş ile istemcinin göreceği yanıtın biçimi ayrı konulardır. [MDN — İstemci–sunucu etkileşimi](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/First_steps/Client-Server_overview)
 
 ### 6.4. Yanıt hazırlanır ve gönderilir
 
@@ -275,6 +294,8 @@ Bu örneği yüksek sesle şöyle okuyabilirsin:
 
 `GET`, HTTP’nin tanımladığı metotlardan biridir. Burada temel amacı bilgi almaktır. `Accept` başlığı istemcinin kabul ettiği yanıt biçimini bildirir; sunucunun isteği mutlaka bu biçimde başarıyla karşılayacağı garantisi değildir. İstemciyle sunucu arasında veri taşıyan protokol HTTP, örnekte istenen veri biçimi ise JSON’dur. [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
 
+Günlük konuşmada “API’ye istek gönderdik” veya “sunucuya istek gönderdik” denebilir. Daha açık anlatım şudur: İstemci, sunucu uygulamasının API üzerinden sunduğu işleme HTTP isteği gönderir. API kullanım kuralını, sunucu ise bu kurala göre isteği karşılayan çalışan yazılımı anlatır.
+
 ### 7.3. Başarılı yanıt nasıl okunur?
 
 ```http
@@ -314,7 +335,9 @@ Hata açıklamasının JSON biçiminde olması, işlemin başarılı olduğu anl
 
 > **404 her zaman kaynağın bulunmadığını kesin olarak göstermez.** Bazı hizmetler, erişim izni olmayan bir istemciye kaynağın varlığını açıklamamak için de `404` döndürür. Örneğin GitHub, özel bir depoya uygun kimlik doğrulaması olmadan erişildiğinde bu yanıtı verebilir. Bu nedenle adresi ve erişim bilgilerini birlikte kontrol ederiz. Kitap örneğimizde ise `404`, belirtilen kitabın bulunamadığını anlatır. [GitHub — Var olan bir kaynak için 404](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api#404-not-found-for-an-existing-resource)
 
-İlk hafta için üç kodu tanımamız yeterlidir: `200` başarıyla karşılanan isteği, `404` bulunamayan kaynağı, `500` sunucunun isteği tamamlamasını engelleyen beklenmedik bir durumu anlatır. Bunlar bütün olasılıklar değildir. Ayrıntılı kod ailelerini ve metotları ikinci haftada inceleyeceğiz. [RFC 9110 — Durum kodları](https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes)
+İlk uygulamada `200`, `404` ve `422` durumlarını gözlemleyeceğiz. `200` isteğin başarıyla karşılandığını, `404` bu örnekte hedef kaynağın bulunamadığını, `422` ise `/api/books/abc` gibi bir değerin beklenen tam sayı yol girdisine dönüştürülemediğini gösterecek. `500`, sunucunun isteği tamamlamasını engelleyen beklenmedik bir durumu anlatır. Bağlantı kurulamadığında ise HTTP durum kodu alınmaz. Kod ailelerini ve metotları ikinci haftada sistemli biçimde inceleyeceğiz. [RFC 9110 — Durum kodları](https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes)
+
+Tarayıcıda görülen web sitesi 404 sayfası ile API’nin JSON biçimindeki 404 gövdesi aynı HTTP durumunu kullanabilir. Fark, yanıtın hedef kullanıcısına göre HTML sayfası veya programın işleyeceği JSON verisi taşımasıdır.
 
 > **Dur ve düşün 4:** İstemci `200` aldı ama gövdede beklediği `ad` alanı yok. “Durum kodu başarılı, dolayısıyla uygulamam mutlaka doğru çalışır” diyebilir miyiz? Teknik başarı ile beklenen veri yapısını ayrı düşün.
 
@@ -335,7 +358,7 @@ Hata açıklamasının JSON biçiminde olması, işlemin başarılı olduğu anl
 
 **Tarayıcı API’si:** Tarayıcının web sayfasındaki koda sunduğu olanaklar. Örneğin sayfadaki öğelere erişmek veya kullanıcı izin verdiğinde konum bilgisini istemek. Tarayıcının API sunması, her işlemin harici bir web hizmeti çağrısı olduğu anlamına gelmez. [MDN — Web API’lerine giriş](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Client-side_APIs/Introduction)
 
-**Ağ üzerinden kullanılan web API:** İstemcinin genellikle HTTP/HTTPS üzerinden başka bir uygulamanın işlevlerine veya verilerine eriştiği arayüz. Bu dersin ana odağı budur. Postman ile karşıya istek gönderecek, ardından kendi API uygulamamızı geliştireceğiz.
+**Ağ üzerinden kullanılan web API:** İstemcinin genellikle HTTP/HTTPS üzerinden başka bir uygulamanın işlevlerine veya verilerine eriştiği arayüz. Bu dersin ana odağı budur. İlk hafta kendi küçük API sunucumuzu ve Python istemcimizi yazacağız; ikinci hafta aynı iletişimi Postman üzerinden elle değiştirerek daha ayrıntılı inceleyeceğiz.
 
 ### 8.2. Erişim kapsamına göre
 
@@ -699,6 +722,8 @@ Bunların hepsini “veri yok” diye aynı kabul edersek hata yapabiliriz:
 
 Bunlara bir de **alanın hiç bulunmaması** eklenir. `puan` alanı gönderilmemişse, bu `"puan": null` gönderilmesiyle her API’de aynı anlama gelmez. Örneğin kısmi güncellemede “alan gönderilmedi” mevcut değeri korumak, `null` ise değeri temizlemek şeklinde tanımlanabilir. Bu davranış evrensel JSON kuralı değildir; API sözleşmesinin kararıdır.
 
+Python istemcisindeki `if book["rating"] is None:` koşulu yalnızca `rating` değerinin Python `None` olup olmadığını denetler. Bu, ilgili alanın `null` durumunu doğru yorumlamamıza yardım eder; istemciyi bozuk JSON’a, eksik alana veya yanlış veri türüne karşı genel olarak koruyan bir kontrol değildir.
+
 ### 12.3. Geçerli JSON, doğru kitap verisi demek değildir
 
 ```json
@@ -767,18 +792,24 @@ Bu cümle henüz ağ isteği değildir. İstemci uygulama bunu kendi API’sinin
 ### 13.2. İstemcinin hazırladığı istek
 
 ```http
-GET /api/kitaplar?arama=API&odunc_alinabilir=true HTTP/1.1
-Host: kutuphane.example
+GET /api/books?search=API&available=true HTTP/1.1
+Host: 127.0.0.1:8000
 Accept: application/json
 ```
 
-`?` sorgu bileşenini başlatır. `&` iki parametreyi ayırır. Burada `arama` ve `odunc_alinabilir` adlarını API tasarımımız belirledi.
+`?` sorgu bileşenini başlatır. `&` iki parametreyi ayırır. Burada `search` ve `available` adlarını çalışan API’mizin tasarımı belirledi. `search`, HTTP veya FastAPI tarafından anlamı önceden belirlenmiş özel bir kelime değildir.
 
 URL içindeki `true` ifadesi, kendi başına bir JSON gövdesi değildir. Sunucu, sorgu parametresini tanımlı kurallara göre yorumlar ve gerekirse mantıksal değere dönüştürür. **Aynı kelimenin URL’de görünmesi ile JSON içindeki veri türü aynı şey değildir.**
 
 ### 13.3. Sunucunun yaptığı iş
 
-Örnek uygulama arama koşulunu okur, uygun kitapları belirler ve istemciye verilecek alanları seçer. Veritabanında on bin kayıt olsa bile yanıt, istenen koşula uyan kayıtların belirlenmiş alanlarını içerebilir. Büyük listelerin nasıl parçalara bölüneceğini ileride sayfalama konusu altında göreceğiz.
+Örnek sunucu `search` değerini yalnızca kitabın `title` alanında arar. Bir kitabın yalnızca `tags` dizisinde `api` bulunması bu sözleşmede eşleşme sağlamaz. Ardından kitabın `available` değeri, istemcinin gönderdiği koşulla karşılaştırılır. İki koşul da sağlanırsa kitap sonuç listesine eklenir.
+
+Sunucu kodunda önce başlık, sonra ödünç durumu hesaplanır; ancak bunlar bağımsız koşullar olduğu ve sonunda `and` ile birleştirildiği için yazım sıralarını değiştirmek sonucu değiştirmez. URL’deki `&` parametreleri ayırır; Python’daki `and` ise iki koşulun birlikte doğru olmasını ister.
+
+Hangi kitabın sonuç listesine gireceğini seçmek ile seçilen kitabın hangi alanlarının yanıtta bulunacağını seçmek farklı işlemlerdir. `search` ve `available` bu örnekte kayıtları süzer. GraphQL örneğindeki `title` ve `author` seçimi ise dönecek alanları belirtir.
+
+İlk uygulamada kayıtlar veritabanında değil, `server.py` içindeki `books` listesinde tutulur. Kalıcı veri tabanına geçtiğimizde iç işlem değişebilir; API sözleşmesi korunursa istemci aynı isteği göndermeye devam edebilir.
 
 ### 13.4. Örnek başarılı yanıt
 
@@ -786,43 +817,36 @@ URL içindeki `true` ifadesi, kendi başına bir JSON gövdesi değildir. Sunucu
 HTTP/1.1 200 OK
 Content-Type: application/json
 
-{
-  "arama": "API",
-  "toplam": 2,
-  "kitaplar": [
-    {
-      "id": 42,
-      "ad": "API Yolculuğu",
-      "yazar": "Deniz Kaya",
-      "odunc_alinabilir": true,
-      "etiketler": ["yazılım", "eğitim"]
+[
+  {
+    "id": 42,
+    "title": "API Yolculuğu",
+    "author": {
+      "first_name": "Deniz",
+      "last_name": "Kaya"
     },
-    {
-      "id": 57,
-      "ad": "API ile Veri Paylaşımı",
-      "yazar": "Ece Yılmaz",
-      "odunc_alinabilir": true,
-      "etiketler": ["web"]
-    }
-  ]
-}
+    "available": true,
+    "tags": ["software", "education"],
+    "rating": null
+  }
+]
 ```
 
 Bu yanıtı okumak için şu sırayı izle:
 
 1. `200` durumuyla karşılandığını gör.
 2. Gövdenin JSON olduğunu başlıktan anla.
-3. Dış yapının nesne olduğunu gör.
-4. `toplam` alanının bu örnekte eşleşen kitap sayısını anlattığını bil.
-5. `kitaplar` alanının bir dizi olduğunu belirle.
-6. Dizinin iki nesne içerdiğini say.
-7. İlk nesnenin `ad` alanını ve ilk etiketini bul.
+3. Dış yapının dizi olduğunu gör.
+4. Dizinin bir kitap nesnesi içerdiğini say.
+5. İlk nesnenin `title` alanını bul.
+6. `author` alanındaki iç nesneden adı ve soyadı oku.
+7. `available`, `tags` ve `rating` değerlerinin türleriyle anlamlarını ayır.
 
-İlk kitabın adı **API Yolculuğu**, ilk etiketi **yazılım**dır. İkinci kitabın bir etiketi vardır. İki kitapta da `odunc_alinabilir` gerçek bir JSON mantıksal değeridir; tırnak içine alınmamıştır.
+Kitabın başlığı **API Yolculuğu**, ilk etiketi **software** değeridir. `available` gerçek bir JSON mantıksal değeri, `rating` ise JSON `null` değeridir; ikisi aynı anlamı taşımaz.
 
 ### 13.5. Ekranda ne gösterilir?
 
-İstemci bu yanıttan iki kart oluşturabilir. Kartta başlık ve yazar gösterip etiketleri küçük rozetlere dönüştürebilir. `id` değerini kullanıcıya göstermese bile ayrıntı isteğinde kullanmak için saklayabilir.
+Bizim `client.py` programımız bu yanıttan kitap sayısını, başlığı, yazarın adını ve soyadını, ödünç durumunu, etiketleri ve puanı terminale yazar. Başka bir istemci aynı veriyi kart veya tablo biçiminde gösterebilir. `id` değerini göstermese bile sonraki ayrıntı isteğinde kullanabilir.
 
 Bu noktada “API neden bana kitap kartı göndermedi?” sorusunun cevabı açıklaşır. Örneğimizde API veri sunar; kartın düzenini istemci oluşturur. Sunucu HTML de üretebilir, fakat burada seçtiğimiz tasarım JSON verisini ayrı bir istemcinin göstermesidir.
 
@@ -831,24 +855,20 @@ Bu noktada “API neden bana kitap kartı göndermedi?” sorusunun cevabı aç�
 Bu örnek sözleşmede başarılı bir arama hiç kitap bulamazsa yanıt şöyle olsun:
 
 ```json
-{
-  "arama": "AranmayanBaslik",
-  "toplam": 0,
-  "kitaplar": []
-}
+[]
 ```
 
-İşlem başarıyla yapılmış, sonuç listesi boş kalmıştır. Bu hizmette buna `200` durumu eşlik eder. Bu durumu belirli bir kimlikle istediğimiz tek kitabın bulunamamasından ayırıyoruz. “Boş liste her API’de mutlaka 200 olur” diye evrensel bir kural ezberlemek yerine, bu sözleşmenin iki durumu nasıl ayırdığını öğreniyoruz.
+`GET /api/books?search=astronomy` işlemi başarıyla yapılmış, sonuç listesi boş kalmıştır; bu hizmette buna `200` durumu eşlik eder. `GET /api/books/999` ise kimliği belirtilen tek kaynağı hedefler ve kitap bulunamadığında `404` döner. “Boş liste her API’de mutlaka 200 olur” diye evrensel bir kural ezberlemek yerine, bu sözleşmenin iki durumu nasıl ayırdığını öğreniyoruz.
 
 ### 13.7. Görünen bilgi bir anı temsil eder
 
-Yanıtta `odunc_alinabilir: true` gördük diye kitabı daha sonra kesin ödünç alabileceğimiz sonucunu çıkaramayız. Arada başka bir kullanıcı kitabı almış olabilir. Listeleme yanıtı, örneğimizde sunucunun değerlendirdiği andaki durumu bildirir; sonraki işlem kendi koşullarını yeniden kontrol etmelidir.
+Yanıtta `available: true` gördük diye kitabı daha sonra kesin ödünç alabileceğimiz sonucunu çıkaramayız. Arada başka bir kullanıcı kitabı almış olabilir. Listeleme yanıtı, örneğimizde sunucunun değerlendirdiği andaki durumu bildirir; sonraki işlem kendi koşullarını yeniden kontrol etmelidir.
 
 Bu düşünceyi bugün ayrıntılı eşzamanlılık konusu yapmak gerekmiyor. Yalnızca **bilgi okumak ile bir işlemi gerçekleştirmek arasındaki farkı** fark etmek yeterli. Bankadaki bakiyeyi görmekle ödeme yapmak veya bir ürünü stokta görmekle satın almak da benzer ayrımlardır.
 
 ### 13.8. Bir öğrencinin doğru açıklaması nasıl duyulur?
 
-> “Kullanıcı arama yaptı. İstemci uygulama bunu API’nin tanımladığı HTTP isteğine çevirdi. Sunucu koşulları işleyip JSON biçiminde bir kitap listesi döndürdü. İstemci, durum kodunu ve gövdeyi yorumlayarak kartları oluşturdu. Liste boş olsaydı kullanıcıya sonuç bulunamadığını gösterecekti.”
+> “Kullanıcı arama yaptı. `client.py` bunu API’nin tanımladığı HTTP isteği olarak gönderdi. `server.py` içindeki uygun işlem tetiklendi; başlık ve ödünç durumu koşulları değerlendirildi. Sunucu sonucu JSON listesiyle döndürdü. İstemci durum kodunu ve gövdeyi yorumlayıp kitap bilgilerini terminalde gösterdi. Liste boş olsaydı sonuç bulunamadığını yazacaktı.”
 
 Bu açıklamayı ezberlemek yerine, her cümlenin şemadaki hangi parçaya karşılık geldiğini gösterebilmelisin.
 
@@ -858,7 +878,7 @@ Bu açıklamayı ezberlemek yerine, her cümlenin şemadaki hangi parçaya karş
 | Yanılgı | Doğru açıklama |
 |---|---|
 | “API bir internet sitesidir.” | Web sitesi, insanın tarayıcı üzerinden kullandığı sayfalar sunar. API ise yazılımların kullanacağı işlemleri tanımlar. Örneğin kitap sitesinde arama kutusunu sen kullanırsın; siteyi çalıştıran yazılım kitapları aramak için bir API’ye istek gönderebilir. |
-| “API mutlaka internette çalışır.” | API kullanmak için genel internete bağlanmak zorunlu değildir. Örneğin kendi bilgisayarında çalışan bir API sunucusuna, aynı bilgisayardaki Postman ile istek gönderebilirsin. |
+| “API mutlaka internette çalışır.” | API kullanmak için genel internete bağlanmak zorunlu değildir. Örneğin kendi bilgisayarında çalışan `client.py`, yine aynı bilgisayardaki API sunucusuna istek gönderebilir. |
 | “Sunucu, veritabanının diğer adıdır.” | Bu örnekte sunucu uygulaması isteği karşılar, gerekli işlemleri yapar ve yanıtı hazırlar. Veritabanı kitap kayıtlarını saklar ve sorgulara cevap verir. Sunucu uygulaması kitabı bulmak için veritabanına başvurabilir; bunlar aynı görev değildir. |
 | “Postman API’yi oluşturur.” | Bu derste API’nin işlemlerini Python ve FastAPI ile yazacağız. Postman’ı ise bu işlemlere istek göndermek ve dönen yanıtları incelemek için kullanacağız. |
 | “JSON bir programlama dilidir.” | JSON, veriyi metin olarak belirli kurallarla yazma biçimidir. Örneğin `{"fiyat": 100}` bir fiyat bilgisi taşır. Bu fiyat üzerinden indirim hesaplayan işlemi JSON değil, onu kullanan program yapar. |
@@ -911,7 +931,7 @@ Bu bölümdeki soruları notu kapatarak cevapla. Ezberlenmiş tanım yerine kıs
 
 **2.** Kitap uygulamasındaki **Ara** düğmesi ile `GET /api/kitaplar` işlemi arasındaki fark nedir?
 
-**3.** Aynı bilgisayarda Postman ve bir API uygulaması çalışıyor. İstemci–sunucu ilişkisi kurulmuş sayılır mı? Neden?
+**3.** Aynı bilgisayarda `client.py` ve `server.py` çalışıyor. İstemci–sunucu ilişkisi kurulmuş sayılır mı? Neden?
 
 **4.** API’nin veritabanındaki bütün sütunları istemciye göndermemesi için iki gerekçe yaz.
 
@@ -982,7 +1002,9 @@ Bu bölümdeki soruları notu kapatarak cevapla. Ezberlenmiş tanım yerine kıs
 
 **20.** Arama başarıyla tamamlanıyor ama sonuç yok. Örneğimizde bunun boş diziyle anlatılması ile kimliği belirtilen tek kitabın bulunamaması arasındaki farkı açıkla.
 
-**Öz değerlendirme önerisi:** Her soruya 0–2 puan ver: 0 = açıklayamıyorum; 1 = sonucu biliyorum, gerekçem eksik; 2 = doğru ve gerekçeli açıklıyorum. Toplam 40 üzerinden aldığın puan bir ders notu değildir. Özellikle 3, 8, 11, 16 ve 19. sorularda zorlanıyorsan ilgili bölümü tekrar oku; sonraki haftaların temeli bunlardır.
+**21.** Sunucu `book_id` için tam sayı beklerken istemci `/api/books/abc` yolunu isterse neden `404` yerine `422` alınabilir?
+
+**Öz değerlendirme önerisi:** Her soruya 0–2 puan ver: 0 = açıklayamıyorum; 1 = sonucu biliyorum, gerekçem eksik; 2 = doğru ve gerekçeli açıklıyorum. Toplam 42 üzerinden aldığın puan bir ders notu değildir. Özellikle 3, 8, 11, 16, 19 ve 21. sorularda zorlanıyorsan ilgili bölümü tekrar oku; sonraki haftaların temeli bunlardır.
 
 <a id="bolum-17"></a>
 ## 17. Gerekçeli cevap anahtarı
@@ -1007,7 +1029,7 @@ Bu bölümdeki soruları notu kapatarak cevapla. Ezberlenmiş tanım yerine kıs
 
 **2.** Düğme, insanın kullandığı UI öğesidir. `GET /api/kitaplar`, yazılımın kullandığı API işlemini belirtir. İstemci uygulama düğmedeki etkileşimi bu isteğe dönüştürebilir.
 
-**3.** Evet. İstemci ve sunucu fiziksel cihaz sınıfları değil, iletişimdeki rollerdir. Postman isteği gönderir; aynı bilgisayardaki API uygulaması karşılar.
+**3.** Evet. İstemci ve sunucu fiziksel cihaz sınıfları değil, iletişimdeki rollerdir. `client.py` isteği gönderir; aynı bilgisayardaki `server.py` uygulaması karşılar.
 
 **4.** İstemcinin ihtiyacı olmayan veya iç kullanıma ait bilgileri paylaşmamak; veri depolama düzenini istemciye bağımlı kılmamak. Ayrıca birden çok tablodaki bilgiyi istemcinin ihtiyacına uygun tek bir temsilde birleştirmek isteyebiliriz.
 
@@ -1047,6 +1069,8 @@ Bu bölümdeki soruları notu kapatarak cevapla. Ezberlenmiş tanım yerine kıs
 
 **20.** Arama bir koleksiyonda koşula uyanları bulma işlemidir; sıfır eşleşme normal bir sonuç olabilir. Kimliği belirtilmiş tek kaynağın istenmesinde ise o kaynağın bulunması beklenir. Örnek sözleşmemiz ilkini `200` ve boş diziyle, ikincisini `404` ile ifade eder.
 
+**21.** Yol `/api/books/{book_id}` ile eşleşir; fakat FastAPI `abc` metnini `book_id: int` tanımının istediği tam sayıya çeviremez. Kitap arama fonksiyonu çalışmadan girdi doğrulaması başarısız olur ve `422` yanıtı üretilebilir. `404` ise bu örnekte geçerli bir kimlik alındığı hâlde kitabın bulunamaması için kullanılır.
+
 <a id="bolum-18"></a>
 ## 18. Üç ders saati için anlatım akışı
 
@@ -1071,7 +1095,7 @@ Bu bölüm, notu okuyup derse hazırlanırken kullanabileceğin bir anlatım ön
 
 **Kendi hazırlığında son kontrol:** Şekil 2’yi kapatıp bir kâğıda yeniden çiz. Ardından 13. bölümdeki yanıtı aç ve bir kitabın başlığına, ödünç durumuna ve ilk etiketine nasıl ulaştığını söyle. Çizimde veya okumada takıldığın yer, tekrar etmen gereken kavramı gösterir.
 
-**İkinci haftaya geçiş:** Artık istemci–sunucu iletişiminin bütününü ve JSON’un temelini gördük. Sonraki hafta HTTP isteğinin parçalarını, metotlarını, başlıklarını ve durum kodlarını ayrıntılandıracağız. Bu haftanın iki saatlik uygulamasında ise kurulum ve ilk istek üzerinden bu kavramları gözlemleyeceğiz; adım adım işlemler ayrı uygulama föyünde hazırlanacaktır.
+**İkinci haftaya geçiş:** Artık istemci–sunucu iletişiminin bütününü ve JSON’un temelini gördük. Bu haftanın uygulamasında yerel FastAPI sunucusu ile HTTPX istemcisini yazıp GET yollarını, sorgu parametrelerini, JSON türlerini ve temel hata ayrımlarını çalışan kodda gözlemleyeceğiz. Sonraki hafta HTTP isteğinin parçalarını, metotlarını, başlıklarını ve durum kodlarını Postman ile elle değiştirerek daha sistemli inceleyeceğiz.
 
 <a id="bolum-19"></a>
 ## 19. Kaynaklar ve ileri okuma
