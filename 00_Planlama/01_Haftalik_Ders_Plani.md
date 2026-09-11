@@ -16,7 +16,7 @@
 | **9** | Kimlik Doğrulama, Token Tabanlı Erişim ve Yetkilendirme | Hazır Kimlik Doğrulama İskeletiyle Korumalı Uç Noktalar ve Kayıt Sahipliği Denetimi |
 | **10** | API Güvenliği, Erişim Kontrolü, CORS ve İstek Sınırlama | Yerel Test Ortamında Yetki Denetimleri, Güvenlik Açıklarının Giderilmesi ve Güvenlik Testleri |
 | **11** | Yayına Alma, Günlükleme, İzleme ve Ölçeklendirmeye Giriş | Hazırlanmış Test Ortamına İlk Yayın, Günlük Kayıtları ve Sağlık Kontrolü |
-| **12** | Harici API Entegrasyonu, Hata Dayanıklılığı ve Önbellekleme Temelleri | Harici Servis Bağlantısı, Zaman Aşımı ve Başarısız Yanıtların Yönetimi |
+| **12** | Harici API Entegrasyonu, Hata Dayanıklılığı ve Redis ile Önbellekleme Temelleri | Harici Servis İsteği ve Hata Yönetimi; Yanıtı Redis'te Önbellekleme, TTL ve Önbelleği Geçersiz Kılma |
 | **13** | OpenAPI, API Dokümantasyonu, Versiyonlama ve Geriye Uyumluluk | Kullanım Dokümanının Tamamlanması, Sürüm Karşılaştırması ve Güncel Sürümün Yayınlanması |
 | **14** | **Proje Sunumları ve Tasarım Kararlarının Değerlendirilmesi** | **Çalışan Proje Gösterimi, Test Sonuçları ve Bireysel Kod Değerlendirmesi** |
 
