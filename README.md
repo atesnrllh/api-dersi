@@ -16,8 +16,11 @@ Bu iki tablo ayrı tutulur. Haftalık plana araç sütunu eklenmez.
 | Hafta | Teorik ders notu | Uygulama föyü |
 |---|---|---|
 | 01 | [API temelleri, istemci–sunucu mimarisi ve JSON](02_Haftalik_Materyaller/Hafta_01/01_Teorik_Ders_Notu.md) — üzerinde çalışılıyor | [İlk kitap kataloğu API'si](02_Haftalik_Materyaller/Hafta_01/02_Uygulama_Foyu.md) — üzerinde çalışılıyor; VS Code'da Python sunucusu ve istemcisiyle yönlendirilmiş çalışma |
+| 02 | [HTTP istek–yanıt yapısı, metotlar, başlıklar ve durum kodları](02_Haftalik_Materyaller/Hafta_02/01_Teorik_Ders_Notu.md) — üzerinde çalışılıyor | [Kitap kataloğunda HTTP deneyleri](02_Haftalik_Materyaller/Hafta_02/02_Uygulama_Foyu.md) — üzerinde çalışılıyor; Postman ve HTTPX ile GET/POST çalışması |
 
 İlk haftanın teorik notu açıklamalar, beş şema, örnekler ve cevaplı değerlendirme soruları içerir. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
+
+İkinci hafta aynı kitap kataloğu örneğini sürdürür. Teoride HTTP mesajı ve metot anlamları açıklanır; uygulamada mevcut GET işlemleri Postman ile incelenir, ardından `POST /api/books` ve kitap oluşturan Python istemcisi eklenir.
 
 ## Çalışma düzeni
 

@@ -6,6 +6,7 @@
 |---|---|---|
 | **Programlama dili** | **Python 3** | API’nin uygulama mantığını, veri işlemlerini ve erişim kontrollerini yazmak. |
 | **API geliştirme çatısı** | **FastAPI** | Uç noktaları, istek–yanıt modellerini ve API işlemlerini oluşturmak. |
+| **Veri modelleri ve gövde doğrulama** | **Pydantic** | İkinci haftada POST gövdesinin beklenen alanlarını tanımlamak; beşinci haftada ayrıntılı tür ve iş kuralı doğrulaması yapmak. |
 | **Ana veritabanı** | **PostgreSQL** | Dönem projesindeki kayıtları kalıcı olarak saklamak ve ilişkisel veri yapılarıyla çalışmak. |
 | **Veritabanı erişimi / ORM** | **SQLModel** | Python modellerini veritabanı tablolarıyla ilişkilendirmek ve veri işlemlerini uygulama içinden yürütmek. |
 | **Önbellekleme** | **Redis** | Sık okunan verileri geçici olarak saklamak; önbellekten okuma, süre dolması (TTL) ve veri değiştiğinde önbelleği silme veya güncelleme davranışlarını öğrenmek. |

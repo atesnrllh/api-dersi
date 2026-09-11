@@ -6,7 +6,7 @@
 | Hafta | Teorik — 3 ders saati | Uygulama — 2 ders saati |
 |:---:|---|---|
 | **1** | API Kavramları ve Türleri, İstemci–Sunucu Mimarisi ve JSON’a Giriş | VS Code ve Python Ortamı; FastAPI ile Yerel Kitap Sunucusu, HTTPX İstemcisi, GET İstekleri, JSON ve Temel Hata Deneyleri |
-| **2** | HTTP: İstek–Yanıt Yapısı, Metotlar, Başlıklar ve Durum Kodları | Postman ile İstekleri Elle Değiştirme; Metot, Yol, Sorgu, Başlık, Gövde ve Yanıt İnceleme |
+| **2** | HTTP: İstek–Yanıt Yapısı, Metotlar, Başlıklar ve Durum Kodları | Postman ile HTTP Deneyleri; GET ve POST, JSON Gövdesi, `201`/`405`/`422`, `Location` Başlığı ve HTTPX ile Kitap Oluşturma |
 | **3** | RESTful API Tasarımı, Kaynaklar, Uç Noktalar ve Yönlendirme | Dönem Projesinin Başlatılması, Projenin İlk GET Uç Noktaları ve Dokümantasyona Giriş |
 | **4** | CRUD İşlemleri, İstek Gövdeleri ve Yanıt Modelleri | Bellek İçi Verilerle Listeleme, Ekleme, Güncelleme ve Silme |
 | **5** | Veri Doğrulama ve Hata Yönetimi | Doğrulama Kuralları ve Tutarlı Hata Yanıtlarının Oluşturulması |
