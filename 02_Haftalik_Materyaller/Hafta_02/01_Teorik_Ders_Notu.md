@@ -1,395 +1,207 @@
 # Hafta 02 — Teorik Ders Notu
 
-## HTTP İstek–Yanıt Yapısı, Metotlar, Başlıklar ve Durum Kodları
+## Aynı Kitap Kataloğunda HTTP: İsteği Kurmak, Yanıtı Yorumlamak
 
-**Ders:** Uygulama Programı Arayüzü (API)
+**Ders:** Uygulama Programı Arayüzü (API)  
+**Ön koşul:** Birinci haftanın üç kitaplı sunucusu ve çalışan HTTPX istemcisi  
+**Sürüm:** 1.1 — 12 Eylül 2026 · Üzerinde çalışılıyor
 
-**Düzey:** API konusunda başlangıç
+Birinci hafta isteği gönderdik, sunucunun kitapları seçtiğini ve istemcinin JSON yanıtını ekrana dönüştürdüğünü gördük. Bu hafta şu soruyu yanıtlıyoruz: **İstemci, sunucudan ne istediğini HTTP mesajının hangi parçasıyla anlatır; sunucunun ne yaptığını yanıttan nasıl anlarız?**
 
-**Ön koşul:** Birinci haftanın teori notu ve kitap kataloğu uygulaması
+Önce bildiğimiz GET isteğini Postman ile kuracağız. Ardından aynı kataloğa bir kitap ekleyerek istek gövdesini, `201` yanıtını ve hata durumlarını inceleyeceğiz. Örnek, adlandırma ve veri yapısı birinci haftadan devam eder. Kodun çalıştırıldığı bütün adımlar [uygulama föyündedir](02_Uygulama_Foyu.md).
 
-**Sürüm:** 1.0 — 11 Eylül 2026
+### Öğrenme yolu
 
-> Bu hafta yeni ve ilgisiz bir örneğe geçmiyoruz. [Birinci hafta uygulamasında](../Hafta_01/02_Uygulama_Foyu.md) yazdığımız kitap kataloğundaki istekleri açıp HTTP mesajının parçalarını inceliyoruz. [İkinci hafta uygulama föyünde](02_Uygulama_Foyu.md) önce aynı işlemleri Postman ile elle kuracak, ardından kitap ekleyen küçük bir Python istemcisi yazacağız.
+| Sıra | Teori | Uygulamadaki karşılığı |
+|---|---|---|
+| 1 | [İstemci değişir, API aynı kalır](#t01) | Hazırlık, Deney 1 |
+| 2 | [URL ve istek parçaları](#t02), [yol ve sorgu](#t03) | Deney 2–3 |
+| 3 | [Yanıtı okumak](#t04), [başlıklar](#t05) | Deney 3–4 |
+| 4 | [Metot ve yol](#t06), [istek gövdesi](#t07) | Deney 5–6 |
+| 5 | [Kitap oluşturmak ve adresini bildirmek](#t08) | Deney 7–8 |
+| 6 | [İsteği tekrarlamanın etkisi](#t09) | Deney 9 |
+| 7 | [JSON, model ve hata ayrımı](#t10) | Deney 10–12 |
+| 8 | [İletişimin bütünü ve verinin ömrü](#t11) | Deney 13–15 |
+| 9 | [Diğer metot ve kodları tanımak](#t12) | Kavramsal karşılaştırma; uygulaması sonraki haftalarda |
 
-## 1. Birinci haftadan ikinci haftaya geçiş
+Bu haftanın sonunda bir GET ve bir POST isteğini hem okuyabilmeli hem hazırlayabilmelisin. Bütün HTTP kodlarını ezberlemen veya tam bir CRUD uygulaması yazman beklenmiyor. Çalışmayı anlamayı tamamlayacak hızda ilerlet; föyün tamamını iki ders saatine sığdırmak zorunlu değil.
 
-Birinci haftada şu ilişkiyi kurduk:
+<a id="t01"></a>
 
-```text
-client.py  ── HTTP isteği ──►  server.py
-client.py  ◄─ HTTP yanıtı ───  server.py
-```
+## 1. Aynı isteği başka bir istemciyle göndermek
 
-Şu isteğin çalıştığını gördük:
-
-```http
-GET /api/books?search=Python&available=true
-```
-
-Bu gösterimde bazı parçaları kullandık; fakat hepsini sistemli biçimde incelemedik. İkinci haftanın ana soruları şunlardır:
-
-1. İstemci, sunucuya **ne yapmak istediğini** nasıl bildirir?
-2. Yol, sorgu parametresi, başlık ve gövde hangi bilgileri taşır?
-3. Sunucu işlemin sonucunu istemciye nasıl açıklar?
-4. Aynı yola farklı HTTP metotları gönderildiğinde neden farklı işlemler seçilir?
-
-Bu haftanın sonunda şunları yapabilmelisin:
-
-- Bir HTTP isteğinde metodu, hedefi, başlıkları ve varsa gövdeyi ayırmak.
-- Yol parametresi, sorgu parametresi ve istek gövdesinin rollerini karşılaştırmak.
-- `GET`, `POST`, `PUT`, `PATCH` ve `DELETE` metotlarının amaçlarını açıklamak.
-- Güvenli metot ile idempotent metot kavramlarını birbirine karıştırmamak.
-- Bir HTTP yanıtında durum kodunu, başlıkları ve gövdeyi ayrı okumak.
-- `200`, `201`, `204`, `400`, `404`, `405`, `409`, `415`, `422` ve `500` kodlarını bağlama göre yorumlamak.
-- `Accept`, `Content-Type`, `Location` ve `Allow` başlıklarının görevlerini açıklamak.
-- Postman’ın API veya sunucu olmadığını, istemci rolünde bir araç olduğunu göstermek.
-
-## 2. HTTP neyi düzenler?
-
-**HTTP**, istemci ile sunucu arasındaki istek–yanıt iletişiminin kurallarını tanımlayan uygulama katmanı protokolüdür. API, yazılımın sunduğu işlemler ve bunların kullanım arayüzüdür; HTTP ise web API’mizde bu işlemlere ait mesajları taşıyan iletişim düzenidir.
-
-```text
-API sözleşmesi: “Kitapları listelemek ve kitap eklemek için şu işlemler sunulur.”
-HTTP mesajı:     “POST /api/books yoluna bu başlıklarla şu gövde gönderildi.”
-```
-
-API ile HTTP aynı kavram değildir. Her API ağ üzerinden HTTP kullanmak zorunda değildir. Bizim dersimizin ana uygulaması bir web API olduğu için HTTP üzerinde çalışır.
-
-### 2.1. Her istek ayrı değerlendirilir
-
-İstemci bir istek gönderir, sunucu bu isteği değerlendirir ve yanıt üretir. Sonra başka bir istek gelebilir:
-
-```text
-İstek 1: GET  /api/books       → Yanıt 1: 200 + kitap listesi
-İstek 2: POST /api/books       → Yanıt 2: 201 + oluşturulan kitap
-İstek 3: GET  /api/books/74    → Yanıt 3: 200 + 74 numaralı kitap
-```
-
-Birinci isteğin `200` olması, sonraki isteğin de başarılı olacağını garanti etmez. Her yanıt kendi isteğinin sonucunu anlatır.
-
-## 3. HTTP isteğinin parçaları
-
-Öğretim amacıyla sadeleştirilmiş bir istek:
+Birinci haftanın son isteği şuydu:
 
 ```http
-POST /api/books HTTP/1.1
+GET /api/books?search=Python&available=true HTTP/1.1
 Host: 127.0.0.1:8000
 Accept: application/json
-Content-Type: application/json
-
-{
-  "title": "HTTP'yi Anlamak",
-  "author": {
-    "first_name": "Selin",
-    "last_name": "Aras"
-  },
-  "available": true,
-  "tags": ["http", "web"],
-  "rating": null
-}
 ```
 
-| Parça | Örnekteki değer | Görevi |
+Bu, HTTP/1.1 mesajının ders için sadeleştirilmiş gösterimidir. İstemci bazı ek başlıkları kendisi ekler. Bu metni bir Python dosyasına yapıştırmıyoruz.
+
+İsteği `client.py` de Postman da gönderebilir. Bizim sunucumuz bu istemcilerin ekranlarını bilmez; gelen metodu, hedefi ve ilgili girdileri işler. Aynı veriler duruyorsa ve aynı istek gönderiliyorsa iki istemci de aynı kitap sonucunu alır. Ekrana yazma biçimleri farklı olabilir.
+
+```mermaid
+flowchart LR
+    P[Postman] -->|HTTP isteği| S[Uvicorn ve FastAPI uygulaması]
+    C[client.py / HTTPX] -->|HTTP isteği| S
+    S --> B[Bellekteki books listesi]
+    B --> S
+    S -->|HTTP yanıtı| P
+    S -->|HTTP yanıtı| C
+```
+
+**Postman API'yi oluşturmaz.** İstek hazırlayıp yanıtı incelememize yarayan bir istemcidir. Sunucudaki davranışı hâlâ `server.py` içinde biz yazarız. Postman'a POST seçeneğini eklemek için sunucu yazmayız; POST isteğini *işlemesi* için sunucuya uygun kodu ekleriz.
+
+“API'ye istek gönderdim” arayüzü kullanmayı, “sunucuya istek gönderdim” isteğin ulaştığı tarafı anlatır. Bu örnekte ikisi aynı iletişimin farklı yönleridir.
+
+<a id="t02"></a>
+
+## 2. İstek mesajını parçalara ayırmak
+
+Tam URL:
+
+```text
+http://127.0.0.1:8000/api/books?search=Python&available=true
+```
+
+| Parça | Bu örnekteki değer | Ne anlatır? |
 |---|---|---|
-| Metot | `POST` | İstemcinin amaçladığı işlem türünü bildirir. |
-| Hedef yol | `/api/books` | İşlemin yöneldiği kaynağı belirtir. |
-| HTTP sürümü | `HTTP/1.1` | Mesajın kullandığı HTTP sürümünü gösterir. |
-| Başlıklar | `Host`, `Accept`, `Content-Type` | Mesaj ve gövdenin işlenmesi için ek bilgi taşır. |
-| Boş satır | Başlıklarla gövde arasında | Başlık bölümünün bittiğini gösterir. |
-| Gövde | Kitap JSON’u | Sunucuya gönderilen asıl veriyi taşır. |
+| Şema | `http` | Kullanılan iletişim şeması. `https` kullanıldığında HTTP iletişimi TLS ile korunur. |
+| Sunucu adresi | `127.0.0.1` | İsteği gönderen bilgisayarın kendisi. Postman da sunucu da aynı bilgisayarda çalışıyor. |
+| Port | `8000` | Bu bilgisayarda sunucunun dinlediği bağlantı noktası. |
+| Yol | `/api/books` | Bu API'deki kitap koleksiyonunun yolu. |
+| Sorgu | `search=Python&available=true` | Bu API'nin tanımladığı iki filtre girdisi. |
 
-Postman ve HTTPX bazı başlıkları bizim yerimize ekleyebilir. Ekranda yalnızca yazdığımız alanları görmek, ağ üzerinden yalnızca bunların gönderildiği anlamına gelmez.
+`?` sorguyu başlatır; `&` parametreleri ayırır. Parametre sırası burada sonucu değiştirmez: `available=true&search=Python` aynı iki girdiyi taşır. Boşluk gibi karakterleri Postman'ın Params alanı veya HTTPX'in `params` seçeneği URL'ye uygun biçimde kodlar.
 
-## 4. Girdi nerede taşınır?
+HTTP isteğinde ayrıca **metot**, **başlıklar** ve varsa **gövde** bulunur. Metot URL'nin parçası değildir; ayrı seçilir. Aynı URL'ye GET ve POST göndermek farklı işlemler istemektir.
 
-Bir API işleminin girdileri aynı yere yazılmak zorunda değildir. Yer seçimi, girdinin işlemdeki anlamına göre yapılır.
+Başlıklar mesaj hakkında bilgi taşır. Gövde, varsa, işleme gönderilen asıl içeriği taşır. Bizim GET isteklerimizin gövdesi yoktur; birazdan POST ile kitap bilgilerini gövdede göndereceğiz. HTTP gövdesi mutlaka JSON olmak zorunda değildir; API'nin kabul ettiği biçim kullanılır.
 
-### 4.1. Yol parametresi: hangi kaynak?
+<a id="t03"></a>
 
-```http
-GET /api/books/57
-```
+## 3. Yol, sorgu ve dönen alanlar
 
-Buradaki `57`, istenen tek kitabı seçer. FastAPI tanımındaki karşılığı şöyledir:
-
-```python
-@app.get("/api/books/{book_id}")
-def get_book(book_id: int):
-    ...
-```
-
-### 4.2. Sorgu parametresi: sonuç nasıl daraltılsın?
+### 3.1. Yol parametresiyle bir kitabı seçmek
 
 ```http
-GET /api/books?search=API&available=true
+GET /api/books/57 HTTP/1.1
+Host: 127.0.0.1:8000
 ```
 
-`search` ve `available`, kitap koleksiyonundan dönecek sonuçları süzer. `?` sorgu bölümünü başlatır, `&` parametreleri ayırır. Parametre adlarının anlamını HTTP değil, API sözleşmemiz belirler.
+Sunucuda `/api/books/{book_id}` yolu tanımlıdır. Buradaki `57`, `book_id` girdisine karşılık gelir. `book_id: int` bildirimi nedeniyle FastAPI bu yol değerini tam sayı olarak doğrular. Sonra bizim fonksiyonumuz `id` değeri 57 olan kitabı arar.
 
-### 4.3. Gövde: işlenecek temsil nedir?
+Bu adres kitabın adıyla arama yapmaz. Kimlik ile başlık aynı şey değildir; farklı kitaplar aynı başlığa sahip olabilir.
 
-```http
-POST /api/books
-Content-Type: application/json
+### 3.2. Sorgu parametreleriyle koleksiyonu süzmek
 
-{"title": "HTTP'yi Anlamak", ...}
-```
+Birinci haftanın son verileri:
 
-Yeni kitabın alanları gövdede taşınır. Kimliği bu örnekte istemci seçmez; sunucu oluşturur. Gövde kullanımı yalnızca `POST` metoduna özgü değildir, ancak `GET` istek gövdesi normal API tasarımında kullanılmamalıdır.
+| `id` | `title` | `available` | `tags` |
+|---|---|---|---|
+| 42 | API Yolculuğu | `true` | `software`, `education` |
+| 57 | Veriyle İlk Adımlar | `false` | Boş liste |
+| 73 | Python ile Web API | `true` | `python`, `api` |
 
-### 4.4. Aynı bilgi her yere yazılabilir mi?
+Bizim sunucumuzda `search`, yalnızca `title` içinde metin arar; `tags` alanına bakmaz. **`search` HTTP'nin hazır arama komutu değildir.** Parametrenin adını ve hangi alanı arayacağını uygulamayı yazan kişi belirler.
 
-Teknik olarak çok farklı tasarımlar yapılabilir; fakat anlaşılır bir sözleşmede girdinin yeri anlamıyla uyumlu olmalıdır:
-
-| Soru | Uygun yer | Kitap örneği |
+| İstek sorgusu | Dönen kimlikler | Gerekçe |
 |---|---|---|
-| Hangi tek kaynak? | Yol | `/api/books/57` |
-| Koleksiyon nasıl süzülsün? | Sorgu | `?available=true` |
-| Oluşturulacak kaydın alanları neler? | Gövde | Kitap JSON’u |
-| Gövdenin biçimi nedir? | Başlık | `Content-Type: application/json` |
+| `search=Python&available=true` | 73 | Başlıkta Python var ve kitap uygun. |
+| `search=API&available=true` | 42, 73 | İki kitabın da başlığında API var ve ikisi de uygun. |
+| `search=API&available=false` | Hiçbiri | API geçen iki kitabın da uygunluk değeri `true`. |
+| `search=&available=false` | 57 | Boş arama bütün başlıklarla eşleşir; uygunluk filtresi 57'yi seçer. |
+| Parametre yok | 42, 57, 73 | Varsayılan değerler filtreyi daraltmaz. |
 
-Bu bir doğa kanunu değil, okunabilir ve tutarlı API tasarımı için kullandığımız yaklaşımdır.
+Bu sonuçlar tabloda gösterilen **üç kitaplı başlangıç** için geçerlidir. Kataloğa kayıt eklenince sonuçlar değişebilir.
 
-## 5. Metot ile yol birlikte işlemi seçer
+`search=` boş metin gönderir; boşluk karakteri göndermez. Python'da boş metin her metnin içinde bulunur. `available=false` ise filtreyi kapatmaz: `false` olan kitapları seçer. Parametreyi hiç göndermediğimizde sunucudaki `None` varsayılanı uygunluk filtresini kapatır.
 
-Yalnızca `/api/books` yoluna bakmak yeterli değildir:
+### 3.3. İki koşulun sırası ve iki yolun sırası
 
-```text
-GET  /api/books   → kitap listesini getir
-POST /api/books   → yeni kitap oluştur
+Bizim filtreleme kodumuz iki koşulu **ve** ile birleştirir. Her iki koşulun da sağlanması gerekir. Bu örnekte koşullar veri değiştirmediği için önce başlığı veya önce uygunluğu kontrol etmek sonucu değiştirmez.
+
+`/api/books` ile `/api/books/{book_id}` yollarının sırası da bu iki yol için sorun oluşturmaz: birinde ek yol parçası yoktur, diğerinde vardır. Ancak ileride `/api/books/search` gibi sabit bir yol eklersen, genel `{book_id}` yolundan önce tanımlanması gerekebilir. Bütün yolların sırası önemsizdir diye genelleyemeyiz. [FastAPI: yol sırası](https://fastapi.tiangolo.com/tutorial/path-params/#order-matters).
+
+### 3.4. Kitabı seçmek, kitabın alanlarını seçmek değildir
+
+`search=Python`, hangi kitapların listeye gireceğini belirler. Dönen kitabın `author`, `tags` ve `rating` alanlarını kaldırmaz. İstemcide yalnızca başlığı yazdırmak da ağdan yalnızca başlığın geldiği anlamına gelmez.
+
+Alan seçimi isteniyorsa API'nin bunu ayrıca desteklemesi gerekir. Bu haftaki API'de böyle bir özellik yoktur.
+
+<a id="t04"></a>
+
+## 4. Yanıtı üç parçayla okumak
+
+57 numaralı kitabı başarıyla istediğimizde sadeleştirilmiş yanıt:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"id":57,"title":"Veriyle İlk Adımlar","author":{"first_name":"Ece","last_name":"Yılmaz"},"available":false,"tags":[],"rating":0}
 ```
 
-Yol aynıdır; metot değiştiği için amaçlanan işlem değişir. FastAPI’de iki ayrı dekoratör ve iki ayrı fonksiyon bulunur:
+| Yanıt parçası | Bize verdiği bilgi |
+|---|---|
+| Durum kodu | İşlemin HTTP düzeyindeki sonucu. Burada `200`. |
+| Başlıklar | Gövdenin biçimi gibi yanıtla ilgili bilgiler. |
+| Gövde | Kitap verisi veya hata ayrıntısı gibi içerik. |
 
-```python
-@app.get("/api/books")
-def get_books():
-    ...
+Önce durum kodunu, ardından ilgili başlıkları ve gövdeyi birlikte oku. `200`, bu okuma isteğinin başarıyla işlendiğini bildirir; verinin gerçek hayatta doğru yazıldığını veya hiç değişmeyeceğini kanıtlamaz.
 
+### Benzer görünen dört farklı sonuç
 
-@app.post("/api/books")
-def create_book():
-    ...
-```
+| Durum | HTTP kodu | Örneğimizde gövde | Ne oldu? |
+|---|---|---|---|
+| Filtreye uyan kitap yok | `200` | `[]` | Koleksiyon başarıyla tarandı; eşleşme yok. |
+| 999 numaralı kitap yok | `404` | `{"detail":"Book not found"}` | İstenen tek kitap bulunamadı. |
+| Kimlik yerine `abc` gönderildi | `422` | Doğrulama ayrıntıları | Bu uç noktanın beklediği tam sayı girdisi sağlanamadı. |
+| Sunucuya bağlantı kurulamadı | Yok | HTTP yanıtı yok | Bir HTTP durum kodu alınamadı. |
 
-Sunucuda yalnızca GET tanımlıyken aynı yola POST gönderilirse yol vardır, fakat o metot için işlem yoktur. Bu durumda `405 Method Not Allowed` beklenir.
+`404`, sunucudan yanıt geldiğini gösterir. `422` de bir HTTP yanıtıdır. Bir hata gövdesi JSON olabilir; JSON'un çözümlenebilmesi işin başarılı olduğunu göstermez. Web sayfasında görülen `404` de aynı HTTP durum kodudur; yanıtın HTML olması onu başka bir kod yapmaz.
 
-## 6. Sık kullanılan HTTP metotları
+<a id="t05"></a>
 
-| Metot | Temel amaç | Kitap örneği |
+## 5. Başlıkların yönünü ayırmak
+
+| Başlık | Nerede kullanıyoruz? | Bu örnekte anlamı |
 |---|---|---|
-| `GET` | Kaynağın temsilini istemek | Kitapları veya bir kitabı getir. |
-| `POST` | Hedef kaynağa veri göndererek işlem başlatmak; çoğu zaman yeni alt kaynak oluşturmak | Koleksiyona yeni kitap ekle. |
-| `PUT` | Hedef kaynağın mevcut temsilini gönderilen içerikle değiştirmek | Kitabın bütün düzenlenebilir alanlarını yeni temsil ile değiştir. |
-| `PATCH` | Kaynağa kısmi değişiklik uygulamak | Yalnızca `available` alanını değiştir. |
-| `DELETE` | Hedef kaynağı silmek | Kimliği verilen kitabı sil. |
+| `Accept: application/json` | İstek | “Yanıtı JSON biçiminde almayı tercih ediyorum.” |
+| `Content-Type: application/json` | İstek | “Gönderdiğim gövde JSON biçiminde.” |
+| `Content-Type: application/json` | Yanıt | “Gelen yanıtın gövdesi JSON biçiminde.” |
+| `Allow: GET` | POST desteği eklenmeden önceki `405` yanıtı | Bu hedefte desteklenen metot GET. |
+| `Location: /api/books/74` | Oluşturma işlemine ekleyeceğimiz yanıt | Yeni kaynağın adresi. |
 
-Bu eşleştirme yaygındır; “her POST mutlaka veritabanına kayıt ekler” gibi evrensel bir kural değildir. API, metodun o işlemdeki kesin anlamını belgelemelidir.
+`Accept` ile `Content-Type` aynı soruyu cevaplamaz. POST sırasında ikisi birlikte bulunabilir: biri beklenen yanıtı, diğeri gönderilen gövdeyi anlatır. Gövdesiz GET isteğimize istek `Content-Type` başlığı eklemek gerekmez.
 
-Bu hafta çalışan kodda `GET` ve `POST` kullanacağız. `PUT`, `PATCH` ve `DELETE` işlemlerini dördüncü haftada kitap kataloğunun gerçek güncelleme ve silme davranışlarıyla yazacağız.
+**Başlık bir dönüştürme komutu değildir.** Bu sunucuda içerik pazarlığı yazmadık. `Accept: text/plain` gönderdiğimizde uygulama yine JSON döndürür. Başka bir API isteği karşılayamayacağını `406` ile bildirebilir; kendi API'mizin davranışını bütün sunuculara genelleyemeyiz.
 
-### 6.1. CRUD ile HTTP metodu aynı şey değildir
+Postman'da istek başlıkları üst taraftaki **Headers**, yanıt başlıkları yanıt bölümündeki **Headers** alanındadır. Aynı adlı iki bölümde farklı yönlerdeki mesajları inceliyoruz.
 
-CRUD, uygulama verisi üzerinde **Create, Read, Update, Delete** işlemlerini sınıflandırır. HTTP metotları ise isteklerin amaçlanan anlamını bildirir. Sık kullanılan eşleştirme şöyledir:
+<a id="t06"></a>
 
-| CRUD | Yaygın HTTP metodu |
+## 6. Metot ile yol birlikte bir işlem belirtir
+
+| Metot + yol | Bu haftaki anlamı |
 |---|---|
-| Create | `POST` |
-| Read | `GET` |
-| Update | `PUT` veya `PATCH` |
-| Delete | `DELETE` |
+| `GET /api/books` | Kitap koleksiyonunu oku; varsa filtreleri uygula. |
+| `GET /api/books/57` | 57 numaralı kitabı oku. |
+| `POST /api/books` | Gövdedeki bilgilerle yeni kitap oluştur. |
 
-Bu tablo öğrenmeyi kolaylaştırır; HTTP’yi yalnızca veritabanı işlemlerine indirgememeliyiz.
+GET fonksiyonunun bulunması POST desteği sağlamaz. POST'u henüz yazmadığımız sürümde `/api/books` yolu bulunur ama bu metot desteklenmez; sonuç `405 Method Not Allowed` olur. Bu nedenle aynı adrese GET'in çalışıp POST'un çalışmaması çelişki değildir.
 
-## 7. Güvenli ve idempotent metotlar
+`@app.get` ve `@app.post` ilgili fonksiyonların hangi metot ve yolla çağrılacağını bildirir. Fonksiyon adının `create_book` olması tek başına HTTP işlemi tanımlamaz. Sınıf tanımlamak da yol oluşturmaz.
 
-### 7.1. Güvenli metot
+POST genel olarak hedefin tanımladığı işleme veri gönderir. Biz bu API'de onu kitap oluşturmak için kullanıyoruz; her API'deki her POST isteği mutlaka yeni kayıt oluşturur diye bir kural yoktur.
 
-İstemci, güvenli bir metotla sunucu durumunu değiştiren bir işlem istemez. `GET`, `HEAD` ve `OPTIONS` güvenli metotlardır. Sunucu günlük kaydı tutabilir; burada önemli olan istemcinin GET ile kitap oluşturma veya silme talep etmemesidir.
+<a id="t07"></a>
 
-### 7.2. Idempotent metot
+## 7. İstek gövdesi: yeni kitap bilgisi hangi yönde gider?
 
-Aynı istek bir veya birden fazla kez uygulandığında sunucuda amaçlanan son etkinin aynı kalmasına **idempotent** denir.
-
-```text
-PUT /api/books/57   aynı tam temsil ile iki kez → hedefin son hâli aynı
-DELETE /api/books/57 iki kez                   → hedef sonunda silinmiş
-POST /api/books      aynı gövdeyle iki kez      → iki yeni kayıt oluşabilir
-```
-
-`GET`, `PUT` ve `DELETE` idempotent kabul edilir. `POST` genel olarak idempotent değildir. `DELETE` idempotent olduğu hâlde güvenli değildir; çünkü ilk başarılı istek kaynağı siler. Böylece **güvenli** ile **idempotent** kavramlarının aynı olmadığını görürüz.
-
-İdempotentlik “iki isteğin durum kodu ve gövdesi mutlaka aynıdır” demek değildir. İlk DELETE `204`, ikincisi `404` dönebilir; amaçlanan son durumda kaynak yine yoktur.
-
-## 8. HTTP yanıtının parçaları
-
-Kitap oluşturma işleminin sadeleştirilmiş yanıtı:
-
-```http
-HTTP/1.1 201 Created
-Content-Type: application/json
-Location: /api/books/74
-
-{
-  "id": 74,
-  "title": "HTTP'yi Anlamak",
-  "author": {
-    "first_name": "Selin",
-    "last_name": "Aras"
-  },
-  "available": true,
-  "tags": ["http", "web"],
-  "rating": null
-}
-```
-
-| Parça | Ne anlatır? |
-|---|---|
-| `HTTP/1.1 201 Created` | Bu isteğin sonucunu bildirir. |
-| `Content-Type` | Yanıt gövdesinin JSON olduğunu bildirir. |
-| `Location` | Oluşturulan kaynağın yolunu gösterir. |
-| Gövde | Oluşturulan kitabın sunucu tarafından üretilen kimlikle temsilini taşır. |
-
-Durum kodu, başlık ve gövde birbirinin yerine geçmez. `201` işlemin türünü; `Location` yeni kaynağın yerini; JSON gövdesi kaynağın verisini açıklar.
-
-## 9. Durum kodu sınıfları
-
-İlk rakam, yanıtın geniş sınıfını gösterir:
-
-| Aralık | Sınıf | Genel anlam |
-|---:|---|---|
-| `100–199` | Bilgilendirme | İletişimin ara durumu hakkında bilgi verir. |
-| `200–299` | Başarı | İstek başarıyla tamamlanmıştır. |
-| `300–399` | Yönlendirme | İstemcinin başka bir konum veya önbellek kuralıyla devam etmesini anlatır. |
-| `400–499` | İstemci hatası | İstek hedef işleme uygun değildir veya gerekli koşulu sağlamaz. |
-| `500–599` | Sunucu hatası | Sunucu isteği tamamlarken kendi tarafında sorun yaşamıştır. |
-
-“4xx gördüm; istemci programında kesin yazılım hatası var” demek fazla geniştir. Örneğin kullanıcı var olmayan bir kitap kimliği seçtiğinde istemci kodu teknik olarak doğru çalışmış olabilir; sunucu yine `404` döndürür.
-
-### 9.1. Bu derste kullanacağımız kodlar
-
-| Kod | Adı | Kitap kataloğundaki örnek |
-|---:|---|---|
-| `200` | OK | Liste veya tek kitap başarıyla döndü. |
-| `201` | Created | Yeni kitap oluşturuldu. |
-| `204` | No Content | İşlem başarılı, dönecek gövde yok; silmede ileride kullanabiliriz. |
-| `400` | Bad Request | Sunucu isteği kendi genel kurallarına göre geçersiz buldu. |
-| `404` | Not Found | Kimliği verilen kitap bulunamadı. |
-| `405` | Method Not Allowed | Yol var, gönderilen metot için işlem tanımlı değil. |
-| `409` | Conflict | İstek mevcut durumla çatışıyor; örneğin benzersiz olması gereken değer zaten var. |
-| `415` | Unsupported Media Type | Sunucu, gövdenin bildirilen biçimini desteklemiyor. |
-| `422` | Unprocessable Content | Mesajın biçimi işlenebilir olsa da içerik beklenen yapıya veya türe uymuyor. |
-| `500` | Internal Server Error | Sunucu kodunda beklenmeyen hata oluştu. |
-
-Aynı sorun her API’de mutlaka aynı ayrıntı gövdesiyle dönmez. API sözleşmesi durum kodunun yanında hata gövdesinin alanlarını da tanımlamalıdır.
-
-Güncel HTTP adlandırmasında `422` için **Unprocessable Content** kullanılır. Bazı sunucular ve araçlar geçmişteki **Unprocessable Entity** adını gösterebilir; karar verirken üç basamaklı durum kodunu esas alırız.
-
-### 9.2. `400`, `415` ve `422` neden karışır?
-
-- `400`, isteğin genel olarak hatalı olduğunu bildiren geniş bir koddur.
-- `415`, sunucunun gövde için bildirilen medya türünü desteklemediğini anlatır.
-- `422`, içerik türü anlaşılmış olsa bile verinin beklenen yapı veya değerlere dönüştürülemediği durumlarda kullanılabilir.
-
-FastAPI, Pydantic modeline uymayan istek gövdelerinde varsayılan olarak ayrıntılı `422` yanıtı üretir. Beşinci haftada hangi doğrulama hatasına hangi yanıtı vereceğimizi daha ayrıntılı tasarlayacağız.
-
-## 10. Başlıklar: mesaj hakkındaki bilgi
-
-HTTP başlıkları ad–değer çiftleridir. Alan adları büyük/küçük harfe duyarlı değildir; araçlar görünümü değiştirebilir.
-
-### 10.1. `Accept`
-
-```http
-Accept: application/json
-```
-
-İstemci, kabul ettiği yanıt biçimini bildirir. Bu bir talep veya tercih bilgisidir. Sunucunun içerik uzlaşmasını destekleyip desteklemediğini sözleşmeden öğreniriz. FastAPI örneğimiz `Accept: text/plain` gönderilse bile varsayılan olarak JSON dönebilir; `Accept` tek başına sunucuya zorunlu biçim değişikliği yaptırmaz.
-
-### 10.2. `Content-Type`
-
-```http
-Content-Type: application/json
-```
-
-Bu başlık, bulunduğu mesajın gövde biçimini bildirir:
-
-- İstekteyse istemci gönderdiği gövdenin türünü açıklar.
-- Yanıttaysa sunucu döndürdüğü gövdenin türünü açıklar.
-
-`Content-Type: application/json` işlemin başarılı olduğunu göstermez. JSON biçiminde bir hata gövdesi de gelebilir.
-
-### 10.3. `Location`
-
-```http
-Location: /api/books/74
-```
-
-`201 Created` yanıtında yeni kaynağın nerede bulunduğunu göstermek için kullanılabilir. İstemci daha sonra bu yolu GET isteğinde kullanabilir.
-
-### 10.4. `Allow`
-
-```http
-Allow: GET
-```
-
-`405 Method Not Allowed` yanıtında hedef kaynağın desteklediği metotları bildirmek için kullanılır. Değer sunucu çatısının yönlendirme davranışına göre görülebilir.
-
-## 11. Gövde ile JSON aynı şey değildir
-
-**Gövde**, HTTP mesajının veri taşıyan bölümüdür. **JSON** ise gövdede kullanılabilecek veri biçimlerinden biridir. Bir gövde metin, HTML, XML, görsel baytları veya başka bir biçim taşıyabilir.
-
-```text
-HTTP gövdesi  → mesajın bölümü
-JSON          → o bölümde kullanılabilen veri biçimi
-```
-
-Birinci haftada çoğunlukla yanıt gövdesini okuduk. İkinci haftada istemci de POST isteğinin gövdesinde JSON gönderecek.
-
-## 12. FastAPI isteği nasıl ilgili koda ulaştırır?
-
-Sadeleştirilmiş süreç şöyledir:
-
-```text
-1. Uvicorn bağlantıyı kabul eder.
-2. FastAPI metot ve yolu birlikte eşleştirir.
-3. Yol ve sorgu değerlerini tanımlanan Python türlerine dönüştürür.
-4. Varsa gövdeyi Content-Type bilgisine göre okur.
-5. JSON verisini beklenen modele dönüştürür ve doğrular.
-6. İlgili Python fonksiyonunu çalıştırır.
-7. Dönüş değerini yanıt gövdesine serileştirir.
-8. Durum kodu ve başlıklarla HTTP yanıtını gönderir.
-```
-
-Hata hangi aşamada oluşursa gözlediğimiz yanıt da değişir:
-
-- Metot+yol işlemi yoksa `404` veya `405`.
-- `book_id: int` dönüşümü yapılamazsa `422`.
-- JSON yazımı veya model alanları uygun değilse `422`.
-- Fonksiyon içinde kitap bulunamazsa bizim kodumuz `404` üretir.
-- Fonksiyonda yakalanmayan beklenmedik hata oluşursa `500` görülebilir.
-
-## 13. Postman bu ilişkide ne yapar?
-
-Postman bir API oluşturmaz ve sunucunun yerine geçmez. İstemci rolünde istek hazırlayıp gönderir ve yanıtı bölümleriyle gösterir.
-
-```text
-Postman  ── HTTP isteği ──► FastAPI uygulaması
-Postman  ◄─ HTTP yanıtı ─── FastAPI uygulaması
-```
-
-Birinci haftadaki `client.py` de aynı istemci rolündeydi. Aralarındaki fark amaç ve kullanım biçimidir:
-
-| İstemci | Güçlü olduğu kullanım |
-|---|---|
-| Postman | Metodu, yolu, parametreyi, başlığı ve gövdeyi elle değiştirerek keşfetmek. |
-| HTTPX kullanan Python dosyası | İsteği program akışının parçası olarak tekrar üretmek ve yanıtı kodla işlemek. |
-
-Postman’da **Params**, **Headers** ve **Body** sekmelerinin bulunması, bunların HTTP’de aynı yer olduğu anlamına gelmez. Araç yalnızca ayrı mesaj parçalarını düzenlemeyi kolaylaştırır.
-
-## 14. Kitap ekleme işleminin uçtan uca yolculuğu
-
-Kullanıcı veya geliştirici yeni kitabın bilgilerini hazırlar:
+Birinci hafta JSON çoğunlukla **sunucudan istemciye** geliyordu. Şimdi **istemciden sunucuya** da gönderilecek:
 
 ```json
 {
@@ -404,111 +216,253 @@ Kullanıcı veya geliştirici yeni kitabın bilgilerini hazırlar:
 }
 ```
 
-Ardından süreç şöyle ilerler:
+Bu nesne yeni kitabın verisidir; sorgu filtresi değildir. `available: true`, yeni kaydın uygunluk değerini belirler. GET sorgusundaki `available=true` ise mevcut kayıtları süzer. Alanın adı aynı kalsa da **işlem ve verinin kullanıldığı yer** farklıdır.
 
-1. İstemci `POST /api/books` isteğini hazırlar.
-2. `Content-Type: application/json`, gönderilen gövdenin biçimini bildirir.
-3. FastAPI metot ve yolu `create_book` işlemine eşler.
-4. İstek gövdesi JSON’dan Python/Pydantic verisine dönüştürülür.
-5. Sunucu yeni kimliği üretir ve kitabı bellekteki listeye ekler.
-6. Sunucu `201 Created`, `Location` başlığı ve kitap gövdesi döndürür.
-7. İstemci durum kodunu, başlıkları ve gövdeyi ayrı ayrı yorumlar.
+Bu API'de kimliği sunucu üretecek. Bu yüzden oluşturma gövdesinde `id` istemiyoruz; yanıtımızda ise bulunacak. Gönderilen temsil ile dönen temsilin birebir aynı olması gerekmez.
 
-Bu örnekte kitap sunucu belleğinde tutulur. Uvicorn yeniden başlatıldığında eklenen kayıt kaybolur. Bu, POST isteğinin başarısız olduğu anlamına gelmez; kalıcılığın henüz uygulanmadığını gösterir.
+### 7.1. Bu veriyi nasıl tarif edeceğiz?
 
-## 15. Sık karıştırılan noktalar
+Birinci hafta `book_validation.py` ile “JSON okunabildi” ve “veri beklediğim kurala uydu” ayrımını gördük. İkinci haftada gövdenin beklenen yapısını **Pydantic modeli** ile tarif edeceğiz. FastAPI bu modeli kullanarak HTTP isteğinin verisini doğrulayacak. [FastAPI: istek gövdesi](https://fastapi.tiangolo.com/tutorial/body/).
 
-| Yanılgı | Doğru açıklama |
+Uygulamada `AuthorCreate` yazarın, `BookCreate` ise oluşturulacak kitabın alanlarını tanımlayan Python sınıflarıdır. `class`, bu adla bir yapı tanımlar; `(BaseModel)` kısmı Pydantic'in doğrulama özelliklerini kullanmamızı sağlar. Bu sınıflar veritabanı tablosu veya ayrı sunucu değildir.
+
+| Model alanı | Kabul etmek istediğimiz veri | Örnek |
+|---|---|---|
+| `title` | Metin | `"HTTP'yi Anlamak"` |
+| `author` | `first_name` ve `last_name` içeren nesne | Yukarıdaki yazar nesnesi |
+| `available` | Mantıksal değer | `true` |
+| `tags` | Metinlerden oluşan liste | `["http", "web"]` veya `[]` |
+| `rating` | Sayı veya `null` | `4.5`, `0`, `null` |
+
+### 7.2. Alanın bulunması ile değerinin `null` olması
+
+Bizim modelimizde `rating: float | None` yazacak ve varsayılan değer vermeyeceğiz. Bunun anlamı **alan gönderilmeli; değeri sayı veya `null` olabilir**. `null` kabul etmek, alanın hiç gönderilmeyebileceği anlamına gelmez. Varsayılan eklemek ayrı bir tasarım kararıdır. [Pydantic: varsayılan değerler](https://docs.pydantic.dev/latest/concepts/fields/#default-values).
+
+| Gövdede durum | Bizim modelimizin sonucu | Anlam |
+|---|---|---|
+| `"rating": null` | Kabul edilir | Puan henüz verilmemiş. |
+| `"rating": 0` | Kabul edilir | Puanın değeri sıfır. |
+| `rating` anahtarı yok | Reddedilir | Gönderilmesi gereken alan eksik. |
+
+Modelin şu an sayının 0–5 aralığında olmasını denetlemediğine dikkat et. Tür bildirimi bütün iş kurallarını kendiliğinden yazmaz. Benzer biçimde başlık benzersizliği kuralı da eklemedik. Ayrıntılı iş kuralları beşinci haftada ele alınacak.
+
+<a id="t08"></a>
+
+## 8. Kitabı oluşturmak ve yeni adresini bildirmek
+
+Artık parçalarını tanıdığımız oluşturma isteğini birlikte okuyabiliriz. Aşağıdaki HTTP/1.1 gösteriminde istemcinin eklediği bazı taşıma başlıkları çıkarılmıştır; JSON okunabilirlik için tek satırdadır:
+
+```http
+POST /api/books HTTP/1.1
+Host: 127.0.0.1:8000
+Accept: application/json
+Content-Type: application/json
+
+{"title":"HTTP'yi Anlamak","author":{"first_name":"Selin","last_name":"Aras"},"available":true,"tags":["http","web"],"rating":null}
+```
+
+İlk satır işlemi ve hedefi, başlıklar mesaj bilgilerini, boş satırdan sonraki gövde yeni kitabın verisini taşır. Buradaki `Content-Type` istemcinin gönderdiği gövdeye aittir; aşağıdaki yanıtta aynı başlık sunucunun gönderdiği gövdeye ait olacak.
+
+Gövde geçerliyse bizim oluşturma fonksiyonumuz şu işleri yapacak:
+
+1. Mevcut kimliklerin en büyüğünden bir fazlasını bulacak: başlangıçta 74.
+2. Doğrulanmış modelden bir Python sözlüğü çıkaracak.
+3. Kimliği ekleyip sözlüğü `books` listesine koyacak.
+4. Oluşturulan kitabı `201` koduyla döndürecek.
+
+`model_dump()` ikinci adımda kullanılır. İç içe yazar modeli de sözlüğe dönüştüğü için, mevcut GET kodumuz aynı `book["author"]["first_name"]` yapısıyla çalışmaya devam eder. [Pydantic: model verisini sözlüğe dönüştürme](https://docs.pydantic.dev/latest/concepts/serialization/#python-mode).
+
+Bir sonraki küçük değişiklikte yanıta `Location` başlığını ekleyeceğiz:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+Location: /api/books/74
+
+{"title":"HTTP'yi Anlamak","author":{"first_name":"Selin","last_name":"Aras"},"available":true,"tags":["http","web"],"rating":null,"id":74}
+```
+
+`201`, yeni kaynak oluşturulduğunu bildirir. `Location` burada `/api/books/74` yolunu gösterir; aynı sunucu adresiyle birleştirip GET gönderebiliriz. `Location` başlığını eklemek kitabı kaydetmez ve `201` yanıtını yönlendirme yanıtına dönüştürmez. Kaydı bizim `books.append(...)` kodumuz yapar. [HTTP: 201 ve Location](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.2).
+
+`response: Response`, FastAPI'nin yanıt başlıklarını ayarlamamız için fonksiyona sağladığı nesnedir. İstemciden `response` adında JSON alanı istemez. Uygulamada bu satırı eklediğimizde kodun tamamını ve değişen satırları birlikte göreceğiz. [FastAPI: yanıt başlıkları](https://fastapi.tiangolo.com/advanced/response-headers/).
+
+**Bellekte kayıt, dosyaya kayıt değildir.** Kitap diğer isteklere görünür hâle gelir; `server.py` dosyasının metni değişmez. Sunucuyu yeniden başlatınca dosyadaki üç başlangıç kitabı yeniden yüklenir.
+
+<a id="t09"></a>
+
+## 9. Aynı isteği tekrar göndermek neyi değiştirir?
+
+### 9.1. Önce deneyin sonucu
+
+Temiz başlangıçta üç kitap olduğunu düşün:
+
+| Sıra | İstek | Kitap sayısı | Neden? |
+|---|---|---|---|
+| 1 | `GET /api/books` | 3 | Okuma yeni kitap eklemez. |
+| 2 | Aynı GET | 3 | Tekrar okumak ekleme işlemi değildir. |
+| 3 | Geçerli kitap gövdesiyle POST | 4 | Sunucu 74 kimlikli yeni kayıt ekler. |
+| 4 | Aynı gövdeyle aynı POST | 5 | Sunucu 75 kimlikli başka kayıt ekler. |
+
+Aynı başlığa izin verdiğimiz için son iki kayıt aynı bilgilere, farklı kimliklere sahip olabilir. Bu örnekte tekrar gönderilen POST, var olan kaydı bulup üzerine yazmaz.
+
+### 9.2. Güvenli metot — safe
+
+HTTP'de “güvenli”, isteğin amaçlanan anlamının kaynak durumunu değiştirmek olmamasıdır. GET ile kitabı okumak buna örnektir. Sunucunun istek günlüğü tutması buna aykırı değildir. Buradaki “güvenli”, şifreleme veya yetkili erişim garantisi demek değildir.
+
+### 9.3. Idempotent metot
+
+Aynı isteğin birden çok kez yapılmasının sunucudaki amaçlanan etkisi, bir kez yapılmasıyla aynıysa işlem idempotenttir. Yanıt metninin ve kodunun her seferinde aynı olması şart değildir. GET idempotenttir; POST için böyle genel bir garanti yoktur. Bizim kitap ekleme POST'umuz tekrarlandığında yeni kayıt oluşturduğu için idempotent değildir. [HTTP: metot özellikleri](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2).
+
+Bu bilgi pratikte tekrar deneme kararını etkiler. POST gönderilirken bağlantı kopup yanıt alınamazsa, işlemin hiç yapılmadığı sonucunu hemen çıkaramayız. Yanıt kaybolmadan önce kitap eklenmiş olabilir. Kontrol etmeden tekrar göndermek ikinci kayıt oluşturabilir.
+
+<a id="t10"></a>
+
+## 10. JSON yazımı, veri modeli ve hata yanıtı
+
+Yeni kitap oluşturma isteğinde üç ayrı soruya bakarız:
+
+| Soru | Hata örneği | Bizim deneyimizde sonuç |
+|---|---|---|
+| Gövde JSON olarak çözümlenebiliyor mu? | Son alanın ardından fazladan virgül | `422`, JSON çözümleme ayrıntısı |
+| Veri beklenen modele uyuyor mu? | `author.last_name` eksik; `available` değeri `"belki"` | `422`, ilgili alanın doğrulama ayrıntısı |
+| Uygulamanın iş kuralları sağlanıyor mu? | Örneğin gelecekte 0–5 dışında puan | Bu hafta aralık kuralı yazılmadı; kendiliğinden denetlenmez. |
+
+Bu, hataları anlamak için kavramsal bir ayrımdır; FastAPI'nin bütün iç adımlarının kesin çalışma sırası olarak okunmamalıdır.
+
+### 10.1. `422` gövdesini nasıl okuyacağız?
+
+Eksik yazar soyadında hata içindeki `loc` değeri şöyle olur:
+
+```json
+["body", "author", "last_name"]
+```
+
+`body`, sorunun istek gövdesinde; `author`, yazar nesnesinde; `last_name`, soyadı alanında olduğunu gösterir. `msg` açıklamayı, `type` hata türünü belirtir. Bütün hata metnini ezberlemeyiz; sorunlu girdiyi buluruz. Ayrıntıların yazımı sürüme göre değişebilir.
+
+FastAPI, burada geçersiz girdiyi oluşturma fonksiyonumuza iletmeden hata yanıtı üretir. Sonuç olarak `books.append(...)` çalışmaz; kitap sayısı artmaz. Varsayılan istek doğrulama davranışı [FastAPI hata yönetimi belgesinde](https://fastapi.tiangolo.com/tutorial/handling-errors/#override-request-validation-exceptions) açıklanır.
+
+### 10.2. Birinci haftanın elle doğrulamasıyla farkı
+
+Birinci hafta yazdığımız `isinstance(...)` kontrolünün kabul ettiği değerlerle Pydantic'in varsayılan dönüşümleri aynı olmak zorunda değildir. Örneğin Pydantic bazı tanınan metinleri mantıksal değere çevirebilir. Bu nedenle `"true"` gönderip “yanlış tür kesin reddedilir” diye beklemeyiz; hata deneyinde dönüştürülemeyen `"belki"` kullanırız. Normal JSON gövdemizde tırnaksız `true` ve `false` göndeririz. [Pydantic: bool doğrulaması](https://docs.pydantic.dev/latest/api/standard_library_types/#booleans).
+
+URL sorgusunda `available=true` metinsel URL verisidir; FastAPI onu Python'da `True` değerine çevirir. JSON gövdesinde ise `true` zaten JSON'un mantıksal değeridir. İki yazımın taşındığı yer farklıdır.
+
+### 10.3. Her API aynı hataya aynı kodu mu verir?
+
+Hayır. HTTP'de `400` genel istemci isteği hatasını, `415` desteklenmeyen içerik biçimini, `422` ise biçimi anlaşılmış içeriğin işlenememesini anlatır. Ancak bu föydeki FastAPI varsayılanı **bozuk JSON yazımını da `422` ile bildirir**. Deneydeki kod ile standardın kavramsal ayrımını ayrı okuyacağız; “bozuk JSON her zaman 400 döner” veya “422 geldiyse JSON kesin geçerliydi” demeyeceğiz.
+
+<a id="t11"></a>
+
+## 11. İletişimin bütünü ve verinin ömrü
+
+Postman'da başarılı POST gönderdikten sonra Python istemcisinin o kitabı okuyabilmesi neyi gösterir? İki istemci aynı sunucunun tuttuğu veriyi kullanır. Postman'a özel ayrı bir katalog oluşmaz.
+
+HTTPX ile yazacağımız `create_book.py`, bir Python sözlüğünü `json=` seçeneğiyle gönderir. HTTPX JSON gövdesini ve uygun istek `Content-Type` başlığını hazırlar. Yanıttaki `response.json()` ise ters yönde, alınan JSON'u Python verisine dönüştürür. [HTTPX: JSON gönderme ve yanıt okuma](https://www.python-httpx.org/quickstart/#sending-json-encoded-data).
+
+| Dosya | Sorumluluğu |
 |---|---|
-| “URL işlemi tek başına belirler.” | FastAPI’de işlem seçilirken metot ve yol birlikte değerlendirilir. `GET /api/books` ile `POST /api/books` farklı işlemlerdir. |
-| “POST, GET’in daha güçlü hâlidir.” | Metotlar güç sırası oluşturmaz; farklı amaçlanan anlamları vardır. |
-| “POST gönderirsem kitap kesin eklenir.” | Yol tanımlı olmayabilir, gövde geçersiz olabilir veya sunucu işlemi reddedebilir. Yanıtı incelemek gerekir. |
-| “`Content-Type` hangi yanıtı istediğimi söyler.” | İstekte `Content-Type`, gönderdiğin gövdenin biçimini; `Accept`, kabul ettiğin yanıt biçimini bildirir. |
-| “201 geldiyse yeni kimliği istemci seçmiştir.” | Bu örnekte kimliği sunucu üretir; yanıt gövdesi ve `Location` ile istemciye bildirir. |
-| “4xx, sunucu hiç çalışmadı demektir.” | 4xx bir HTTP yanıtıdır. Sunucu isteği almış ve belirli nedenle karşılayamamıştır. |
-| “500 kullanıcının yanlış kitap adı yazmasıdır.” | 500 sunucu tarafındaki beklenmedik tamamlanma sorunlarını anlatır; geçersiz kullanıcı girdisi için 4xx sınıfı daha uygundur. |
-| “Aynı POST’u iki kez göndermek tek kitap oluşturur.” | POST genel olarak idempotent değildir; örneğimiz her başarılı tekrarda yeni kimlikle kitap oluşturur. |
-| “Gövde demek JSON demektir.” | Gövde HTTP mesajının bölümüdür; JSON bu bölümde taşınabilecek biçimlerden biridir. |
-| “Postman isteği başarılı yapar.” | Postman yalnızca istemcidir. Sonucu sunucunun sözleşmesi, istek ve mevcut durum belirler. |
+| `server.py` | Veriyi tutmak, istekleri doğrulamak, okuma ve oluşturma işlemlerini yürütmek. |
+| `client.py` | GET göndermek ve kitapları kullanıcıya göstermek. |
+| `create_book.py` | POST göndermek ve oluşturma sonucunu göstermek. |
 
-## 16. Kendini değerlendir
+Her istek, işlenecek hedefi ve gerekli girdileri taşır. Sunucu, önce Postman'da hangi sekmeye tıkladığını bilmek zorunda değildir. HTTP'nin durumsuz olması sunucunun kitap verisi saklayamayacağı anlamına gelmez; kaynak verisini tutmakla önceki istemci adımlarına bağımlı olmak farklı konulardır.
 
-1. `POST /api/books` gösteriminde metot ve yol ayrı ayrı neyi anlatır?
-2. Aynı `/api/books` yoluna GET ve POST gönderildiğinde neden farklı fonksiyonlar çalışabilir?
-3. Yol parametresi, sorgu parametresi ve gövde için birer kitap örneği ver.
-4. `Accept` ile `Content-Type` arasındaki fark nedir?
-5. `201` ile `200` arasındaki anlam farkını kitap örneğiyle açıkla.
-6. `405` ile `404` arasındaki fark nedir?
-7. `422` hangi aşamada, `500` hangi aşamada oluşabilir?
-8. Güvenli metot ve idempotent metot aynı şey midir?
-9. DELETE neden idempotent olabildiği hâlde güvenli değildir?
-10. Aynı POST gövdesini iki kez göndermek neden iki kitap oluşturabilir?
-11. `Location: /api/books/74` başlığı ne anlatır?
-12. Postman ile `client.py` aynı rolü hangi açıdan paylaşır?
-13. POST başarılı olduktan sonra sunucuyu yeniden başlatınca kitap neden kaybolabilir?
-14. `Content-Type: application/json` neden işlemin başarılı olduğunu kanıtlamaz?
-15. Kitabın kimliğini neden istek gövdesine koymadığımızı bu örneğin sözleşmesine göre açıkla.
+Bellekteki liste şu an tek sunucu sürecinin içindedir. Yeniden başlatma listeyi başlangıca döndürür. SQL ve PostgreSQL ile kalıcı kayıt altıncı haftada; Redis ile seçilmiş yanıtların geçici önbelleği on ikinci haftada ele alınır. Bu hafta kitapların kaybolmasını HTTP hatası sanmadan açıklayabilmek yeterlidir.
 
-## 17. Gerekçeli cevaplar
+<a id="t12"></a>
 
-**1.** `POST` istemcinin hedefe veri göndererek bir işlem başlatma niyetini, `/api/books` kitap koleksiyonu kaynağını belirtir.
+## 12. Diğer HTTP metotları ve kodları: karşılaştırma
 
-**2.** Sunucu yönlendirmeyi metot ve yol çiftiyle yapar. Aynı yol için GET listeleme, POST oluşturma işlemine bağlanabilir.
+Bu bölüm anlamları tanımak içindir. Föyde GET ve POST'u uyguluyoruz. PUT, PATCH ve DELETE desteğini dördüncü haftada yazacağız; bu metotlarla yalnızca `405` almak güncelleme ve silme davranışını öğretmez.
 
-**3.** Yol: `/api/books/57`; sorgu: `?available=true`; gövde: oluşturulacak kitabın `title`, `author`, `tags` gibi alanları.
+### 12.1. PUT ile PATCH arasındaki gerçek fark
 
-**4.** `Accept` istemcinin kabul ettiği yanıt biçimini, `Content-Type` bulunduğu mesajın gövde biçimini bildirir.
+57 numaralı kitabı düzenlemek istediğimizi düşün:
 
-**5.** `200`, mevcut kitap listesinin başarıyla okunmasında; `201`, yeni kitap kaynağının oluşturulmasında kullanılır.
+| İstek | İfade edilen amaç |
+|---|---|
+| `PUT /api/books/57` | Hedef kaynağın durumunu, API'nin kabul ettiği tam yeni temsille oluştur veya değiştir. |
+| `PATCH /api/books/57` | Hedef kaynağa belirtilen değişiklikleri uygula. |
+| `DELETE /api/books/57` | Hedef kaynağı kaldır. |
 
-**6.** `404` hedef yolun veya kaynağın bulunmadığını; `405` yol bulunduğu hâlde o metot için işlem tanımlanmadığını anlatır.
+PUT ile yalnızca yeni başlığı yollayıp “diğer alanlar mutlaka korunur” diye varsayamayız; temsilin gerekliliklerini API tanımlar. PATCH için ise örneğin “yalnızca `available` değerini `true` yap” değişikliği tanımlanabilir. PATCH gövdesinin biçimi de API'nin desteklediği yama biçimine bağlıdır; tek bir evrensel PATCH JSON'u yoktur. [PATCH standardı](https://www.rfc-editor.org/rfc/rfc5789.html#section-2).
 
-**7.** Gövde modele dönüştürülemezse `422`; fonksiyon içinde beklenmedik ve yakalanmayan hata oluşursa `500` görülebilir.
+**Kitap örneğinde düşünelim:** Gelecekteki API'miz PUT için bütün düzenlenebilir alanları istesin; PATCH ise gönderilen alanların değerini değiştirmeyi desteklesin. 57'nin yalnızca uygunluğunu değiştirmek için karşılaştırma şöyle olur:
 
-**8.** Hayır. Güvenli metot sunucu durumunu değiştiren talep taşımaz. Idempotent metot tekrarlandığında amaçlanan son etkiyi değiştirmez.
+| | PUT için gönderilecek bilgi | Bu varsayımsal PATCH için gönderilecek bilgi |
+|---|---|---|
+| `title` | Veriyle İlk Adımlar | Gönderilmez; mevcut başlık korunur. |
+| `author` | Ece Yılmaz'ın ad ve soyad nesnesi | Gönderilmez; mevcut yazar korunur. |
+| `available` | `true` | `true` |
+| `tags` | `[]` | Gönderilmez; mevcut etiketler korunur. |
+| `rating` | `0` | Gönderilmez; mevcut puan korunur. |
 
-**9.** DELETE kaynağı değiştirir, dolayısıyla güvenli değildir. Aynı silme isteği tekrarlandığında hedef sonunda yine silinmiş kalır.
+Her iki istek de bu tasarımda aynı son duruma ulaşabilir, fakat farklı talimat verir. Bu tablo **henüz yazmadığımız bir sözleşmenin karşılaştırmasıdır**; mevcut sunucumuz bu metotları desteklemez.
 
-**10.** POST genel olarak idempotent değildir. Sunucu her başarılı istekte yeni kimlik üretip yeni kayıt ekleyebilir.
+PUT ve DELETE idempotent metotlardır. İki DELETE isteğinin ilki başarılı, ikincisi `404` olabilir; hedefin kaldırılmış olması bakımından sonuç aynıdır. PATCH idempotentlik garantisi vermez: “değeri true yap” ile “değeri tersine çevir” tekrarlandığında aynı etkiyi üretmez. POST'un oluşturma dışında başka işlemler için de kullanılabildiğini hatırla.
 
-**11.** Oluşturulan yeni kaynağın erişim yolunu bildirir.
+`HEAD`, GET'e benzer biçimde başlıkları almayı, gövdeyi almamayı sağlar. `OPTIONS`, hedefin iletişim seçeneklerini sorgular. Bunları bu haftaki sunucuya ayrıca eklemiyoruz.
 
-**12.** İkisi de HTTP isteğini başlatan ve yanıtı alan istemci yazılımlardır. Biri elle, diğeri kodla çalıştırılır.
+### 12.2. Durum kodu ailesi ve çalışma kapsamı
 
-**13.** Bu aşamada veri yalnızca Python listesindedir. Uygulama süreci yeniden başlayınca liste kaynak kodundaki başlangıç değerleriyle kurulur.
+| Aile | Genel anlam |
+|---|---|
+| `1xx` | Ara bilgilendirme |
+| `2xx` | Başarı |
+| `3xx` | Yönlendirme veya isteğin tamamlanması için ilgili ek işlem |
+| `4xx` | İstemci isteğinin karşılanamamasıyla ilgili durum |
+| `5xx` | Sunucunun isteği yerine getirirken karşılaştığı hata |
 
-**14.** Başlık yalnızca gövdenin JSON olduğunu bildirir. Hata gövdesi de JSON olabilir.
+`4xx`, mutlaka Python istemcisinde yazım hatası var demek değildir. Olmayan kitabı düzgün yazılmış bir istekle aramak da `404` üretebilir.
 
-**15.** Bu sözleşmede istemci yeni kitabın verisini gönderir, benzersiz kimliği sunucu üretir. Böylece kimlik üretme sorumluluğu tek tarafta kalır.
+| Bu hafta çalıştırıp okuyacağız | Sonraki çalışmalarda ayrıntılandıracağız |
+|---|---|
+| `200`: başarılı okuma | `204`: başarılı işlem, yanıt gövdesi yok |
+| `201`: yeni kitap oluşturuldu | `400`: hatalı istek; `415`: desteklenmeyen içerik biçimi |
+| `404`: istenen tek kitap yok | `401`: geçerli kimlik bilgisi gerekli; `403`: erişim reddedildi |
+| `405`: bu hedefte metot desteklenmiyor | `409`: kaynak durumuyla çakışma |
+| `422`: bu FastAPI örneğinde istek doğrulama hatası | `500`: sunucuda beklenmeyen hata |
 
-## 18. Üç ders saati için anlatım akışı
+`204` yanıtında gövde bulunmadığından `response.json()` ile JSON çözümlemeye çalışmayız. Bütün başarılı işlemleri yalnızca `200` bekleyen tek koşulla değerlendirmek de doğru değildir; bu haftaki okuma istemcisi `200`, oluşturma istemcisi `201` bekleyecek. Kod adları için [IANA durum kodu kaydı](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml) kullanılabilir.
 
-| Blok | Süre | İçerik ve etkinlik |
-|---|---:|---|
-| 1. ders | 0–10 dk | Birinci haftanın son GET isteğini öğrencinin kendi cümlesiyle anlatması. |
-| 1. ders | 10–25 dk | HTTP isteğinin metot, hedef, başlık ve gövde parçaları. |
-| 1. ders | 25–35 dk | Yol, sorgu ve gövde karşılaştırması. |
-| 1. ders | 35–45 dk | Aynı yolda GET ile POST’un neden farklı işlem olduğu. |
-| 2. ders | 0–20 dk | GET, POST, PUT, PATCH ve DELETE anlamları. |
-| 2. ders | 20–35 dk | Güvenli ve idempotent metot tartışması. |
-| 2. ders | 35–45 dk | Aynı POST’un iki kez gönderilmesi düşünce deneyi. |
-| 3. ders | 0–15 dk | Yanıt satırı, başlıklar, gövde ve durum kodu sınıfları. |
-| 3. ders | 15–30 dk | `200`, `201`, `404`, `405`, `422`, `500` karşılaştırması. |
-| 3. ders | 30–40 dk | `Accept`, `Content-Type`, `Location`, `Allow`. |
-| 3. ders | 40–45 dk | Kitap POST akışını yedi adımda sözlü anlatma. |
+<a id="t13"></a>
 
-## 19. Kaynaklar
+## 13. Sık karıştırılan noktalar
 
-- [MDN — HTTP’ye genel bakış](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview)
-- [MDN — HTTP istek metotları](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods)
-- [MDN — Güvenli HTTP metotları](https://developer.mozilla.org/en-US/docs/Glossary/Safe/HTTP)
-- [MDN — Idempotent HTTP metotları](https://developer.mozilla.org/en-US/docs/Glossary/Idempotent)
-- [MDN — HTTP yanıt durum kodları](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status)
-- [RFC 9110 — HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
-- [FastAPI — Request Body](https://fastapi.tiangolo.com/tutorial/body/)
-- [FastAPI — Response Status Code](https://fastapi.tiangolo.com/tutorial/response-status-code/)
-- [FastAPI — Response Headers](https://fastapi.tiangolo.com/advanced/response-headers/)
-- [Postman — İstek parametreleri ve gövde](https://learning.postman.com/docs/send-requests/create-requests/parameters/)
-- [Postman — İstek başlıkları](https://learning.postman.com/docs/use/send-requests/create-requests/headers/)
+| Yanılgı | Açık karşılığı |
+|---|---|
+| “Postman'a geçince yeni API kurduk.” | Aynı sunucuya farklı istemciden istek gönderdik. |
+| “`search`, bütün kitap alanlarını arar.” | Bizim fonksiyonumuz yalnızca `title` alanını arar. `tags` araması yazılmadı. |
+| “`available=false` filtreyi kapatır.” | Yalnızca uygunluk değeri `false` olan kitapları seçer. Filtreyi kapatmak için parametreyi göndermeyiz. |
+| “Aynı URL aynı işlemdir.” | İşlemi belirlerken HTTP metodu da gerekir. GET ve POST farklıdır. |
+| “`Accept` gönderdiğim verinin türüdür.” | Beklediğim yanıt biçimini bildirir. Gönderdiğim gövdenin biçimi istek `Content-Type` başlığındadır. |
+| “Model yazınca veri kaydedildi.” | Model yapıyı tarif eder; bizim uygulamamızda kayıt `books.append(...)` ile yapılır. |
+| “`rating` null olabiliyorsa göndermesem de olur.” | Bu modelde alan zorunludur; değeri `null` olabilir. |
+| “`201`, verinin diske yazıldığını kanıtlar.” | Kaynağın oluşturulduğunu bildirir. Kalıcılık kullanılan saklama düzenine bağlıdır. |
+| “İki aynı POST aynı kitaba gider.” | Bizim POST'umuz her seferinde yeni kimlikle yeni kitap oluşturur. |
+| “İdempotent isteğin yanıtı hep aynıdır.” | Tanım, tekrarlamanın sunucuda amaçlanan etkisiyle ilgilidir. |
 
-Bu kaynaklar teknik başvuru içindir. İkinci hafta için ana çalışma sırası bu not ve ardından uygulama föyüdür.
+<a id="t14"></a>
+
+## 14. Haftayı tamamlama soruları
+
+1. `GET /api/books?search=API&available=true` başlangıç verisinde neden iki kitap döndürür? Başlıktaki API metnini kaldırıp yalnızca etikette bıraksak ilgili kitap yine gelir mi?
+2. `Accept` ve istek `Content-Type` başlıklarını POST örneğimiz üzerinde açıkla.
+3. Yol aynı kaldığı hâlde GET `200`, POST `405` verebilir mi? Sunucuda ne eksiktir?
+4. Geçerli POST `201` ve `Location: /api/books/74` döndürdü. Kaydın okunabildiğini hangi yeni istekle doğrularsın?
+5. `rating` alanını göndermemek, `null` göndermek ve `0` göndermek bu modelde nasıl ayrılır?
+6. Aynı POST'u iki kez gönderince ne olur? Sunucuyu yeniden başlatınca oluşturulan kitaplar neden kaybolur?
+
+<details>
+<summary>Gerekçeli cevaplar</summary>
+
+1. 42 ve 73'ün başlığında API vardır ve ikisi de uygundur. Arama yalnızca başlığa baktığı için metnin yalnızca etikette olması yeterli olmaz.
+2. `Accept`, yanıtı hangi biçimde istediğimizi; istek `Content-Type`, gönderdiğimiz kitap gövdesinin biçimini bildirir.
+3. Evet. GET yolu yazılmış, aynı yolda POST işlemi tanımlanmamış olabilir. Metot desteği eklemek gerekir.
+4. `GET http://127.0.0.1:8000/api/books/74`. `201` oluşturmayı, ardından gelen `200` ve kitap gövdesi okumayı gösterir.
+5. Alan eksikse `422`; `null` ise henüz puan yok; `0` ise puan sıfırdır. Son ikisi kabul edilir. İstemci `is None` ile bu anlamları ayırır.
+6. Bu uygulama farklı kimliklerle iki kayıt oluşturur. Veriler yalnızca çalışan sürecin belleğinde tutulduğu için yeniden başlatıldığında dosyadaki başlangıç listesi yüklenir.
+
+</details>
+
+**Devam:** [Uygulama föyünü aç](02_Uygulama_Foyu.md). Önce başlangıç verisini doğrula; her deneyde tahminini yazıp tek adımı çalıştır ve gözlemle karşılaştır.

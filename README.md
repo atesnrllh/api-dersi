@@ -20,7 +20,7 @@ Bu iki tablo ayrı tutulur. Haftalık plana araç sütunu eklenmez.
 
 İlk haftanın teorik notu açıklamalar, beş şema, örnekler ve cevaplı değerlendirme soruları içerir. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
 
-İkinci hafta aynı kitap kataloğu örneğini sürdürür. Teoride HTTP mesajı ve metot anlamları açıklanır; uygulamada mevcut GET işlemleri Postman ile incelenir, ardından `POST /api/books` ve kitap oluşturan Python istemcisi eklenir.
+İkinci hafta birinci haftanın üç kitaplı son sürümünü sürdürür. Teori ve uygulama aynı sırayı izler: mevcut GET'i Postman'da kurma, istek parçalarını ayırma, gövde modelini tanıma, POST ile kayıt ekleme ve `Location` ile okuma. Tekrar gönderim ve hatalı gövde deneylerinden sonra aynı işlem HTTPX ile yapılır. Föy, her kod değişikliğinde tam dosyayı; her deneyde amaç, teori bağlantısı, başlangıç durumu, beklenen sonuç ve gerekçeli kontrol sorusu verir. PUT/PATCH/DELETE bu hafta kavramsal olarak karşılaştırılır; uygulanmaları dördüncü haftadadır.
 
 ## Çalışma düzeni
 

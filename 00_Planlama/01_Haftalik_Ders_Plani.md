@@ -6,7 +6,7 @@
 | Hafta | Teorik — 3 ders saati | Uygulama — 2 ders saati |
 |:---:|---|---|
 | **1** | API Kavramları ve Türleri, İstemci–Sunucu Mimarisi ve JSON’a Giriş | VS Code ve Python Ortamı; FastAPI ile Yerel Kitap Sunucusu, HTTPX İstemcisi, GET İstekleri, JSON ve Temel Hata Deneyleri |
-| **2** | HTTP: İstek–Yanıt Yapısı, Metotlar, Başlıklar ve Durum Kodları | Postman ile HTTP Deneyleri; GET ve POST, JSON Gövdesi, `201`/`405`/`422`, `Location` Başlığı ve HTTPX ile Kitap Oluşturma |
+| **2** | HTTP İstek–Yanıt Yapısı; Yol, Sorgu ve Gövde; Metot Anlamları, Başlıklar, Durum Kodları ve İstek Tekrarının Etkisi | Aynı Kitap Kataloğunda Postman ile GET; Gövde Modeli, POST ve `Location` Adımlarını Ayrı Kurma; `200`/`201`/`404`/`405`/`422` Deneyleri; HTTPX ile Oluşturma ve Okuma |
 | **3** | RESTful API Tasarımı, Kaynaklar, Uç Noktalar ve Yönlendirme | Dönem Projesinin Başlatılması, Projenin İlk GET Uç Noktaları ve Dokümantasyona Giriş |
 | **4** | CRUD İşlemleri, İstek Gövdeleri ve Yanıt Modelleri | Bellek İçi Verilerle Listeleme, Ekleme, Güncelleme ve Silme |
 | **5** | Veri Doğrulama ve Hata Yönetimi | Doğrulama Kuralları ve Tutarlı Hata Yanıtlarının Oluşturulması |
@@ -23,6 +23,10 @@
 **Uygulama düzeni:** Birinci haftada kavramları görünür kılmak için bellekte veri tutan küçük bir kitap kataloğu sunucusu ve istemcisi geliştirilecek. Bu çalışma dönem projesinin başlangıcı değildir. Üçüncü haftadan itibaren tek dönem projesi geliştirilecek. Otomatik testler yedinci haftadan sonra her yeni özellikle sürdürülecek. Dokümantasyon üçüncü haftada başlayıp on üçüncü haftada tamamlanacak. İlk yayın on birinci haftada yapılacak.
 
 **Konu derinliği:** Birinci hafta `GET`, başlıklar, `200`, `404`, `422`, bağlantı hatası ve basit doğrulama çalışan örnek içinde gözlemlenecek. HTTP kuralları ikinci haftada, veri doğrulama ve tutarlı hata modelleri beşinci haftada sistemli biçimde ele alınacak.
+
+**İkinci haftanın sınırı ve yöntemi:** Birinci haftanın üç kitaplı son sürümü korunarak ilerlenir. Önce aynı GET farklı istemcide kurulur; sonra gövde modeli, kitap oluşturma ve yeni kaynağın adresini bildirme ayrı adımlarda eklenir. Aynı isteği tekrarlama ve geçersiz gövde deneyleri, başlangıç verisi ve beklenen sonuç belirtilerek yapılır. PUT/PATCH/DELETE anlamları karşılaştırılır; çalışan güncelleme ve silme uygulamaları dördüncü haftaya aittir. İkinci haftanın model tanımı, beşinci haftadaki ayrıntılı iş kurallarının hazırlığıdır.
+
+**Öğretim düzeni:** Her uygulama adımı ne yapıldığını, neden yapıldığını ve teorideki yerini açıklar; tahmin, çalıştırma ve sonuç yorumlama ile ilerler. Değişen Python dosyası her seferinde tam verilir. Ayrıntılı föyleri iki ders saatine sığdırmak için öğrenme adımları kaldırılmaz; gerektiğinde çalışma sonraki oturumda sürer.
 
 **Takvim notu:** Sekizinci hafta ara değerlendirmeye ayrıldı; kesin sınav tarihine göre yeri değiştirilebilir.
 
