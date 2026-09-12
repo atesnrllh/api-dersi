@@ -24,9 +24,11 @@
 
 **Konu derinliği:** Birinci hafta `GET`, başlıklar, `200`, `404`, `422`, bağlantı hatası ve basit doğrulama çalışan örnek içinde gözlemlenecek. HTTP kuralları ikinci haftada, veri doğrulama ve tutarlı hata modelleri beşinci haftada sistemli biçimde ele alınacak.
 
-**İkinci haftanın sınırı ve yöntemi:** Birinci haftanın üç kitaplı son sürümü korunarak ilerlenir. Önce aynı GET farklı istemcide kurulur; sonra gövde modeli, kitap oluşturma ve yeni kaynağın adresini bildirme ayrı adımlarda eklenir. Aynı isteği tekrarlama ve geçersiz gövde deneyleri, başlangıç verisi ve beklenen sonuç belirtilerek yapılır. PUT/PATCH/DELETE anlamları karşılaştırılır; çalışan güncelleme ve silme uygulamaları dördüncü haftaya aittir. İkinci haftanın model tanımı, beşinci haftadaki ayrıntılı iş kurallarının hazırlığıdır.
+**İkinci haftanın sınırı ve yöntemi:** Birinci haftanın üç kitaplı son sürümü korunarak ilerlenir. Önce aynı GET farklı istemcide kurulur. Yeni kitap için önce gövdenin alınıp geri gösterilmesi, sonra kaydedilmesi ve yeni adresinin bildirilmesi gözlemlenir. Böylece veri göndermekle kayıt oluşturmanın farklı işler olduğu görülür. Python istemcisinde de ham yanıtı görmekle alanları yorumlamak ayrı adımlardır. Aynı isteği tekrarlama ve geçersiz gövde deneyleri, başlangıç verisi ve beklenen sonuç belirtilerek yapılır. PUT/PATCH/DELETE anlamları karşılaştırılır; çalışan güncelleme ve silme uygulamaları dördüncü haftaya aittir. İkinci haftanın model tanımı, beşinci haftadaki ayrıntılı iş kurallarının hazırlığıdır.
 
 **Öğretim düzeni:** Her uygulama adımı ne yapıldığını, neden yapıldığını ve teorideki yerini açıklar; tahmin, çalıştırma ve sonuç yorumlama ile ilerler. Değişen Python dosyası her seferinde tam verilir. Ayrıntılı föyleri iki ders saatine sığdırmak için öğrenme adımları kaldırılmaz; gerektiğinde çalışma sonraki oturumda sürer.
+
+**İçerik hazırlama sırası:** Önceki haftanın uygulaması ders temposunun ölçütüdür. Yeni haftanın önce örneklerle teorisi, ardından uygulaması hazırlanır; son olarak uygulamaya bakılarak teori tekrar denetlenir. Ayrıntılar [ders işleme yaklaşımında](03_Ders_Isleme_Yaklasimi.md) tutulur.
 
 **Takvim notu:** Sekizinci hafta ara değerlendirmeye ayrıldı; kesin sınav tarihine göre yeri değiştirilebilir.
 

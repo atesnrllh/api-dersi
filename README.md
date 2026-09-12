@@ -8,8 +8,9 @@ Uygulama Programı Arayüzü (API) dersi için planlama ve ders materyalleri.
 
 - [Haftalık ders planı](00_Planlama/01_Haftalik_Ders_Plani.md): Haftalık teorik konu ve uygulama başlıkları.
 - [Teknolojiler ve araçlar](00_Planlama/02_Teknolojiler_ve_Araclar.md): Seçilen araçlar ve dersteki kullanım amaçları.
+- [Ders işleme yaklaşımı](00_Planlama/03_Ders_Isleme_Yaklasimi.md): Birinci haftanın uygulamasından çıkarılan tempo, örnek seçimi ve teori–uygulama karşılaştırma ölçütleri.
 
-Bu iki tablo ayrı tutulur. Haftalık plana araç sütunu eklenmez.
+Haftalık plan ile teknoloji tablosu ayrı tutulur. Haftalık plana araç sütunu eklenmez.
 
 ## Haftalık materyaller
 
@@ -20,7 +21,7 @@ Bu iki tablo ayrı tutulur. Haftalık plana araç sütunu eklenmez.
 
 İlk haftanın teorik notu açıklamalar, beş şema, örnekler ve cevaplı değerlendirme soruları içerir. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
 
-İkinci hafta birinci haftanın üç kitaplı son sürümünü sürdürür. Teori ve uygulama aynı sırayı izler: mevcut GET'i Postman'da kurma, istek parçalarını ayırma, gövde modelini tanıma, POST ile kayıt ekleme ve `Location` ile okuma. Tekrar gönderim ve hatalı gövde deneylerinden sonra aynı işlem HTTPX ile yapılır. Föy, her kod değişikliğinde tam dosyayı; her deneyde amaç, teori bağlantısı, başlangıç durumu, beklenen sonuç ve gerekçeli kontrol sorusu verir. PUT/PATCH/DELETE bu hafta kavramsal olarak karşılaştırılır; uygulanmaları dördüncü haftadadır.
+İkinci hafta birinci haftanın üç kitaplı son sürümünü sürdürür. Teori, “yeni kitabı istemciden nasıl ekleriz?” ihtiyacından hareket eder. Uygulamada gövdeyi almak, kaydetmek ve yanıtı istemcide yorumlamak ayrı gözlemlerle ilerler. POST ve `Location`, tekrar gönderim ve hatalı gövde deneyleri aynı kitapla çalışılır. Föy, her kod değişikliğinde tam dosyayı; her deneyde amaç, teori bağlantısı, başlangıç durumu, beklenen sonuç ve gerekçeli kontrol sorusu verir. PUT/PATCH/DELETE teorinin başvuru bölümündedir; uygulanmaları dördüncü haftadadır.
 
 ## Çalışma düzeni
 
@@ -35,7 +36,8 @@ API/
 ├── README.md
 ├── 00_Planlama/
 │   ├── 01_Haftalik_Ders_Plani.md
-│   └── 02_Teknolojiler_ve_Araclar.md
+│   ├── 02_Teknolojiler_ve_Araclar.md
+│   └── 03_Ders_Isleme_Yaklasimi.md
 ├── 01_Kurulum_Rehberleri/
 ├── 02_Haftalik_Materyaller/
 │   └── Hafta_01/ ... Hafta_14/

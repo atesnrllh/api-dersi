@@ -5,9 +5,11 @@
 **Ders:** Uygulama Programı Arayüzü (API)  
 **Ön koşul:** Birinci haftanın son üç kitaplı `server.py` ve `client.py` dosyaları  
 **Araçlar:** VS Code, Python, FastAPI, Uvicorn, HTTPX, Pydantic ve Postman  
-**Sürüm:** 1.1 — 12 Eylül 2026 · Üzerinde çalışılıyor
+**Sürüm:** 1.2 — 12 Eylül 2026 · Üzerinde çalışılıyor
 
-Önce [teorik notu](01_Teorik_Ders_Notu.md) oku. Bu föyde aynı kitap kataloğuyla çalışacağız: bildiğimiz GET isteğini Postman'da kuracak, sonra bir kitabı istek gövdesiyle sunucuya göndereceğiz. Birinci haftanın konuşarak ilerleyen düzenini sürdüreceğiz: **amacı oku → tahmin et → çalıştır → sonucu açıkla**.
+Önce [teorik notu](01_Teorik_Ders_Notu.md) oku. Oradaki soruyu şimdi kodla cevaplayacağız: **Yeni kitabı, sunucu dosyasındaki listeyi elle değiştirmeden, istemciden nasıl ekleriz?** Birinci haftadaki düzeni sürdüreceğiz: **ihtiyacı anla → sonucu tahmin et → küçük değişikliği çalıştır → gözlemi açıkla → kavrama bağla**.
+
+Birinci hafta sunucuya `rating` eklemekle istemcide `null` ve `0` değerlerini doğru göstermek ayrı adımlardı. Burada da gövdenin sunucuya ulaşması, kaydedilmesi ve istemcinin yanıtı kullanması ayrı gözlemler olacak. Hazırlık ve ilk beş deney bildiğimiz okuma davranışını Postman'da görünür kılar; yeni veri gönderme adımlarına Deney 6–7'de geçeriz.
 
 > **Kod kutularını kullanma:** Her değişiklikte önce `diff`, hemen ardından değişen `.py` dosyasının tamamı bulunur. GitHub, `diff` içindeki eklenen satırları yeşil, kaldırılanları kırmızı gösterir. Çalışan dosyaya **tam Python kutusunu** kopyala. `+`, `-`, `@@` işaretlerini veya üçlü ters tırnakları dosyaya koyma. Renk tek gösterge değildir; işaretler de değişikliği belirtir.
 
@@ -24,13 +26,15 @@
 | [4](#x04) | `Accept` ile yanıt `Content-Type` | Yok |
 | [5](#x05) | Yolun bulunması ile metot desteği | Yok |
 | [6](#x06) | Gövde modelini tanımlamak | `server.py` |
-| [7](#x07) | POST ile veri eklemek, `201` | `server.py` |
+| [7A](#x07a) | Gelen gövdeyi geri göstermek; henüz kayıt yok | `server.py` |
+| [7B](#x07b) | Aynı gövdeyi kaydetmek; `200` ile `201` ayrımı | `server.py` |
 | [8](#x08) | `Location` ile yeni kaynağı bulmak | `server.py` |
 | [9](#x09) | Aynı GET ve POST'u tekrar etmek | Yok |
 | [10](#x10) | Zorunlu alan ile `null` değeri | Yok |
 | [11](#x11) | Geçerli JSON içindeki yanlış veri | Yok |
 | [12](#x12) | JSON yazım hatasını ayırmak | Yok |
-| [13](#x13) | Aynı POST'u Python ile göndermek | Yeni `create_book.py` |
+| [13A](#x13a) | Aynı POST'u Python ile gönderip ham yanıtı görmek | Yeni `create_book.py` |
+| [13B](#x13b) | Oluşturma yanıtını istemcide yorumlamak | `create_book.py` |
 | [14](#x14) | Eklenen kitabı diğer istemciden okumak | `client.py` |
 | [15](#x15) | Bellekte kayıt ile kalıcı kayıt | Yok |
 
@@ -40,7 +44,7 @@
 
 **Ne yapıyoruz?** Üç kitaplı sunucuyu ve son okuma istemcisini çalıştırıyoruz.  
 **Neden?** Yeni bir davranışı, başlangıç verisi ve çalışan kod belli olduğunda yorumlayabiliriz.  
-**Teorideki yeri:** [Bölüm 1 — Aynı isteği başka istemciyle göndermek](01_Teorik_Ders_Notu.md#t01).
+**Teorideki yeri:** [Bölüm 1 — Bildiğimiz sonuçtan başlamak](01_Teorik_Ders_Notu.md#t01).
 
 ### VS Code ve iki terminal
 
@@ -281,6 +285,8 @@ http://127.0.0.1:8000/api/books?search=Python&available=true
 
 Durum `200`, yanıt `Content-Type` değeri `application/json` olmalı. Gövde, 73 numaralı kitabı içeren **tek elemanlı liste** olmalı. Python istemcisi başlığı ayrı satırda yazmıştı; Postman JSON'u gösterir. Verinin aynı olması, ekranın aynı görünmesini gerektirmez.
 
+İstemcinin cümlesini kendi dilinle oku: “Bu sunucudan, başlığında Python geçen ve uygun olan kitapları istiyorum.” Sonra Postman'da cümlenin karşılıklarını göster: GET, URL, Params ve Accept. Burada öğrendiğimiz şey düğmelerin yerinden çok, bir isteğin nasıl ifade edildiğidir.
+
 **Kontrol sorusu:** İstemciyi değiştirince `server.py` kodunu değiştirdik mi?
 
 <details><summary>Cevap</summary>
@@ -415,6 +421,8 @@ Hayır. İstemcinin isteğini değiştirmek ve sunucunun o isteği işleyecek fo
 **Teorideki yeri:** [Bölüm 7 — İstek gövdesi ve model](01_Teorik_Ders_Notu.md#t07).
 
 Bu adımın yeni konusu yalnızca **gövdenin yapısıdır**. Henüz POST fonksiyonunu eklemiyoruz.
+
+Yeni kitap için göndereceğimiz alanlar birinci haftadan tanıdık: başlık, iç içe yazar nesnesi, uygunluk, etiket listesi ve puan. Yeni olan, **sunucunun bu alanları gelen istekte beklediğini yazıyla tarif etmemiz**. Teorideki yeni kitap örneğini aç; aşağıdaki her model alanını o JSON'daki karşılığıyla eşleştir.
 
 ### Yeni Python ifadelerini oku
 
@@ -558,16 +566,166 @@ Bu modelde aynı değil. Değer `null` olabilir ama alanın gönderilmesi gereki
 
 ## Deney 7 — POST gövdesiyle kitap oluştur ve `201` gör
 
-**Ne yapıyoruz?** Modeli yeni bir POST fonksiyonuna bağlıyor, geçerli kitabı listeye ekliyoruz.  
-**Neden?** İstemciden gelen veriyle sunucudaki durumun değişmesini ve oluşturma yanıtını görmek için.  
-**Teorideki yeri:** [Bölüm 8 — Kitabı oluşturmak](01_Teorik_Ders_Notu.md#t08).
+**Ne yapıyoruz?** Önce gövdeyi alıp geri gösteriyor, ardından aynı veriyi listeye kaydediyoruz.  
+**Neden?** Sunucuya veri ulaşması ile sunucuda kayıt oluşmasının farklı işler olduğunu gözlemek için.  
+**Teorideki yeri:** [Bölüm 8 — Alma, kaydetme ve yanıt](01_Teorik_Ders_Notu.md#t08).
+
+<a id="x07a"></a>
+
+### 7A — Önce yalnızca gövdenin ulaştığını gör
+
+Bu bir **ara öğrenme sürümüdür**. Henüz kitap kaydetmez. `receive_book` adı da yaptığı işi anlatır: kitabın verisini alır. `book_data: BookCreate`, gövdenin modelimize göre doğrulanmasını sağlar. `model_dump()`, modelin alanlarını sözlük olarak çıkarır; `return` bu veriyi yanıtta gönderir. Listeye ekleme satırı yoktur.
+
+### Değişen satırlar
+
+```diff
+--- server.py
++++ server.py
+@@ -76,3 +76,8 @@
+             return book
+ 
+     raise HTTPException(status_code=404, detail="Book not found")
++
++
++@app.post("/api/books", status_code=200)
++def receive_book(book_data: BookCreate):
++    return book_data.model_dump()
+```
+
+### `server.py` dosyasının tamamı
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+class AuthorCreate(BaseModel):
+    first_name: str
+    last_name: str
+
+
+class BookCreate(BaseModel):
+    title: str
+    author: AuthorCreate
+    available: bool
+    tags: list[str]
+    rating: float | None
+
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        },
+        "available": True,
+        "tags": ["software", "education"],
+        "rating": None
+    },
+    {
+        "id": 57,
+        "title": "Veriyle İlk Adımlar",
+        "author": {
+            "first_name": "Ece",
+            "last_name": "Yılmaz"
+        },
+        "available": False,
+        "tags": [],
+        "rating": 0
+    },
+    {
+        "id": 73,
+        "title": "Python ile Web API",
+        "author": {
+            "first_name": "Can",
+            "last_name": "Demir"
+        },
+        "available": True,
+        "tags": ["python", "api"],
+        "rating": 4.5
+    }
+]
+
+
+@app.get("/api/books")
+def get_books(search: str = "", available: bool | None = None):
+    results = []
+
+    for book in books:
+        title_matches = search.casefold() in book["title"].casefold()
+        availability_matches = (
+            available is None or book["available"] == available
+        )
+
+        if title_matches and availability_matches:
+            results.append(book)
+
+    return results
+
+
+@app.get("/api/books/{book_id}")
+def get_book(book_id: int):
+    for book in books:
+        if book["id"] == book_id:
+            return book
+
+    raise HTTPException(status_code=404, detail="Book not found")
+
+
+@app.post("/api/books", status_code=200)
+def receive_book(book_data: BookCreate):
+    return book_data.model_dump()
+```
+
+### Gönder ve katalogla karşılaştır
+
+1. Dosyayı kaydet; sunucuyu Ctrl+C ile durdurup `python -m uvicorn server:app` ile yeniden başlat. Başlangıç üç kitaptır.
+2. Postman'ın POST sekmesinde URL `http://127.0.0.1:8000/api/books`, Params boş ve `Accept: application/json` olsun.
+3. **Body → raw → JSON** seç. İstek Headers bölümünde `Content-Type: application/json` oluştuğunu kontrol et; çelişen ikinci başlık ekleme.
+4. Tam gövdeyi yaz:
+
+```json
+{
+  "title": "HTTP'yi Anlamak",
+  "author": {
+    "first_name": "Selin",
+    "last_name": "Aras"
+  },
+  "available": true,
+  "tags": [
+    "http",
+    "web"
+  ],
+  "rating": null
+}
+```
+
+5. Bir kez Send'e bas. **`200` ve gönderdiğimiz kitap alanları** gelir. Gövdede `id` yoktur.
+6. GET sekmesinde parametresiz `http://127.0.0.1:8000/api/books` isteğini gönder. Listede hâlâ **üç kitap** vardır.
+
+**Şimdi dur:** POST yanıtında HTTP'yi Anlamak göründüğü hâlde GET listesinde neden yok? İki yanıtı yan yana incelemeden 7B'ye geçme.
+
+<details><summary>Gözlemin açıklaması</summary>
+
+Sunucu veriyi alıp yanıt olarak geri döndürdü. Kataloğu değiştiren bir kod çalıştırmadık. Gelen veri ile saklanan kayıt aynı şey değildir. `200`, bu ara sürümdeki alıp geri gösterme işleminin başarı kodudur; nihai kitap oluşturma işlemimiz 7B'de gelecek.
+
+</details>
+
+<a id="x07b"></a>
+
+### 7B — Şimdi aynı veriyi kataloğa kaydet
+
+İstek gövdesini değiştirmiyoruz. Bu kez sunucu fonksiyonunu geliştirip kimlik üretme, listeye ekleme ve `201` yanıtı verme davranışını ekleyeceğiz. Fonksiyonun adı yaptığı yeni işe uygun olarak `create_book` olacak.
 
 ### Yeni fonksiyonu sırayla oku
 
 1. `@app.post(..., status_code=201)`, bu yolun POST işlemini ve normal başarı kodunu tanımlar.
-2. `book_data: BookCreate`, gövdenin bu modele göre doğrulanmasını sağlar. Geçerli veri fonksiyona bir model nesnesi olarak gelir.
+2. `book_data: BookCreate`, 7A'daki gibi geçerli gövdeyi fonksiyona model nesnesi olarak getirir.
 3. Döngü, mevcut en büyük kimliğin bir fazlasını bulur. 42, 57, 73 için sonuç 74'tür. `len(books) + 1` kullanmıyoruz; kitap sayısı en büyük kimlik değildir.
-4. `model_dump()`, modeli ve içindeki yazar modelini sözlüğe dönüştürür. Böylece birinci haftadan gelen liste/sözlük düzeni korunur.
+4. `model_dump()`, 7A'da gördüğümüz dönüşümdür. Bu kez oluşan sözlüğü `new_book` değişkeninde tutarız; böylece birinci haftadan gelen liste/sözlük düzeni korunur.
 5. Yeni kimliği sözlüğe ekler, `books.append(new_book)` ile listeye koyarız.
 6. `return new_book`, oluşturulan veriyi JSON yanıtının gövdesi olarak döndürür.
 
@@ -578,12 +736,13 @@ Bu kimlik yöntemi sırayla istek gönderdiğimiz tek süreçli ders deneyi içi
 ```diff
 --- server.py
 +++ server.py
-@@ -76,3 +76,18 @@
-             return book
- 
+@@ -78,6 +78,16 @@
      raise HTTPException(status_code=404, detail="Book not found")
-+
-+
+ 
+ 
+-@app.post("/api/books", status_code=200)
+-def receive_book(book_data: BookCreate):
+-    return book_data.model_dump()
 +@app.post("/api/books", status_code=201)
 +def create_book(book_data: BookCreate):
 +    next_book_id = 1
@@ -1099,11 +1258,15 @@ Bu FastAPI örneğinde hayır. Kodun yanında hata ayrıntısını da okumak ger
 
 ## Deney 13 — Aynı kitabı Python istemcisiyle oluştur
 
-**Ne yapıyoruz?** Postman'da kullandığımız kitap verisini bu kez HTTPX ile POST ediyoruz.  
-**Neden?** İstemciyi değiştirip aynı HTTP işlemini program içinden kurabilmek için.  
+**Ne yapıyoruz?** Aynı POST'u HTTPX ile gönderiyor; önce ham yanıtı görüp sonra istemcide yorumluyoruz.  
+**Neden?** Birinci haftadaki gibi verinin gelmesi ile programın bu veriyi kullanmasını ayrı adımlarda görmek için.  
 **Teorideki yeri:** [Bölüm 11 — İletişimin bütünü](01_Teorik_Ders_Notu.md#t11).
 
 **Başlangıç:** Sunucu kodu Deney 8 sürümüdür. Karşılaştırmayı aynı veriyle yapabilmek için şimdi sunucuyu Ctrl+C ile kapatıp yeniden başlat. Parametresiz GET'te **üç kitap** olduğunu doğrula. POST sekmesindeki Send'e basma.
+
+<a id="x13a"></a>
+
+### 13A — İsteği gönder; önce ham yanıtı oku
 
 ### Yeni dosyanın görevi
 
@@ -1113,8 +1276,8 @@ Yeni olan ifadeler:
 
 - `httpx.post(...)`: GET yerine POST gönderir.
 - `json=new_book`: Python sözlüğünü JSON gövdesi olarak gönderir; istek `Content-Type` başlığını HTTPX hazırlar.
-- `response.status_code == 201`: Bu işlemin oluşturma başarı kodunu kontrol eder.
-- `response.headers.get("Location")`: Yeni kaynağın yanıt başlığındaki adresini okur.
+
+`response.text` ile ham gövdeyi yazdırmayı birinci haftadan biliyoruz. Bu adımda yeni yanıtı önce o biçimde göreceğiz.
 
 Python sözlüğündeki `True` ve `None`, gönderilirken JSON'da `true` ve `null` olur. Elle `json.dumps` çağırmamıza gerek yoktur.
 
@@ -1123,7 +1286,7 @@ Python sözlüğündeki `True` ve `None`, gönderilirken JSON'da `true` ve `null
 ```diff
 --- create_book.py
 +++ create_book.py
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,30 @@
 +import httpx
 +
 +new_book = {
@@ -1152,9 +1315,84 @@ Python sözlüğündeki `True` ve `None`, gönderilirken JSON'da `true` ve `null
 +    print("Request Content-Type:", response.request.headers.get("Content-Type"))
 +    print("Status code:", response.status_code)
 +    print("Response Content-Type:", response.headers.get("Content-Type"))
-+    print("Location:", response.headers.get("Location"))
 +    print("Response body:", response.text)
 +
+```
+
+### `create_book.py` dosyasının tamamı
+
+```python
+import httpx
+
+new_book = {
+    "title": "HTTP'yi Anlamak",
+    "author": {
+        "first_name": "Selin",
+        "last_name": "Aras"
+    },
+    "available": True,
+    "tags": ["http", "web"],
+    "rating": None
+}
+
+try:
+    response = httpx.post(
+        "http://127.0.0.1:8000/api/books",
+        json=new_book,
+        headers={"Accept": "application/json"}
+    )
+except httpx.ConnectError:
+    print("Connection failed: Could not connect to the server.")
+    print("Check that the server is running at http://127.0.0.1:8000.")
+else:
+    print("Request method:", response.request.method)
+    print("Request URL:", response.request.url)
+    print("Request Content-Type:", response.request.headers.get("Content-Type"))
+    print("Status code:", response.status_code)
+    print("Response Content-Type:", response.headers.get("Content-Type"))
+    print("Response body:", response.text)
+```
+
+### Çalıştır ve gözlemle
+
+Dosyayı kaydet. İstemci terminalinde **bir kez** çalıştır:
+
+```bash
+python create_book.py
+```
+
+Beklenen temel satırlar:
+
+```text
+Request method: POST
+Request URL: http://127.0.0.1:8000/api/books
+Request Content-Type: application/json
+Status code: 201
+Response Content-Type: application/json
+```
+
+Program ayrıca **Response body** satırında JSON'u yazar. Bu satırda kitabın başlığını, sunucunun eklediği `id: 74` değerini ve `rating: null` alanını bul. Postman GET sekmesinde `/api/books/74` ile aynı kitabı oku. Kataloğun artık dört kitabı olmalı.
+
+Yalnızca istemciyi değiştirdik. Aynı POST yolu, aynı kitap verisi ve aynı sunucu işlevi kullanıldı. Programı yeniden çalıştırmak aynı kitabı ekranda yeniden göstermekle sınırlı kalmaz; **bir POST daha gönderir ve yeni kayıt ekler**.
+
+<a id="x13b"></a>
+
+### 13B — Yanıttaki kimliği, başlığı ve adresi kullan
+
+Şimdi gönderdiğimiz isteği aynı bırakıp yanıtı okuyan kodu geliştirelim. Oluşturma yanıtında `201` bekleriz; bu yüzden kitap alanlarını okumadan önce bu kodu kontrol ederiz. `response.json()` ile yanıtı Python verisine çevirir, `id` ve `title` alanlarını seçeriz. `Location` ise gövdeden değil, yanıt başlığından okunur.
+
+### Değişen satırlar
+
+```diff
+--- create_book.py
++++ create_book.py
+@@ -26,5 +26,12 @@
+     print("Request Content-Type:", response.request.headers.get("Content-Type"))
+     print("Status code:", response.status_code)
+     print("Response Content-Type:", response.headers.get("Content-Type"))
++    print("Location:", response.headers.get("Location"))
+     print("Response body:", response.text)
+ 
 +    if response.status_code == 201:
 +        created_book = response.json()
 +        print("Created book ID:", created_book["id"])
@@ -1205,30 +1443,23 @@ else:
         print("Book could not be created. Read the status code and response body.")
 ```
 
-### Çalıştır ve gözlemle
+Bu dosyayı yeniden çalıştırmak yine POST gönderecek. İki istemci sürümünü **aynı başlangıç verisiyle** karşılaştırmak için sunucuyu şimdi yeniden başlat ve parametresiz GET ile üç kitabı doğrula. Bunu istemci kodunu değiştirdiğimiz için değil, önceki denemenin eklediği kaydı sıfırlamak için yapıyoruz.
 
-Dosyayı kaydet. İstemci terminalinde **bir kez** çalıştır:
+Kaydettiğin yeni `create_book.py` dosyasını bir kez çalıştır:
 
 ```bash
 python create_book.py
 ```
 
-Beklenen temel satırlar:
+13A'daki mesaj satırlarına ek olarak şunları görmelisin:
 
 ```text
-Request method: POST
-Request URL: http://127.0.0.1:8000/api/books
-Request Content-Type: application/json
-Status code: 201
-Response Content-Type: application/json
 Location: /api/books/74
 Created book ID: 74
 Created book title: HTTP'yi Anlamak
 ```
 
-Program ayrıca Response body satırını yazar. Postman GET sekmesinde `/api/books/74` ile aynı kitabı oku. Kataloğun artık dört kitabı olmalı.
-
-Yalnızca istemciyi değiştirdik. Aynı POST yolu, aynı kitap verisi ve aynı sunucu işlevi kullanıldı. Programı yeniden çalıştırmak aynı kitabı ekranda yeniden göstermekle sınırlı kalmaz; **bir POST daha gönderir ve yeni kayıt ekler**.
+Katalog yine dört kitaptır. Sunucu aynı JSON verisini sundu; istemci artık onun belirli parçalarını anlamlandırıp ayrı satırlarda gösteriyor. Sonraki deney bu kaydı okuyacak; sunucuyu yeniden başlatma.
 
 **Kontrol sorusu:** `json=new_book` ile `response.json()` hangi yönlerde dönüşüm yapıyor?
 
@@ -1246,7 +1477,7 @@ Yalnızca istemciyi değiştirdik. Aynı POST yolu, aynı kitap verisi ve aynı 
 **Neden?** Oluşturma ve okumanın ayrı HTTP işlemleri olduğunu, aynı sunucu verisinde buluştuğunu görmek için.  
 **Teorideki yeri:** [Bölüm 3 ve 11 — Filtreleme ve istemciler](01_Teorik_Ders_Notu.md#t11).
 
-**Başlangıç:** Deney 13'te bir POST yapıldı; dört kitap var. **Sunucuyu yeniden başlatma.** `available=true` filtresi aynı kalacak. Yeni kitabın başlığında HTTP var ve uygunluğu true.
+**Başlangıç:** Deney 13B tamamlandı; son yeniden başlatmadan beri bir POST yapıldı ve dört kitap var. **Sunucuyu yeniden başlatma.** `available=true` filtresi aynı kalacak. Yeni kitabın başlığında HTTP var ve uygunluğu true.
 
 ### Değişen satırlar
 
@@ -1396,18 +1627,21 @@ Hayır. O anda kitap oluşturulmuş ve GET ile okunmuştu. `201`, sunucunun daha
 
 ## Deneylerin durum çizelgesi
 
-Beklenen kimlik ve sayılar için bu çizelgeyi kullan. Fazladan başarılı POST gönderdiysen sayı artar; başarısız istekler ve GET istekleri yeni kitap eklemez.
+Beklenen kimlik ve sayılar için bu çizelgeyi kullan. **Deney 7B'den sonraki oluşturma sürümünde** fazladan başarılı POST gönderdiysen sayı artar. Deney 7A'nın POST'u yalnızca gövdeyi geri gösterir. Başarısız istekler ve GET istekleri yeni kitap eklemez.
 
 | Nokta | Kitap sayısı | Sonradan oluşan kimlikler |
 |---|---|---|
 | Hazırlık ve Deney 1–6 | 3 | Yok |
-| Deney 7 sonunda | 4 | 74 |
+| Deney 7A sonunda: gövde yalnızca geri gönderildi | 3 | Yok |
+| Deney 7B sonunda: kitap kaydedildi | 4 | 74 |
 | Deney 8 başında yeniden başlatma | 3 | Yok |
 | Deney 8 sonunda | 4 | 74 |
 | Deney 9 sonunda | 5 | 74, 75 |
 | Deney 10–12 sonunda | 5 | 74, 75 |
-| Deney 13 başında yeniden başlatma | 3 | Yok |
-| Deney 13–14 sonunda | 4 | 74 |
+| Deney 13A başında yeniden başlatma | 3 | Yok |
+| Deney 13A sonunda | 4 | 74 |
+| Deney 13B karşılaştırması için yeniden başlatma | 3 | Yok |
+| Deney 13B–14 sonunda | 4 | 74 |
 | Deney 15 sonunda | 3 | Yok |
 
 ## Takıldığında sonucu açıklayarak ilerle
@@ -1417,6 +1651,7 @@ Beklenen kimlik ve sayılar için bu çizelgeyi kullan. Fazladan başarılı POS
 | Bağlantı kurulamıyor | Sunucu terminalinde Uvicorn çalışıyor mu? URL ve port doğru mu? | Sunucuyu çalıştır; yalnızca istemciyi açmak yeterli değildir. |
 | `address already in use` | Aynı portta eski sunucu var mı? | Çalışan sunucunun terminalinde Ctrl+C kullan. Gerekirse `ss -ltnp 'sport = :8000'` ile süreci belirle; rastgele süreç kapatma. |
 | POST eklediğim hâlde `405` | Doğru `server.py` kaydedildi ve doğru klasördeki sunucu yeniden başladı mı? | Eski süreç eski kodu çalıştırıyor olabilir. |
+| POST `200` döndürüyor, kitap eklenmiyor | Sunucu Deney 7A sürümünde mi? | Bu ara sürüm yalnızca gelen gövdeyi geri gönderir. Kayıt ekleme kodu ve `201`, Deney 7B'dedir. |
 | Beklediğimden çok kitap var | Kaç başarılı POST gönderdim? | Send ve `python create_book.py` her çalıştırmada yeni POST yapar. Durum çizelgesine dön. |
 | Yeni kimlik 74 değil | Önceden kitap ekledim mi? | Dönen `id` ve `Location` değerini kullan; adresi tahmin etme. Kesin deney sonucu için belirtilen başlangıcı kur. |
 | GET sonucu boş | Params'ta eski filtre kaldı mı? Sunucu yeniden mi başladı? | Önce parametresiz listeyi oku. Nedenini anlamadan yeniden POST gönderme. |
@@ -1443,7 +1678,7 @@ Bu istemciler bağlantı kurma hatasını yakalar. Her tür ağ ve JSON hatasın
 2. `Location` başlığındaki yolu sunucu adresiyle birleştirip GET göndeririz. Başarılı okumada `200` ve kitap nesnesi bekleriz.
 3. FastAPI girdiyi doğrularken isteği reddeder; oluşturma fonksiyonundaki listeye ekleme satırı çalışmaz.
 4. Boş liste `200` ile başarılı bir arama sonucu olabilir. `404` istenen tek kaynağın bulunamadığı HTTP yanıtıdır. Bağlantı hatasında HTTP yanıtı ve durum kodu alınmamıştır.
-5. GET okumayı tekrarlar; bizim POST'umuz her seferinde yeni kayıt oluşturur. Yanıt kodunun aynı olması etkisinin aynı olduğunu göstermez.
+5. GET okumayı tekrarlar; tamamlanmış oluşturma sürümümüz her başarılı POST'ta yeni kayıt oluşturur. Yanıt kodunun aynı olması etkisinin aynı olduğunu göstermez.
 6. İki istemci aynı sunucu verisini kullanmıştır. Veri yalnızca bellekte tutulmuş, yeniden başlatmada kaynak dosyadaki başlangıç listesi yüklenmiştir.
 
 </details>
@@ -1453,7 +1688,7 @@ Bu istemciler bağlantı kurma hatasını yakalar. Her tür ağ ve JSON hatasın
 | Dosya | Son sürümü | Görevi |
 |---|---|---|
 | `server.py` | [Deney 8](#x08) | İki GET ve bir POST işlemi; üç başlangıç kitabı; bellekte ekleme; Location. |
-| `create_book.py` | [Deney 13](#x13) | Bir yeni kitap oluşturma isteği göndermek. |
+| `create_book.py` | [Deney 13B](#x13b) | Bir yeni kitap oluşturma isteği göndermek ve yanıtın alanlarını yorumlamak. |
 | `client.py` | [Deney 14](#x14) | Başlığında HTTP geçen, uygun kitapları okumak. |
 
 Deney 15 sonunda sunucu çalışır ve üç başlangıç kitabı vardır; bu nedenle son okuma istemcisinin boş liste alması beklenir. Bu durum tamamlanmamış kurulum değildir.
