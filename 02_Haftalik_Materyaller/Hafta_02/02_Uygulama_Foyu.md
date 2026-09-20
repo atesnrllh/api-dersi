@@ -57,7 +57,7 @@ Birinci hafta sunucuya `rating` eklemekle istemcide `null` ve `0` değerlerini d
 source api-env/bin/activate
 ```
 
-`api-env` yoksa [birinci haftanın kurulum adımlarını](../Hafta_01/02_Uygulama_Foyu.md) tamamla. Aynı bilgisayarda çalışan ortamın varsa yeniden kurmana gerek yoktur. Paket kontrolü:
+`api-env` yoksa [birinci haftanın kurulum adımlarını](../Hafta_01/02_Practice.md) tamamla. Aynı bilgisayarda çalışan ortamın varsa yeniden kurmana gerek yoktur. Paket kontrolü:
 
 ```bash
 python -c "import fastapi, uvicorn, httpx, pydantic; print('Packages are ready.')"
@@ -1697,4 +1697,4 @@ Deney 15 sonunda sunucu çalışır ve üç başlangıç kitabı vardır; bu ned
 
 Üçüncü haftada bu deneyden hareketle kaynakları ve uç noktaları tasarlayacağız. Dördüncü haftada güncelleme ve silmeyi uygulayacağız; PUT/PATCH/DELETE adlarını seçip `405` görmek onların işlevlerini öğrenmek için yeterli değildir. Beşinci haftada modelleri iş kurallarıyla, altıncı haftada saklamayı veritabanıyla genişleteceğiz.
 
-**Geri dön:** [İkinci hafta teorisi](01_Teorik_Ders_Notu.md) · [Birinci hafta uygulaması](../Hafta_01/02_Uygulama_Foyu.md) · [Haftalık plan](../../00_Planlama/01_Haftalik_Ders_Plani.md)
+**Geri dön:** [İkinci hafta teorisi](01_Teorik_Ders_Notu.md) · [Birinci hafta uygulaması](../Hafta_01/02_Practice.md) · [Haftalık plan](../../00_Planlama/01_Haftalik_Ders_Plani.md)
