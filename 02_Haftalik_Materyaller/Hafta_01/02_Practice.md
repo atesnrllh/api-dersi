@@ -32,7 +32,7 @@ Bu iki program **HTTP** adı verilen iletişim kurallarına göre mesajlaşır. 
 - Yol parametresiyle tek kitap, koleksiyon yolu ile kitap listesi istemek.
 - `200`, `404`, `422` ve bağlantı hatasını birbirinden ayırmak.
 - JSON nesnesi, dizisi, metni, sayısı, mantıksal değeri ve `null` değerini uygulamada okumak.
-- Sorgu parametreleriyle başlık araması ve ödünç alınabilirlik filtresi yapmak.
+- Sorgu parametreleriyle kitap başlığına göre arama yapmak ve kütüphanede şu anda okuyucuya verilebilecek kitapları listelemek.
 - `Accept` ile `Content-Type` başlıklarının farklı görevlerini açıklamak.
 - Geçersiz JSON, yanlış veri türü ve iş kuralına aykırı değeri ayırmak.
 
@@ -73,7 +73,7 @@ VS Code'un solundaki **Explorer** bölümünde **New File** düğmesini kullanar
 python3 --version
 ```
 
-Bu föydeki `bool | None` tür gösterimi için Python 3.10 veya daha yeni bir sürüm kullan.
+Bu çalışmadaki kodları çalıştırmak için Python 3.10 veya daha yeni bir sürüm gerekir. `python3 --version` komutu kurulu sürümü gösterir. Örneğin `Python 3.12.3` görüyorsan sürümün uygundur.
 
 ### Sanal ortamı oluştur
 
@@ -126,7 +126,7 @@ Ardından yeniden kontrol et:
 uv --version
 ```
 
-> Bazı kurulum çıktıları `source "$HOME/.local/bin/env"` önerebilir. Bu dosya sisteminde yoksa yukarıdaki `export PATH=...` komutunu kullan. Bu komut yalnızca açık terminalin komut arama yolunu günceller.
+> Terminal, `uv` komutunu yazdığımızda bu programı belirli klasörlerde arar. Yukarıdaki `export PATH="$HOME/.local/bin:$PATH"` komutu, uv’nin kurulduğu klasörü bu arama listesine ekler. Buradaki `$HOME`, kullanıcı hesabının ana klasörünü belirtir. Komutu çalıştırdıktan sonra `uv --version` ile tekrar kontrol et. Bu ayar yalnızca komutu çalıştırdığın terminal için geçerlidir.
 
 ### Paketleri proje ortamına kur
 
@@ -134,18 +134,88 @@ uv --version
 uv pip install --python api-env/bin/python fastapi uvicorn httpx
 ```
 
-**Paket nedir?** Python projemize kurup kullanabildiğimiz hazır yazılımdır. Başka geliştiricilerin hazırladığı araçları kullanarak her işlemi sıfırdan yazmak zorunda kalmayız. Yukarıdaki komutta `uv`, kurulum işlemini yapan araçtır; `fastapi`, `uvicorn` ve `httpx` ise kurduğumuz üç pakettir. Aşağıdaki tabloda bu dört aracın görevleri açıklanmıştır:
+**Paket nedir?**
 
-| Araç / paket | Nedir? | Bu uygulamadaki görevi |
-|---|---|---|
-| **[uv](https://docs.astral.sh/uv/)** | Python projelerinin ihtiyaç duyduğu paketleri kurmak, güncellemek ve yönetmek için terminalden kullanılan bir **paket ve proje yönetim aracıdır**. Bir paketin çalışması için gereken diğer paketlere **bağımlılık (dependency)** denir; uv kurulum sırasında bunları da belirler ve kurar. Ayrıca projeye özel sanal ortamlar oluşturabilir. | Bu föyde `api-env` adlı sanal ortamı Python'un `venv` aracıyla oluşturduk. uv'yi, FastAPI, Uvicorn ve HTTPX paketlerini bu ortama kurmak için kullanıyoruz. Komuttaki `--python api-env/bin/python`, paketlerin hangi Python ortamına kurulacağını belirtir. uv bu aşamada geliştirme ortamımızı hazırlar; kitap isteğini karşılayan uygulamayı çalıştırma görevini Uvicorn üstlenir. |
-| **[FastAPI](https://fastapi.tiangolo.com/tutorial/first-steps/)** | Python ile web API'leri geliştirmek için kullanılan bir **uygulama çatısıdır (framework)**. Uygulama çatısı, kodumuzu belirli bir düzen içinde yazmamızı sağlayan hazır bir yapı ve araçlar sunar. FastAPI ile hangi adrese gelen isteğin hangi Python fonksiyonunu çalıştıracağını tanımlarız. | `server.py` içindeki API uygulamasını FastAPI ile yazacağız. Kitap bilgisini isteyen bir istek geldiğinde, FastAPI tanımladığımız uygun fonksiyonu çalıştıracak. Kitabı bulma işlemini bu fonksiyonun içinde biz yazacağız. FastAPI, fonksiyonun döndürdüğü kitap sözlüğünü JSON biçiminde bir yanıta dönüştürecek. |
-| **[Uvicorn](https://uvicorn.dev/)** | Python ile yazılmış web uygulamalarının HTTP üzerinden erişilebilir olmasını sağlayan bir **sunucu programıdır**. Belirli bir adres ve bağlantı noktasında (**port**) istemcilerin bağlantı kurmasını bekler. “Bağlantıları dinlemek” ifadesi bu bekleme ve gelen bağlantıları kabul etme işini anlatır. | `server.py` içinde yazdığımız FastAPI uygulamasını Uvicorn ile çalıştıracağız. Uvicorn, istemciden gelen HTTP isteğini uygulamaya aktaracak ve uygulamanın hazırladığı yanıtı istemciye gönderecek. Çalışmaya devam ettiği sürece yeni istekleri kabul edebilecek; bu nedenle sunucu terminalini açık tutacağız. |
-| **[HTTPX](https://www.python-httpx.org/quickstart/)** | Python programından HTTP istekleri göndermek ve yanıtları almak için kullanılan bir **istemci kütüphanesidir (client library)**. Kütüphane, kendi kodumuzdan çağırabildiğimiz hazır işlevler sunar. HTTPX ile isteğin gönderileceği adresi belirtir ve gelen yanıtı programımızda inceleyebiliriz. | `client.py` içinde HTTPX kullanarak kitap bilgisi isteyeceğiz. HTTPX, isteği sunucuya gönderecek ve gelen yanıtı kodumuzda kullanabileceğimiz bir nesne olarak verecek. Bu nesne üzerinden işlemin sonucunu belirten durum kodunu okuyabilecek, JSON biçimindeki kitap bilgilerini Python verisine dönüştürebileceğiz. Kitap başlığını terminale yazdıran kodu biz yazacağız. |
+Paket, başkalarının hazırladığı ve kendi Python programımızda kullanmak için bilgisayarımıza kurabildiğimiz hazır kodlardır.
 
-**Bu araçlar birlikte nasıl kullanılır?** uv ile gerekli paketleri projenin sanal ortamına kurarız. Sunucu tarafında FastAPI ile isteğe verilecek cevabın nasıl hazırlanacağını tanımlarız; Uvicorn bu uygulamanın istemcilerden istek alıp yanıt göndermesini sağlar. İstemci tarafında ise HTTPX kullanarak bu uygulamaya ulaşırız. Böylece sunucu uygulamasını yazma, uygulamayı erişime açma ve istemciden istek gönderme görevleri için ayrı araçlar kullanmış oluruz.
+Örneğin birazdan bir Python programından başka bir programa kitap bilgisi isteyen bir mesaj göndereceğiz. Bu mesajın HTTP kurallarına uygun hazırlanması, gönderilmesi ve cevabının alınması gerekir. Bunların bütün ayrıntılarını kendimiz yazmak yerine, bu iş için hazırlanmış **HTTPX paketini** kullanacağız.
 
-`Failed to hardlink files; falling back to full copy` uyarısı görülürse kurulum başarısız olmuş sayılmaz. Önbellek ve proje farklı dosya sistemlerindeyse uv dosyaları kopyalayarak devam edebilir.
+Paketler bazı işleri hazır olarak sunar. **Hangi kitabın isteneceğini, kitap bilgilerinin nerede tutulacağını ve gelen bilginin ekranda nasıl gösterileceğini ise biz yazacağız.**
+
+**Birazdan nasıl bir uygulama yapacağız?**
+
+İki Python dosyasıyla çalışacağız:
+
+- **`server.py`:** Kitap bilgilerini tutan ve istenen kitabın bilgilerini gönderen sunucu uygulamasını yazacağız.
+- **`client.py`:** Sunucudan kitap bilgisi isteyen ve gelen kitabın başlığını terminale yazdıran istemci programını yazacağız.
+
+İlk denemede istemci, **“42 numaralı kitabın bilgilerini istiyorum.”** anlamına gelen bir istek gönderecek. Sunucu da kitabın kimliğini, başlığını ve yazarını içeren bir yanıt verecek.
+
+Şimdi kurduğumuz araçların bu çalışmadaki görevlerini ayıralım:
+
+| Araç | Bu çalışmada ne için kullanacağız? |
+|---|---|
+| **[uv](https://docs.astral.sh/uv/)** | Gerekli Python paketlerini `api-env` ortamına kurmak için kullanacağız. |
+| **[FastAPI](https://fastapi.tiangolo.com/)** | Sunucuya gelen kitap isteğinin, yazdığımız hangi Python fonksiyonu tarafından karşılanacağını belirleyeceğiz. |
+| **[Uvicorn](https://uvicorn.dev/)** | FastAPI ile yazdığımız uygulamayı çalıştırıp istemciden gelen istekleri kabul etmesini sağlayacağız. |
+| **[HTTPX](https://www.python-httpx.org/quickstart/)** | İstemci programımızdan sunucuya istek gönderip cevabını alacağız. |
+
+**uv: Paketleri kuran araç**
+
+Yukarıdaki kurulum komutunda `uv`, kurulum işini yapan programdır. Komutun sonundaki `fastapi`, `uvicorn` ve `httpx` ise kurulmasını istediğimiz paketlerin adlarıdır.
+
+`--python api-env/bin/python` bölümü, **“Bu paketleri projemizin `api-env` adlı Python ortamına kur.”** anlamına gelir.
+
+Bir paketin çalışması için başka paketler de gerekebilir. Bunlara **bağımlılık** denir. uv gerekli olanları da kurar; bu yüzden kurulum çıktısında üçten fazla paket adı görebilirsin.
+
+**FastAPI: Kendi API’mizi geliştirmek için kullanacağımız araç**
+
+**FastAPI, Python ile HTTP API geliştirmemizi sağlayan bir uygulama çatısıdır (framework). Bilgisayarımıza `fastapi` adlı Python paketi olarak kurulur.** Yani “paket” nasıl kurulduğunu, “uygulama çatısı” ise ne tür bir araç olduğunu anlatır.
+
+Bir programın sunduğu işlemleri başka programların kullanabilmesini sağlayan arayüze **API** denir. Buradaki “arayüz”, programların hangi işlemleri, hangi bilgileri göndererek kullanabileceğini ve karşılığında nasıl bir sonuç alacağını belirler.
+
+Bizim uygulamamızda sunucu, kitap bilgilerini istemci programların kullanımına açacak. Bunun için şu kuralları belirleyeceğiz:
+
+- Kitap bilgisi istemek için hangi adrese istek gönderilecek?
+- Hangi kitabın istendiği nasıl belirtilecek?
+- Kitap bulunduğunda hangi bilgiler gönderilecek?
+- Kitap bulunamadığında nasıl cevap verilecek?
+
+**Bu kurallara göre çalışan kitap API’mizi FastAPI kullanarak yazacağız.**
+
+`server.py` içinde kitabı bulan bir Python fonksiyonu oluşturacağız. FastAPI ile, belirlediğimiz adrese gelen isteği bu fonksiyona bağlayacağız. İstek geldiğinde FastAPI fonksiyonu çağıracak ve fonksiyonun döndürdüğü kitap bilgisinden bir HTTP yanıtı hazırlayacak.
+
+Kitap bilgisini **JSON** biçiminde göndereceğiz. JSON, başlık ve yazar gibi bilgileri belirli yazım kurallarıyla metin olarak taşımamızı sağlayan bir veri biçimidir. Örneklerini birazdan göreceğiz.
+
+FastAPI’nin sunduğu hazır kodları kendi programımızda kullanırız; bu yönüyle bir **kütüphane** gibi kullanılır. Ancak gelen isteğin hangi fonksiyonu çalıştıracağı gibi uygulamanın işleyişini de düzenlediği için daha belirgin adı **uygulama çatısıdır (framework)**.
+
+**FastAPI’yi paket olarak kuruyor, sunduğu uygulama çatısını kullanarak kendi kitap API’mizi geliştiriyoruz.**
+
+**Uvicorn: Uygulamayı istek alabilecek şekilde çalıştıran program**
+
+`server.py` dosyasına kod yazmak, uygulamayı çalıştırmış olduğumuz anlamına gelmez. Uygulamayı Uvicorn ile başlatacağız.
+
+Uvicorn çalışırken istemcilerin bağlantı kurmasını bekler. İstek geldiğinde onu FastAPI uygulamasına aktarır; uygulamanın hazırladığı yanıtı da istemciye gönderir.
+
+Bu nedenle sunucuyu başlattığımız terminal açık kalacak. İstemciyi çalıştırmak için ikinci bir terminal kullanacağız.
+
+**HTTPX: İstemcinin istek göndermesini sağlayan kütüphane**
+
+`client.py` içinde HTTPX’in hazır bir fonksiyonunu çağırıp isteğin gönderileceği adresi vereceğiz. HTTPX isteği gönderecek ve gelen yanıtı programımızın inceleyebileceği şekilde bize verecek.
+
+Ardından kendi kodumuzla yanıtın içinden kitap başlığını okuyup terminale yazdıracağız.
+
+Programımızın içinden çağırarak kullandığımız bu tür hazır kodlara **kütüphane (library)** denir. HTTPX’i paket olarak kurar, kodumuzda kütüphane olarak kullanırız.
+
+**Kod üzerinden: server.py, Uvicorn ve API**
+
+Bu küçük örnek, yalnızca kitap başlığını döndürerek araçların görevlerini gösterir.
+
+![Basit server.py ve client.py kodları, Uvicorn ile sunucunun başlatılması ve uygulamanın sunduğu API](Gorseller/06_api_kod_ve_araclar.png)
+
+**Kurulum sırasında kopyalama uyarısı görürsen**
+
+`Failed to hardlink files; falling back to full copy` mesajı, uv’nin paket dosyalarını yerleştirirken kullanmak istediği yöntemi kullanamadığını ve dosyaları kopyalayarak devam ettiğini söyler. **Bu uyarı tek başına kurulumun başarısız olduğu anlamına gelmez.**
 
 ### İki terminal kullan
 
@@ -269,7 +339,7 @@ Başarılı başlangıçta `Uvicorn running on http://127.0.0.1:8000` mesajını
 
 ### Ne yapıyoruz?
 
-Sunucunun belleğinde bir kitap sözlüğü tutuyor ve yalnızca `/api/books/42` adresindeki GET isteğine cevap veren bir işlem tanımlıyoruz.
+Sunucunun belleğinde bir kitap sözlüğü tutuyor ve yalnızca `/book/42` adresindeki GET isteğine cevap veren bir işlem tanımlıyoruz.
 
 ### Neden yapıyoruz?
 
@@ -291,7 +361,7 @@ Bu aşamada veritabanı yoktur. Kitap bilgisi `server.py` içindeki Python sözl
 + }
 +
 +
-+ @app.get("/api/books/42")
++ @app.get("/book/42")
 + def get_book():
 +     return book
 ```
@@ -310,7 +380,7 @@ book = {
 }
 
 
-@app.get("/api/books/42")
+@app.get("/book/42")
 def get_book():
     return book
 ```
@@ -406,7 +476,7 @@ API'yi başka bir yazılımın kullandığını görmek istiyoruz. İnsan `clien
 ```diff
 + import httpx
 +
-+ response = httpx.get("http://127.0.0.1:8000/api/books/42")
++ response = httpx.get("http://127.0.0.1:8000/book/42")
 + book = response.json()
 + print(book["title"])
 ```
@@ -416,7 +486,7 @@ API'yi başka bir yazılımın kullandığını görmek istiyoruz. İnsan `clien
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books/42")
+response = httpx.get("http://127.0.0.1:8000/book/42")
 book = response.json()
 print(book["title"])
 ```
@@ -427,7 +497,7 @@ print(book["title"])
 |---|---|---|
 | 1 | `import httpx` | Önceden kurduğumuz HTTPX kütüphanesini bu dosyada kullanıma açar. Bundan sonra kütüphanenin sunduğu işlevlere `httpx` adı üzerinden ulaşabiliriz. |
 | 2 | Boş satır | Kütüphaneyi içeri aktardığımız satır ile işlemleri yapan satırları görsel olarak ayırır. Python bu satırda bir işlem yapmaz. |
-| 3 | `response = httpx.get("http://127.0.0.1:8000/api/books/42")` | Belirtilen adrese HTTP GET isteği gönderir. Bu örnekte 42 numaralı kitabın bilgilerini isteriz. Yanıt geldiğinde HTTPX'in döndürdüğü yanıt nesnesini `response` adlı değişkene atarız. |
+| 3 | `response = httpx.get("http://127.0.0.1:8000/book/42")` | Belirtilen adrese HTTP GET isteği gönderir. Bu örnekte 42 numaralı kitabın bilgilerini isteriz. Yanıt geldiğinde HTTPX'in döndürdüğü yanıt nesnesini `response` adlı değişkene atarız. |
 | 4 | `book = response.json()` | Alınmış yanıtın gövdesindeki JSON verisini Python'un kullanabileceği bir veri yapısına dönüştürür. Bu örnekte tek bir kitap nesnesi geldiği için sonuç bir Python sözlüğüdür (`dict`). Bu sözlüğü `book` adlı değişkene atarız. |
 | 5 | `print(book["title"])` | `book` sözlüğündeki `title` anahtarının karşılığı olan kitap başlığını alır ve terminale yazdırır. |
 
@@ -440,7 +510,7 @@ print(book["title"])
 | `http://` | İstek HTTP protokolüyle gönderilir. |
 | `127.0.0.1` | İstemcinin kendi çalıştığı ağ ortamını gösterir. Sunucuyu da aynı WSL ortamında çalıştırdığımız için bu adresi kullanırız. |
 | `:8000` | İstemci, sunucunun bağlantı beklediği `8000` numaralı porta bağlanır. |
-| `/api/books/42` | Sunucu uygulamasında tanımladığımız yoldur. Biz bu yolu 42 numaralı kitabın bilgilerini vermek için tanımladık. |
+| `/book/42` | Sunucu uygulamasında tanımladığımız yoldur. Biz bu yolu 42 numaralı kitabın bilgilerini vermek için tanımladık. |
 
 `=` işareti **atama** yapar: önce sağ taraftaki işlem gerçekleştirilir, ardından sonucu soldaki değişken adıyla kullanılabilir hâle gelir. Burada önce istek gönderilir ve yanıt alınır; sonra bu yanıt `response` adıyla kullanılabilir. Bu basit örnekte program, bu işlem tamamlandıktan sonra bir sonraki satıra geçer.
 
@@ -506,7 +576,7 @@ Bir HTTP yanıtının yalnızca kitap verisinden oluşmadığını görmek istiy
 ### Değişen satırlar
 
 ```diff
-  response = httpx.get("http://127.0.0.1:8000/api/books/42")
+  response = httpx.get("http://127.0.0.1:8000/book/42")
 + print("Status code:", response.status_code)
 + print("Response body:", response.text)
   book = response.json()
@@ -520,7 +590,7 @@ Bir HTTP yanıtının yalnızca kitap verisinden oluşmadığını görmek istiy
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books/42")
+response = httpx.get("http://127.0.0.1:8000/book/42")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -548,7 +618,7 @@ Book author: Deniz Kaya
 
 ### Ne yapıyoruz?
 
-Henüz tanımlamadığımız `/api/books/99` adresini istiyoruz. Sonra istemcinin her JSON yanıtını kitap sanmasının neden hata olduğunu gözlemliyoruz.
+Henüz tanımlamadığımız `/book/99` adresini istiyoruz. Sonra istemcinin her JSON yanıtını kitap sanmasının neden hata olduğunu gözlemliyoruz.
 
 ### Neden yapıyoruz?
 
@@ -557,8 +627,8 @@ Başarısız bir işlemde de JSON gövdesi gelebileceğini ve istemcinin durum k
 ### Değişen satırlar
 
 ```diff
-- response = httpx.get("http://127.0.0.1:8000/api/books/42")
-+ response = httpx.get("http://127.0.0.1:8000/api/books/99")
+- response = httpx.get("http://127.0.0.1:8000/book/42")
++ response = httpx.get("http://127.0.0.1:8000/book/99")
 ```
 
 ### `client.py` dosyasının tamamı — hatayı gözlemleme sürümü
@@ -566,7 +636,7 @@ Başarısız bir işlemde de JSON gövdesi gelebileceğini ve istemcinin durum k
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books/99")
+response = httpx.get("http://127.0.0.1:8000/book/99")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -591,7 +661,7 @@ KeyError: 'title'
 
 | Çıktıdaki satır veya bölüm | Ne anlama geliyor? |
 |---|---|
-| `Status code: 404` | Sunucu isteğe yanıt verdi, fakat istediğimiz yol bulunamadı. Deneyin bu aşamasında sunucuda yalnızca `/api/books/42` yolu tanımlı; istemci ise `/api/books/99` yolunu istiyor. |
+| `Status code: 404` | Sunucu isteğe yanıt verdi, fakat istediğimiz yol bulunamadı. Deneyin bu aşamasında sunucuda yalnızca `/book/42` yolu tanımlı; istemci ise `/book/99` yolunu istiyor. |
 | `Response body: {"detail":"Not Found"}` | Sunucu kitap bilgisi yerine JSON biçiminde bir hata açıklaması gönderdi. Bu JSON'da yalnızca `detail` alanı var. `Not Found`, “Bulunamadı” demektir. |
 | `Traceback (most recent call last):` | Python, programın hangi noktada hatayla durduğunu gösteren hata izini yazdırmaya başlıyor. “Most recent call last”, en son çağrının en altta gösterildiğini belirtir. Bu bölüm istemci programında oluşan hatanın ayrıntısıdır. |
 | `File ".../client.py", line 12, in <module>` | Hatanın `client.py` dosyasının bu örnekteki 12. satırında oluştuğunu gösterir. `<module>`, bu satırın dosyanın doğrudan çalıştırılan ana bölümünde bulunduğunu belirtir. |
@@ -625,7 +695,7 @@ Bu hata `client.py` programının çalışmasını sonlandırır ve istemci term
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books/99")
+response = httpx.get("http://127.0.0.1:8000/book/99")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -662,7 +732,7 @@ book = {
 }
 
 
-@app.get("/api/books/42")
+@app.get("/book/42")
 def get_book():
     return book
 ```
@@ -674,7 +744,7 @@ def get_book():
 | `from fastapi import FastAPI` | Bir paketten belirli bir adı içeri aktaran Python ifadesidir. | `FastAPI` sınıfını bu dosyada kullanıma açar. |
 | `app = FastAPI()` | Sınıftan bir **nesne (object / instance)** oluşturur ve onu `app` değişkenine atar. | `app`, bizim API uygulamamızı temsil eder; hangi isteklerin hangi fonksiyonlarla karşılanacağı bu uygulamaya kaydedilir. |
 | `book = {...}` | Kitap bilgilerini içeren Python sözlüğünü oluşturur. | Bu ilk örnekte sunucunun döndüreceği tek kitabı bellekte tutar. |
-| `@app.get("/api/books/42")` | Altındaki fonksiyonu belirli bir HTTP metodu ve yolla ilişkilendiren **dekoratör (decorator)** ifadesidir. | `GET /api/books/42` isteğini `get_book` fonksiyonuna bağlar. |
+| `@app.get("/book/42")` | Altındaki fonksiyonu belirli bir HTTP metodu ve yolla ilişkilendiren **dekoratör (decorator)** ifadesidir. | `GET /book/42` isteğini `get_book` fonksiyonuna bağlar. |
 | `def get_book():` | `get_book` adlı Python fonksiyonunu tanımlar. | Uygun istek geldiğinde FastAPI'nin çalıştıracağı kodu tanımlar. |
 | `return book` | Fonksiyonun sonucunu döndürür. | Kitap sözlüğünü FastAPI'ye verir. FastAPI bu örnekte sözlüğü JSON yanıt gövdesine dönüştürür. |
 
@@ -743,27 +813,27 @@ FastAPI'deki `@app.get(...)` de aynı Python özelliğini kullanır. Onun burada
 
 Bir Python fonksiyonunu `def` ile tanımlamak, gövdesindeki kodu hemen çalıştırmaz. Fonksiyonun daha sonra çağrılması gerekir. Bizim örneğimizde bu çağrıyı, uygun HTTP isteği geldiğinde FastAPI yapar.
 
-`@` işareti, Python'da bir dekoratörün altındaki fonksiyona uygulanmasını sağlar. Bu örnekte `@app.get("/api/books/42")`, `get_book` fonksiyonunu uygulamanın istek yönlendirme kayıtlarına ekler. **Yönlendirme (routing)**, gelen isteği uygun fonksiyonla eşleştirme işidir. [Python'da dekoratör](https://docs.python.org/3/glossary.html#term-decorator) ve [FastAPI'de yol işlemi tanımlama](https://fastapi.tiangolo.com/tutorial/first-steps/#define-a-path-operation-decorator).
+`@` işareti, Python'da bir dekoratörün altındaki fonksiyona uygulanmasını sağlar. Bu örnekte `@app.get("/book/42")`, `get_book` fonksiyonunu uygulamanın istek yönlendirme kayıtlarına ekler. **Yönlendirme (routing)**, gelen isteği uygun fonksiyonla eşleştirme işidir. [Python'da dekoratör](https://docs.python.org/3/glossary.html#term-decorator) ve [FastAPI'de yol işlemi tanımlama](https://fastapi.tiangolo.com/tutorial/first-steps/#define-a-path-operation-decorator).
 
 Bu kaydı şöyle okuyabiliriz:
 
 | HTTP metodu | Yol | Çalıştırılacak fonksiyon |
 |---|---|---|
-| `GET` | `/api/books/42` | `get_book` |
+| `GET` | `/book/42` | `get_book` |
 
 İki farklı zamanı ayıralım:
 
 1. **Sunucu başlatılırken:** Uvicorn `server.py` modülünü yükler. `app` oluşturulur; fonksiyon tanımlanır ve dekoratör bu eşleştirmeyi kaydeder. Bu kayıt sırasında `get_book` fonksiyonunun gövdesindeki `return book` henüz çalışmaz.
-2. **İstek geldiğinde:** FastAPI gelen isteğin metodunu ve yolunu kontrol eder. `GET` ve `/api/books/42` eşleştiğinde kayıtlı `get_book` fonksiyonunu çağırır. İşte bu anda `return book` çalışır.
+2. **İstek geldiğinde:** FastAPI gelen isteğin metodunu ve yolunu kontrol eder. `GET` ve `/book/42` eşleştiğinde kayıtlı `get_book` fonksiyonunu çağırır. İşte bu anda `return book` çalışır.
 
-Bu örnekte dekoratörü kaldırıp sunucuyu yeniden başlatsaydık, `get_book` normal bir Python fonksiyonu olarak tanımlı kalırdı; fakat bu yol için kaydedilmiş bir eşleştirme olmazdı. Başka bir kayıt da yapmadığımız için `/api/books/42` isteği onu çalıştırmazdı. Sunucu kodunun içinde açıkça `get_book()` yazarak fonksiyonu çağırmak mümkün olurdu; bu, program içindeki sıradan bir fonksiyon çağrısıdır.
+Bu örnekte dekoratörü kaldırıp sunucuyu yeniden başlatsaydık, `get_book` normal bir Python fonksiyonu olarak tanımlı kalırdı; fakat bu yol için kaydedilmiş bir eşleştirme olmazdı. Başka bir kayıt da yapmadığımız için `/book/42` isteği onu çalıştırmazdı. Sunucu kodunun içinde açıkça `get_book()` yazarak fonksiyonu çağırmak mümkün olurdu; bu, program içindeki sıradan bir fonksiyon çağrısıdır.
 
 #### İstemcideki `httpx.get(...)` ile sunucudaki `app.get(...)` arasındaki ilişki
 
 | İfade | Nerede kullanılır? | Görevi |
 |---|---|---|
-| `httpx.get("http://127.0.0.1:8000/api/books/42")` | İstemcide, `client.py` içinde | Verilen adrese HTTP `GET` isteği gönderir ve yanıtı alır. |
-| `@app.get("/api/books/42")` | Sunucuda, `server.py` içinde | Sunucuya `/api/books/42` yolu için bir HTTP `GET` isteği geldiğinde `get_book` fonksiyonunun çalıştırılacağını uygulamaya kaydeder. |
+| `httpx.get("http://127.0.0.1:8000/book/42")` | İstemcide, `client.py` içinde | Verilen adrese HTTP `GET` isteği gönderir ve yanıtı alır. |
+| `@app.get("/book/42")` | Sunucuda, `server.py` içinde | Sunucuya `/book/42` yolu için bir HTTP `GET` isteği geldiğinde `get_book` fonksiyonunun çalıştırılacağını uygulamaya kaydeder. |
 
 İki taraftaki `get` adının ortak noktası **HTTP'nin GET metodudur**. İstemci GET isteğini gönderir; sunucudaki kayıt GET isteğini karşılayacak fonksiyonu belirtir. HTTPX, FastAPI'deki `app.get` metodunu doğrudan çağırmaz; aralarında HTTP iletişimi vardır. [HTTPX ile GET isteği gönderme](https://www.python-httpx.org/quickstart/).
 
@@ -774,14 +844,14 @@ Bu örnekte dekoratörü kaldırıp sunucuyu yeniden başlatsaydık, `get_book` 
 Aşağıdaki satır, daha önce başarıyla çalıştırdığımız istemci isteğidir:
 
 ```python
-response = httpx.get("http://127.0.0.1:8000/api/books/42")
+response = httpx.get("http://127.0.0.1:8000/book/42")
 ```
 
 | Adım | Ne olur? |
 |---|---|
-| 1 | İstemci, HTTPX aracılığıyla `127.0.0.1:8000` adresine `GET /api/books/42` isteğini gönderir. |
+| 1 | İstemci, HTTPX aracılığıyla `127.0.0.1:8000` adresine `GET /book/42` isteğini gönderir. |
 | 2 | Uvicorn bağlantıyı kabul eder ve isteği çalıştırdığı `app` uygulamasına aktarır. |
-| 3 | FastAPI, metodun `GET`, yolun `/api/books/42` olduğunu görür ve eşleşen kayıttan `get_book` fonksiyonunu bulur. |
+| 3 | FastAPI, metodun `GET`, yolun `/book/42` olduğunu görür ve eşleşen kayıttan `get_book` fonksiyonunu bulur. |
 | 4 | FastAPI fonksiyonu çağırır. Fonksiyonun içindeki `return book` kitap sözlüğünü döndürür. |
 | 5 | FastAPI bu sözlükten JSON içeren başarılı yanıtı hazırlar. Uvicorn yanıtı istemciye iletir. |
 | 6 | HTTPX yanıtı alır ve bir yanıt nesnesi döndürür. İstemcideki `response` değişkeni bu nesneyi tutar. |
@@ -793,27 +863,27 @@ Uvicorn bağlantı ve HTTP iletişimini yürütür; FastAPI uygulaması isteğin
 Son deneyde istemcide şu satırı kullandık:
 
 ```python
-response = httpx.get("http://127.0.0.1:8000/api/books/99")
+response = httpx.get("http://127.0.0.1:8000/book/99")
 ```
 
-Sunucudaki kayıt ise hâlâ `@app.get("/api/books/42")` şeklindedir. GET metodu eşleşse de yol eşleşmez:
+Sunucudaki kayıt ise hâlâ `@app.get("/book/42")` şeklindedir. GET metodu eşleşse de yol eşleşmez:
 
 | İstemcinin isteği | Sunucuda kayıtlı yol | `get_book` çalışır mı? | Sonuç |
 |---|---|---|---|
-| `GET /api/books/42` | `/api/books/42` | Evet | `200` ve kitap bilgileri döner. |
-| `GET /api/books/99` | `/api/books/42` | Hayır | `404` ve `{"detail":"Not Found"}` döner. |
+| `GET /book/42` | `/book/42` | Evet | `200` ve kitap bilgileri döner. |
+| `GET /book/99` | `/book/42` | Hayır | `404` ve `{"detail":"Not Found"}` döner. |
 
 **Bu aşamadaki `404`, fonksiyonun kitaplar arasında arama yapıp 99 numaralı kitabı bulamamasından kaynaklanmaz. İstenen yola karşılık gelen fonksiyon kaydı bulunamadığı için oluşur.** `get_book` hiç çağrılmadığından içindeki `return book` satırına da ulaşılmaz.
 
-Ayrıca `/api/books/42` içindeki `42`, şu anda sabit yol metninin bir parçasıdır. FastAPI bunu kendiliğinden `book` sözlüğünün `id` alanına bağlamaz. Yol eşleşince fonksiyon mevcut `book` sözlüğünü doğrudan döndürür; henüz bir kimlik karşılaştırması yazmadık.
+Ayrıca `/book/42` içindeki `42`, şu anda sabit yol metninin bir parçasıdır. FastAPI bunu kendiliğinden `book` sözlüğünün `id` alanına bağlamaz. Yol eşleşince fonksiyon mevcut `book` sözlüğünü doğrudan döndürür; henüz bir kimlik karşılaştırması yazmadık.
 
-Bir sonraki deneyde `/api/books/{book_id}` yazarak bu sabit parçayı **yol parametresine (path parameter)** dönüştüreceğiz. Böylece hem `/42` hem `/99` aynı fonksiyona ulaşabilecek; gelen kimliğe ait kitabın bulunup bulunmadığına fonksiyonun içinde yazacağımız kod karar verecek. [FastAPI yol parametreleri](https://fastapi.tiangolo.com/tutorial/path-params/).
+Bir sonraki deneyde `/book/{book_id}` yazarak bu sabit parçayı **yol parametresine (path parameter)** dönüştüreceğiz. Böylece hem `/42` hem `/99` aynı fonksiyona ulaşabilecek; gelen kimliğe ait kitabın bulunup bulunmadığına fonksiyonun içinde yazacağımız kod karar verecek. [FastAPI yol parametreleri](https://fastapi.tiangolo.com/tutorial/path-params/).
 
 ## Deney 5 — Yol parametresiyle farklı kitap kimliklerini karşıla
 
 ### Ne yapıyoruz?
 
-Sabit `/api/books/42` yolunu `/api/books/{book_id}` biçimine getiriyoruz. Aynı fonksiyon farklı kitap kimliklerini alabilecek.
+Sabit `/book/42` yolunu `/book/{book_id}` biçimine getiriyoruz. Aynı fonksiyon farklı kitap kimliklerini alabilecek.
 
 ### Neden yapıyoruz?
 
@@ -825,10 +895,10 @@ Her kitap için ayrı fonksiyon yazmak yerine, istemcinin istediği kaynak kimli
 - from fastapi import FastAPI
 + from fastapi import FastAPI, HTTPException
 ...
-- @app.get("/api/books/42")
+- @app.get("/book/42")
 - def get_book():
 -     return book
-+ @app.get("/api/books/{book_id}")
++ @app.get("/book/{book_id}")
 + def get_book(book_id: int):
 +     if book_id == book["id"]:
 +         return book
@@ -850,7 +920,7 @@ book = {
 }
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     if book_id == book["id"]:
         return book
@@ -869,7 +939,7 @@ def get_book(book_id: int):
 Örneğin aşağıdaki yerleşim **geçersizdir**:
 
 ```python
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 
 book = {
     "id": 42,
@@ -918,13 +988,13 @@ Kapanış tamamlandığında aynı terminal yeniden `(api-env) ... $` komut iste
 python -m uvicorn server:app
 ```
 
-`/api/books/99` artık tanımlı yol kalıbıyla eşleşir; fonksiyon çalışır ve kitabı bulamadığı için bilinçli olarak şu gövdeyi döndürür:
+`/book/99` artık tanımlı yol kalıbıyla eşleşir; fonksiyon çalışır ve kitabı bulamadığı için bilinçli olarak şu gövdeyi döndürür:
 
 ```json
 {"detail": "Book not found"}
 ```
 
-`/api/books/42` isteğinde ise `book_id` değeri `42` olur ve kitap `200` ile döner.
+`/book/42` isteğinde ise `book_id` değeri `42` olur ve kitap `200` ile döner.
 
 ### Deneyin sonucu
 
@@ -938,7 +1008,7 @@ python -m uvicorn server:app
 
 | Soru | Doğrudan Python fonksiyonu çağırırsak | Bu dersteki HTTP API'yi kullanırsak |
 |---|---|---|
-| Kitap nasıl istenir? | `get_book(42)` çağrısıyla. | Sunucuya `GET /api/books/42` isteği gönderilerek. |
+| Kitap nasıl istenir? | `get_book(42)` çağrısıyla. | Sunucuya `GET /book/42` isteği gönderilerek. |
 | İşlemi yapan kod nerede çalışır? | Fonksiyonu çağıran programın Python sürecinde. | Bağımsız çalışan sunucu sürecinde. |
 | Çağıran kod neyi bilmelidir? | Hangi Python fonksiyonunu, hangi parametrelerle çağıracağını. | Sunucu adresini, HTTP metodunu, adres yolunu ve yanıt biçimini. |
 | Sonuç nasıl alınır? | Fonksiyonun `return` ettiği Python değeri doğrudan alınır. | HTTP yanıtı alınır; bu örnekte JSON gövdesi Python verisine dönüştürülür. |
@@ -1011,7 +1081,7 @@ Bu derste bu anlaşmayı şu şekilde kurduk:
 | API'nin belirlediği bilgi | Kitap örneğimizdeki karşılığı |
 |---|---|
 | Hangi işlem istenebilir? | Kimliği verilen kitabın bilgisini almak. |
-| İstek nasıl gönderilir? | `GET /api/books/{book_id}` yoluyla. |
+| İstek nasıl gönderilir? | `GET /book/{book_id}` yoluyla. |
 | Hangi girdi verilir? | Adres yolundaki kitap kimliği. |
 | Başarılı sonuç nasıl bildirilir? | `200` durum kodu ve kitap bilgilerini içeren JSON gövdesiyle. |
 | Kitap bulunamazsa ne olur? | `404` durum kodu ve hata açıklamasını içeren JSON gövdesiyle. |
@@ -1079,7 +1149,7 @@ Tek kaynak yanıtıyla koleksiyon yanıtının farklı JSON yapılarına sahip o
 +     {"id": 57, ...}
 + ]
 +
-+ @app.get("/api/books")
++ @app.get("/book")
 + def get_books():
 +     return books
 ...
@@ -1109,12 +1179,12 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books():
     return books
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1123,13 +1193,13 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 ```
 
-Sunucuyu yeniden başlat. İstemcinin adresini `/api/books` olarak değiştir ve gelen listeyi döngüyle işle.
+Sunucuyu yeniden başlat. İstemcinin adresini `/book` olarak değiştir ve gelen listeyi döngüyle işle.
 
 ### Değişen satırlar
 
 ```diff
-- response = httpx.get("http://127.0.0.1:8000/api/books/99")
-+ response = httpx.get("http://127.0.0.1:8000/api/books")
+- response = httpx.get("http://127.0.0.1:8000/book/99")
++ response = httpx.get("http://127.0.0.1:8000/book")
 ...
 -     book = response.json()
 -     print("Book title:", book["title"])
@@ -1145,7 +1215,7 @@ Sunucuyu yeniden başlat. İstemcinin adresini `/api/books` olarak değiştir ve
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books")
+response = httpx.get("http://127.0.0.1:8000/book")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -1168,8 +1238,8 @@ else:
 
 | İstek | JSON gövdesi | Python karşılığı |
 |---|---|---|
-| `GET /api/books/57` | `{...}` | Sözlük |
-| `GET /api/books` | `[{...}, {...}]` | Sözlüklerden oluşan liste |
+| `GET /book/57` | `{...}` | Sözlük |
+| `GET /book` | `[{...}, {...}]` | Sözlüklerden oluşan liste |
 
 Sunucu listeyi gönderir; `len(books)` ile kitap sayısını istemci hesaplar.
 
@@ -1188,10 +1258,12 @@ Python'daki `True` ve `False`, FastAPI tarafından JSON'daki `true` ve `false` d
 #### Değişen satırlar
 
 ```diff
-      "author": "Deniz Kaya",
+-     "author": "Deniz Kaya"
++     "author": "Deniz Kaya",
 +     "available": True
 ...
-      "author": "Ece Yılmaz",
+-     "author": "Ece Yılmaz"
++     "author": "Ece Yılmaz",
 +     "available": False
 ```
 
@@ -1218,12 +1290,12 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books():
     return books
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1250,7 +1322,7 @@ Sunucuyu yeniden başlat. Ardından istemciye görünüm kuralını ekle.
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books")
+response = httpx.get("http://127.0.0.1:8000/book")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -1284,10 +1356,12 @@ else:
 #### Değişen satırlar
 
 ```diff
-      "available": True,
+-     "available": True
++     "available": True,
 +     "tags": ["software", "education"]
 ...
-      "available": False,
+-     "available": False
++     "available": False,
 +     "tags": []
 ```
 
@@ -1316,12 +1390,12 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books():
     return books
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1349,7 +1423,7 @@ def get_book(book_id: int):
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books")
+response = httpx.get("http://127.0.0.1:8000/book")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -1392,10 +1466,12 @@ Bizim API sözleşmemizde `None` henüz puan verilmediğini, `0` ise verilmiş s
 #### Değişen satırlar
 
 ```diff
-      "tags": ["software", "education"],
+-     "tags": ["software", "education"]
++     "tags": ["software", "education"],
 +     "rating": None
 ...
-      "tags": [],
+-     "tags": []
++     "tags": [],
 +     "rating": 0
 ```
 
@@ -1426,12 +1502,12 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books():
     return books
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1457,7 +1533,7 @@ def get_book(book_id: int):
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books")
+response = httpx.get("http://127.0.0.1:8000/book")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -1553,12 +1629,12 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books():
     return books
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1583,7 +1659,7 @@ def get_book(book_id: int):
 ```python
 import httpx
 
-response = httpx.get("http://127.0.0.1:8000/api/books")
+response = httpx.get("http://127.0.0.1:8000/book")
 
 print("Status code:", response.status_code)
 print("Response body:", response.text)
@@ -1630,7 +1706,7 @@ else:
 
 ### Ne yapıyoruz?
 
-İstemci `/api/books?search=API` isteğini gönderiyor. Sunucu `search` değerini kitapların yalnızca `title` alanında arıyor.
+İstemci `/book?search=API` isteğini gönderiyor. Sunucu `search` değerini kitapların yalnızca `title` alanında arıyor.
 
 ### Neden yapıyoruz?
 
@@ -1639,7 +1715,7 @@ else:
 ### Sunucudaki değişen satırlar
 
 ```diff
-  @app.get("/api/books")
+  @app.get("/book")
 - def get_books():
 -     return books
 + def get_books(search: str = ""):
@@ -1677,7 +1753,7 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books(search: str = ""):
     results = []
 
@@ -1688,7 +1764,7 @@ def get_books(search: str = ""):
     return results
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -1700,9 +1776,9 @@ def get_book(book_id: int):
 ### İstemcideki değişen satırlar
 
 ```diff
-- response = httpx.get("http://127.0.0.1:8000/api/books")
+- response = httpx.get("http://127.0.0.1:8000/book")
 + response = httpx.get(
-+     "http://127.0.0.1:8000/api/books",
++     "http://127.0.0.1:8000/book",
 +     params={"search": "API"}
 + )
 + print("Request URL:", response.request.url)
@@ -1714,7 +1790,7 @@ def get_book(book_id: int):
 import httpx
 
 response = httpx.get(
-    "http://127.0.0.1:8000/api/books",
+    "http://127.0.0.1:8000/book",
     params={"search": "API"}
 )
 
@@ -1777,12 +1853,12 @@ else:
 | `search: str = ""` | Boş metin kullanılır; mevcut kod bütün kitapları döndürür. |
 | `search: str` veya `search` | FastAPI **422** yanıtı verir. 422, sunucunun isteği aldığı ancak gönderilen bilgiler beklenen koşulları karşılamadığı için işleyemediği anlamına gelen HTTP durum kodudur. |
 
-**Soru: `search`, `@app.get("/api/books")` içinde yok. FastAPI onu nasıl görüyor?**
+**Soru: `search`, `@app.get("/book")` içinde yok. FastAPI onu nasıl görüyor?**
 
 Dekoratör, altındaki fonksiyonu FastAPI'ye kaydeder. FastAPI hem yolu hem de fonksiyonun parametrelerini inceler; bunun için fonksiyonun gövdesini çalıştırması gerekmez.
 
 ```python
-@app.get("/api/books")       # İsteğin yolu
+@app.get("/book")       # İsteğin yolu
 def get_books(search):     # Fonksiyonun istediği parametre
 ```
 
@@ -1819,7 +1895,7 @@ Koleksiyonda sıfır eşleşmenin, belirli bir kitabın bulunamamasından farkl�
 import httpx
 
 response = httpx.get(
-    "http://127.0.0.1:8000/api/books",
+    "http://127.0.0.1:8000/book",
     params={"search": "astronomy"}
 )
 
@@ -1875,7 +1951,7 @@ Book count: 0
 No books matched your search.
 ```
 
-**Sonuç:** Arama başarıyla tamamlanmıştır; yalnızca eşleşen kayıt yoktur. Tek kitap işleminde `/api/books/999` belirli bir kaynağı hedefler ve kaynak yoksa `404` döner.
+**Sonuç:** Arama başarıyla tamamlanmıştır; yalnızca eşleşen kayıt yoktur. Tek kitap işleminde `/book/999` belirli bir kaynağı hedefler ve kaynak yoksa `404` döner.
 
 - **“Başlığında şu kelime geçen kitapları bul.”** → Hiç eşleşme olmasa da **200 + boş liste**.
 - **“Kimliği 999 olan kitabı getir.”** → O kitap yoksa **404**; varsa **200 + kitabın bilgileri**.
@@ -1909,7 +1985,7 @@ No books matched your search.
 import httpx
 
 response = httpx.get(
-    "http://127.0.0.1:8000/api/books",
+    "http://127.0.0.1:8000/book",
     params={"search": "API"},
     headers={"Accept": "application/json"}
 )
@@ -1981,7 +2057,7 @@ Sunucunun yanıtındaki `Content-Type: application/json` ise **“Gönderdiğim 
 Başlık aramasıyla ödünç alınabilirlik filtresini birlikte sunuyoruz:
 
 ```text
-/api/books?search=API&available=true
+/book?search=API&available=true
 ```
 
 ### Neden yapıyoruz?
@@ -2031,7 +2107,7 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books(search: str = "", available: bool | None = None):
     results = []
 
@@ -2047,7 +2123,7 @@ def get_books(search: str = "", available: bool | None = None):
     return results
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -2072,7 +2148,7 @@ def get_book(book_id: int):
 import httpx
 
 response = httpx.get(
-    "http://127.0.0.1:8000/api/books",
+    "http://127.0.0.1:8000/book",
     params={
         "search": "API",
         "available": "true"
@@ -2260,7 +2336,7 @@ import httpx
 
 try:
     response = httpx.get(
-        "http://127.0.0.1:8000/api/books",
+        "http://127.0.0.1:8000/book",
         params={
             "search": "API",
             "available": "true"
@@ -2333,16 +2409,16 @@ Bu mesaj bağlantıyı düzeltmez; istemcinin sorunu anlaşılır biçimde bildi
 
 | İstek | Ne istiyoruz? |
 |---|---|
-| `/api/books/57` | Kimliği 57 olan kitabı getir. |
-| `/api/books/999` | Kimliği 999 olan kitabı getir; listemizde böyle bir kitap yok. |
-| `/api/books/abc` | Kitap kimliği yerine `abc` gönderiyoruz; sunucu tam sayı bekliyor. |
-| `/api/books/latest` | Bu deneyde ekleyeceğimiz fonksiyonla listedeki son kitabı getir. |
+| `/book/57` | Kimliği 57 olan kitabı getir. |
+| `/book/999` | Kimliği 999 olan kitabı getir; listemizde böyle bir kitap yok. |
+| `/book/abc` | Kitap kimliği yerine `abc` gönderiyoruz; sunucu tam sayı bekliyor. |
+| `/book/latest` | Bu deneyde ekleyeceğimiz fonksiyonla listedeki son kitabı getir. |
 
 `latest`, İngilizcede “en son” demektir. Bu örnekte listedeki son kaydı döndüreceğiz; tarihe göre bir sıralama yapmayacağız.
 
 ### 1. `server.py` dosyasını hazırla
 
-`server.py` dosyasının içeriğini aşağıdaki kodla değiştir ve **Ctrl+S** ile kaydet. Önceki kitap bilgileri ve arama fonksiyonu burada da var. Eklediğimiz yeni işlem `/api/books/latest` yoludur.
+`server.py` dosyasının içeriğini aşağıdaki kodla değiştir ve **Ctrl+S** ile kaydet. Önceki kitap bilgileri ve arama fonksiyonu burada da var. Eklediğimiz yeni işlem `/book/latest` yoludur.
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -2369,7 +2445,7 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books(search: str = "", available: bool | None = None):
     results = []
 
@@ -2385,12 +2461,12 @@ def get_books(search: str = "", available: bool | None = None):
     return results
 
 
-@app.get("/api/books/latest")
+@app.get("/book/latest")
 def get_latest_book():
     return books[-1]
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -2414,7 +2490,7 @@ Bu deneyde durum kodunu ve yanıt gövdesini görmek yeterli. `client.py` dosyas
 ```python
 import httpx
 
-path = "/api/books/57"
+path = "/book/57"
 
 try:
     response = httpx.get("http://127.0.0.1:8000" + path)
@@ -2442,10 +2518,10 @@ Her denemede `client.py` içindeki **`path = ...` satırını** aşağıdaki sat
 
 | İstemcide kullanılacak satır | Durum kodu | Yanıt ve nedeni |
 |---|---|---|
-| `path = "/api/books/57"` | `200` | 57 numaralı kitabın bilgileri gelir. `get_book` çalışır ve kitabı bulur. |
-| `path = "/api/books/999"` | `404` | `{"detail":"Book not found"}` gelir. `get_book` çalışır; kitap bulunamadığı için `raise HTTPException(...)` satırına ulaşır. |
-| `path = "/api/books/abc"` | `422` | Yanıt, `book_id` değerinin tam sayıya çevrilemediğini bildirir. FastAPI `get_book` fonksiyonunu çağırmadan yanıt verir. |
-| `path = "/api/books/latest"` | `200` | `get_latest_book` çalışır; listedeki son kitabın, yani 57 numaralı kitabın bilgileri gelir. |
+| `path = "/book/57"` | `200` | 57 numaralı kitabın bilgileri gelir. `get_book` çalışır ve kitabı bulur. |
+| `path = "/book/999"` | `404` | `{"detail":"Book not found"}` gelir. `get_book` çalışır; kitap bulunamadığı için `raise HTTPException(...)` satırına ulaşır. |
+| `path = "/book/abc"` | `422` | Yanıt, `book_id` değerinin tam sayıya çevrilemediğini bildirir. FastAPI `get_book` fonksiyonunu çağırmadan yanıt verir. |
+| `path = "/book/latest"` | `200` | `get_latest_book` çalışır; listedeki son kitabın, yani 57 numaralı kitabın bilgileri gelir. |
 
 `abc` isteğinin hata gövdesinde `"loc":["path","book_id"]` ve `"input":"abc"` gibi bilgiler görürsün. Bunlar sorunun URL yolundaki `book_id` değerinde olduğunu gösterir. Hata metninin ayrıntıları sürüme göre değişebilir.
 
@@ -2454,7 +2530,7 @@ Her denemede `client.py` içindeki **`path = ...` satırını** aşağıdaki sat
 Şimdi yalnızca `server.py` dosyasının sonundaki **`get_latest_book` ve `get_book` fonksiyonlarını, üstlerindeki dekoratörlerle birlikte** aşağıdaki blokla değiştir. Aynı fonksiyonları dosyaya ikinci kez ekleme. `books` listesi ve `get_books` fonksiyonu aynı kalacak.
 
 ```python
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -2463,7 +2539,7 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 
 
-@app.get("/api/books/latest")
+@app.get("/book/latest")
 def get_latest_book():
     return books[-1]
 ```
@@ -2477,7 +2553,7 @@ python -m uvicorn server:app
 İstemcide şu satırın bulunduğundan emin ol:
 
 ```python
-path = "/api/books/latest"
+path = "/book/latest"
 ```
 
 İstemci dosyasını kaydet ve ikinci terminalde yeniden çalıştır:
@@ -2490,17 +2566,17 @@ Bu kez **`Status code: 422`** görmelisin. Hata gövdesi `latest` değerinin tam
 
 | Adım | Ne oluyor? |
 |---|---|
-| Yol seçiliyor. | FastAPI yolları kayıt sırasıyla kontrol eder. Önce gelen `/api/books/{book_id}`, `/api/books/latest` isteğiyle eşleşir; `latest`, `book_id` için aday değer olur. |
+| Yol seçiliyor. | FastAPI yolları kayıt sırasıyla kontrol eder. Önce gelen `/book/{book_id}`, `/book/latest` isteğiyle eşleşir; `latest`, `book_id` için aday değer olur. |
 | Parametre kontrol ediliyor. | Fonksiyon `book_id: int` istediği için FastAPI `latest` metnini tam sayıya çevirmeyi dener. |
 | Dönüşüm başarısız oluyor. | 422 yanıtı verilir. `get_book` gövdesi çalışmaz; daha aşağıdaki `get_latest_book` fonksiyonuna da geçilmez. |
 
-**Yol eşleşmesi ile parametrenin tür kontrolü ayrı adımlardır.** `book_id: int` yazmak, yönlendirmenin `latest` sözcüğünü atlayıp sonraki yolu denemesini sağlamaz. Bu nedenle sabit `/api/books/latest` yolunu, onu da yakalayabilen `/api/books/{book_id}` yolundan önce tanımlarız. [FastAPI: yol sırası](https://fastapi.tiangolo.com/tutorial/path-params/#order-matters)
+**Yol eşleşmesi ile parametrenin tür kontrolü ayrı adımlardır.** `book_id: int` yazmak, yönlendirmenin `latest` sözcüğünü atlayıp sonraki yolu denemesini sağlamaz. Bu nedenle sabit `/book/latest` yolunu, onu da yakalayabilen `/book/{book_id}` yolundan önce tanımlarız. [FastAPI: yol sırası](https://fastapi.tiangolo.com/tutorial/path-params/#order-matters)
 
 ### 5. Doğru sıraya geri dön
 
-`get_latest_book` fonksiyonunu dekoratörüyle birlikte yeniden `get_book` fonksiyonunun üstüne taşı; ilk verdiğimiz tam `server.py` kodundaki sırayı kullan. Kaydet, sunucuyu **Ctrl+C** ile kapatıp aynı komutla yeniden başlat ve istemciyi tekrar çalıştır. `/api/books/latest` yeniden **200** döndürmelidir.
+`get_latest_book` fonksiyonunu dekoratörüyle birlikte yeniden `get_book` fonksiyonunun üstüne taşı; ilk verdiğimiz tam `server.py` kodundaki sırayı kullan. Kaydet, sunucuyu **Ctrl+C** ile kapatıp aynı komutla yeniden başlat ve istemciyi tekrar çalıştır. `/book/latest` yeniden **200** döndürmelidir.
 
-Mevcut `/api/books` ve `/api/books/{book_id}` yolları ise bu şekilde çakışmaz: ilkinin sonunda kitap kimliği için ek bir parça yoktur. `/api/books?search=API&available=true` isteğinde de yol `/api/books` olarak kalır; `?` sonrasındaki sorgu parametreleri `get_books` fonksiyonuna aktarılır.
+Mevcut `/book` ve `/book/{book_id}` yolları ise bu şekilde çakışmaz: ilkinin sonunda kitap kimliği için ek bir parça yoktur. `/book?search=API&available=true` isteğinde de yol `/book` olarak kalır; `?` sonrasındaki sorgu parametreleri `get_books` fonksiyonuna aktarılır.
 
 ## Son uygulama — Üçüncü kitabı ekle ve filtrele
 
@@ -2511,6 +2587,8 @@ Mevcut `/api/books` ve `/api/books/{book_id}` yolları ise bu şekilde çakışm
 ### Neden yapıyoruz?
 
 Haftanın veri türleri, sorgu parametreleri, koşulları ve istemci görünümü çalışmalarını tek çalışan örnekte birleştiriyoruz.
+
+Deney 14 sonunda sunucuda `/book/latest` işlemi, istemcide ise bu yolu deneyen kısa kod bulunuyor. Yönlendirme sırasını denemek için eklediğimiz `/latest` işlemini bu son örnekte kaldırıyoruz; kitap listesi ve kimlikle kitap bulma işlemleriyle devam ediyoruz.
 
 ### Sunucudaki değişen satırlar
 
@@ -2531,6 +2609,14 @@ Haftanın veri türleri, sorgu parametreleri, koşulları ve istemci görünüm�
 +         "tags": ["python", "api"],
 +         "rating": 4.5
       }
+  ]
+...
+- @app.get("/book/latest")
+- def get_latest_book():
+-     return books[-1]
+-
+-
+  @app.get("/book/{book_id}")
 ```
 
 ### Son `server.py` dosyasının tamamı
@@ -2577,7 +2663,7 @@ books = [
 ]
 
 
-@app.get("/api/books")
+@app.get("/book")
 def get_books(search: str = "", available: bool | None = None):
     results = []
 
@@ -2593,7 +2679,7 @@ def get_books(search: str = "", available: bool | None = None):
     return results
 
 
-@app.get("/api/books/{book_id}")
+@app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
         if book["id"] == book_id:
@@ -2602,15 +2688,9 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 ```
 
-### İstemcideki değişen satırlar
+### İstemciyi son uygulamaya hazırla
 
-```diff
-      params={
--         "search": "API",
-+         "search": "Python",
-          "available": "true"
-      },
-```
+Deney 14'teki `path = "/book/latest"` satırını içeren kısa istemciyi, aşağıdaki tam `client.py` koduyla değiştir. Bu sürüm `/book` yoluna `search=Python` ve `available=true` sorgu parametrelerini gönderir; gelen kitap listesindeki bilgileri terminalde gösterir.
 
 ### Son `client.py` dosyasının tamamı
 
@@ -2619,7 +2699,7 @@ import httpx
 
 try:
     response = httpx.get(
-        "http://127.0.0.1:8000/api/books",
+        "http://127.0.0.1:8000/book",
         params={
             "search": "Python",
             "available": "true"
@@ -2674,6 +2754,8 @@ else:
     else:
         print("Book information could not be retrieved.")
 ```
+
+İki dosyayı **Ctrl+S** ile kaydet. Sunucu terminalinde **Ctrl+C** ile sunucuyu kapatıp `python -m uvicorn server:app` komutuyla yeniden başlat. Ardından ikinci terminalde `python client.py` çalıştır.
 
 Beklenen temel sonuç:
 
@@ -2743,15 +2825,15 @@ Yalnızca `client.py` değiştiyse sunucuyu yeniden başlatmaya gerek yoktur.
 ### Sorular
 
 1. `client.py` ve `server.py` hangi rolleri üstlenir? Uvicorn'un görevi nedir?
-2. `GET /api/books/57` içinde `GET` ve `57` ayrı ayrı neyi belirtir?
+2. `GET /book/57` içinde `GET` ve `57` ayrı ayrı neyi belirtir?
 3. `404` ile `httpx.ConnectError` arasındaki temel fark nedir?
 4. `false`, `null` ve `0` neden aynı kabul edilmemelidir?
 5. `search=Python` parametresi mevcut sunucu kodunda hangi alanda aranır? Yalnızca `tags` içinde `python` bulunması yeterli midir?
 6. URL'deki `&` ile Python kodundaki `and` ne iş yapar?
-7. `/api/books?search=astronomy` neden `200` ve `[]`; `/api/books/999` neden `404` döndürür?
-8. `/api/books/abc` neden `404` yerine `422` döndürebilir?
+7. `/book?search=astronomy` neden `200` ve `[]`; `/book/999` neden `404` döndürür?
+8. `/book/abc` neden `404` yerine `422` döndürebilir?
 9. `Accept` ile `Content-Type` başlıklarını hangi taraf gönderir ve ne anlatırlar?
-10. `GET /api/books?search=Python&available=true` isteğinden kitabın terminalde görünmesine kadar süreci altı kısa adımda anlat.
+10. `GET /book?search=Python&available=true` isteğinden kitabın terminalde görünmesine kadar süreci altı kısa adımda anlat.
 
 ### Cevapları değerlendirirken aranacak noktalar
 
