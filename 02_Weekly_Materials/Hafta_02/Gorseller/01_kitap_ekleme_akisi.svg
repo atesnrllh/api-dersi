@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="1410" viewBox="0 0 2100 1410" role="img" aria-labelledby="title desc">
+<title id="title">Yeni kitap ekleme: POST, yanıt ve ayrı GET isteği</title>
+<desc id="desc">Altı adım: HTTPX ile POST gönderilir. Uvicorn isteği FastAPI uygulamasına iletir. FastAPI, Pydantic modeliyle veriyi doğrular. Sunucu kodu books listesine kayıt ekler. 201 ve Location yanıtından sonra istemci açıkça yeni bir GET isteği gönderir.</desc>
+<rect width="2100" height="1410" fill="#F6F8FC"/>
+<defs>
+<marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#1E5CD8"/></marker>
+<marker id="arrow-teal" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#087D72"/></marker>
+<marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 Z" fill="#7844AD"/></marker>
+</defs>
+<text x="60" y="78" font-family="Segoe UI, Arial, sans-serif" font-size="47" font-weight="700" fill="#162C4B" text-anchor="start">Yeni kitap ekleme: istekten kayıtlı kitaba</text>
+<text x="60" y="128" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="400" fill="#516178" text-anchor="start">Başarılı örnek: yeni kitaba 74 kimliği verilir. Kartları 1 → 6 sırasıyla oku.</text>
+<rect x="60" y="184" width="590" height="465" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<rect x="755" y="184" width="590" height="465" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<rect x="1450" y="184" width="590" height="465" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<rect x="60" y="742" width="590" height="418" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<rect x="755" y="742" width="590" height="418" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<rect x="1450" y="742" width="590" height="418" rx="20" fill="white" stroke="#D6DFED" stroke-width="2"/>
+<circle cx="101" cy="230" r="23" fill="#1E5CD8"/>
+<text x="101" y="238" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">1</text>
+<text x="139" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#162C4B" text-anchor="start">İstemci POST gönderir</text>
+<text x="87" y="294" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">client.py</text>
+<rect x="85" y="317" width="540" height="203" rx="13" fill="#F1F5FC" stroke="#D6DFED" stroke-width="2"/>
+<text x="105" y="356" font-family="Consolas, monospace" font-size="24" font-weight="400" fill="#162C4B" text-anchor="start">response = httpx.post(</text>
+<text x="105" y="399" font-family="Consolas, monospace" font-size="24" font-weight="400" fill="#162C4B" text-anchor="start">    base_url + &quot;/book&quot;,</text>
+<text x="105" y="442" font-family="Consolas, monospace" font-size="24" font-weight="400" fill="#162C4B" text-anchor="start">    json=new_book</text>
+<text x="105" y="485" font-family="Consolas, monospace" font-size="24" font-weight="400" fill="#162C4B" text-anchor="start">)</text>
+<text x="87" y="568" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">HTTPX, new_book verisini JSON olarak</text>
+<text x="87" y="604" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">POST /book isteğinin gövdesine koyar.</text>
+<line x1="667" y1="410" x2="733" y2="410" stroke="#1E5CD8" stroke-width="4" marker-end="url(#arrow-blue)"/>
+<circle cx="796" cy="230" r="23" fill="#1E5CD8"/>
+<text x="796" y="238" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">2</text>
+<text x="834" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#162C4B" text-anchor="start">Sunucu isteği alır</text>
+<text x="782" y="306" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#1E5CD8" text-anchor="start">Uvicorn → FastAPI uygulaması</text>
+<rect x="781" y="343" width="538" height="121" rx="13" fill="#F1F5FC" stroke="#D6DFED" stroke-width="2"/>
+<text x="803" y="383" font-family="Consolas, monospace" font-size="25" font-weight="400" fill="#162C4B" text-anchor="start">POST /book</text>
+<text x="803" y="426" font-family="Consolas, monospace" font-size="25" font-weight="400" fill="#162C4B" text-anchor="start">JSON gövdesi → BookCreate</text>
+<text x="782" y="513" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">FastAPI, BookCreate kurallarına göre</text>
+<text x="782" y="551" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">Pydantic ile veriyi kontrol eder.</text>
+<text x="782" y="589" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">Veri uygunsa create_book() çalışır.</text>
+<line x1="1362" y1="410" x2="1428" y2="410" stroke="#1E5CD8" stroke-width="4" marker-end="url(#arrow-blue)"/>
+<circle cx="1491" cy="230" r="23" fill="#1E5CD8"/>
+<text x="1491" y="238" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">3</text>
+<text x="1529" y="240" font-family="Segoe UI, Arial, sans-serif" font-size="29" font-weight="700" fill="#162C4B" text-anchor="start">Kod kaydı listeye ekler</text>
+<text x="1477" y="291" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">server.py içindeki ilgili satırlar</text>
+<rect x="1475" y="312" width="540" height="273" rx="13" fill="#F1F5FC" stroke="#D6DFED" stroke-width="2"/>
+<text x="1492" y="350" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">@app.post(&quot;/book&quot;, status_code=201)</text>
+<text x="1492" y="384" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">def create_book(</text>
+<text x="1492" y="418" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    book_data: BookCreate,</text>
+<text x="1492" y="452" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    response: Response</text>
+<text x="1492" y="486" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">):</text>
+<text x="1492" y="520" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    ...</text>
+<text x="1492" y="554" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    books.append(new_book)</text>
+<text x="1477" y="621" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="600" fill="#087D72" text-anchor="start">Yeni kimlik: 74 · Listenin yeri: sunucu belleği</text>
+<line x1="1745" y1="668" x2="1745" y2="723" stroke="#1E5CD8" stroke-width="4" marker-end="url(#arrow-blue)"/>
+<text x="1715" y="703" font-family="Segoe UI, Arial, sans-serif" font-size="23" font-weight="600" fill="#087D72" text-anchor="end">Yanıt</text>
+<circle cx="1491" cy="788" r="23" fill="#087D72"/>
+<text x="1491" y="796" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">4</text>
+<text x="1529" y="798" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#162C4B" text-anchor="start">Sunucu yanıt verir</text>
+<rect x="1475" y="837" width="540" height="174" rx="13" fill="#E9F6F1" stroke="#B9DDCF" stroke-width="2"/>
+<text x="1495" y="880" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#087D72" text-anchor="start">201 Created</text>
+<text x="1495" y="914" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#087D72" text-anchor="start">Location: /book/74</text>
+<text x="1495" y="948" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#087D72" text-anchor="start"></text>
+<text x="1495" y="982" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#087D72" text-anchor="start">{&quot;id&quot;: 74}</text>
+<text x="1477" y="1060" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="400" fill="#516178" text-anchor="start">JSON gövdesinin yalnızca id alanı</text>
+<text x="1477" y="1096" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="400" fill="#516178" text-anchor="start">gösterildi; yanıtta yeni kitabın bilgileri var.</text>
+<line x1="1428" y1="937" x2="1362" y2="937" stroke="#087D72" stroke-width="4" marker-end="url(#arrow-teal)"/>
+<circle cx="796" cy="788" r="23" fill="#087D72"/>
+<text x="796" y="796" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">5</text>
+<text x="834" y="798" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#162C4B" text-anchor="start">İstemci ayrı bir GET gönderir</text>
+<text x="782" y="847" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">client.py</text>
+<rect x="781" y="871" width="538" height="166" rx="13" fill="#F1F5FC" stroke="#D6DFED" stroke-width="2"/>
+<text x="798" y="909" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">location = response.headers[&quot;Location&quot;]</text>
+<text x="798" y="943" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">book_response = httpx.get(</text>
+<text x="798" y="977" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">    base_url + location</text>
+<text x="798" y="1011" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">)</text>
+<text x="782" y="1093" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="600" fill="#087D72" text-anchor="start">Bu ikinci isteği httpx.get(...) başlatır.</text>
+<line x1="733" y1="937" x2="667" y2="937" stroke="#087D72" stroke-width="4" marker-end="url(#arrow-teal)"/>
+<circle cx="101" cy="788" r="23" fill="#087D72"/>
+<text x="101" y="796" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="700" fill="white" text-anchor="middle">6</text>
+<text x="139" y="798" font-family="Segoe UI, Arial, sans-serif" font-size="29" font-weight="700" fill="#162C4B" text-anchor="start">Eklenen kitap geri alınır</text>
+<rect x="85" y="837" width="540" height="147" rx="13" fill="#E9F6F1" stroke="#B9DDCF" stroke-width="2"/>
+<text x="105" y="881" font-family="Consolas, monospace" font-size="25" font-weight="400" fill="#087D72" text-anchor="start">GET /book/74</text>
+<text x="105" y="920" font-family="Consolas, monospace" font-size="25" font-weight="400" fill="#087D72" text-anchor="start">200 OK</text>
+<text x="105" y="959" font-family="Consolas, monospace" font-size="25" font-weight="400" fill="#087D72" text-anchor="start">JSON: kayıtlı kitabın bilgileri</text>
+<text x="87" y="1032" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">Sunucu, books listesindeki 74 numaralı</text>
+<text x="87" y="1069" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">kaydı bulur ve istemciye gönderir.</text>
+<rect x="60" y="1208" width="1980" height="147" rx="20" fill="#FFFFFF" stroke="#D6DFED" stroke-width="2"/>
+<text x="91" y="1256" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#162C4B" text-anchor="start">POST / 201: Kaydı oluşturan, sunucudaki books.append(new_book) satırıdır. 201 yalnızca sonucu bildirir.</text>
+<text x="91" y="1298" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#162C4B" text-anchor="start">Location: Yeni kaydın yolunu bildirir. Bu başlık kendi başına GET isteği göndermez.</text>
+<text x="91" y="1333" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">Kod parçaları işlemin ilgili satırlarını gösterir; tam programlar Practice notundadır.</text>
+</svg>
