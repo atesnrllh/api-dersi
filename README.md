@@ -16,10 +16,10 @@ Haftalık plan ile teknoloji tablosu ayrı tutulur. Haftalık plana araç sütun
 
 | Hafta | Teorik ders notu | Uygulama föyü |
 |---|---|---|
-| 01 | [API temelleri, istemci–sunucu mimarisi ve JSON](02_Haftalik_Materyaller/Hafta_01/01_Teorik_Ders_Notu.md) — üzerinde çalışılıyor | [İlk kitap kataloğu API'si](02_Haftalik_Materyaller/Hafta_01/02_Practice.md) — üzerinde çalışılıyor; VS Code'da Python sunucusu ve istemcisiyle yönlendirilmiş çalışma |
+| 01 | [API temelleri, istemci–sunucu mimarisi ve JSON](02_Haftalik_Materyaller/Hafta_01/01_Lecture_Notes.md) — üzerinde çalışılıyor | [İlk kitap kataloğu API'si](02_Haftalik_Materyaller/Hafta_01/02_Practice.md) — üzerinde çalışılıyor; VS Code'da Python sunucusu ve istemcisiyle yönlendirilmiş çalışma |
 | 02 | [HTTP istek–yanıt yapısı, metotlar, başlıklar ve durum kodları](02_Haftalik_Materyaller/Hafta_02/01_Teorik_Ders_Notu.md) — üzerinde çalışılıyor | [Kitap kataloğunda HTTP deneyleri](02_Haftalik_Materyaller/Hafta_02/02_Uygulama_Foyu.md) — üzerinde çalışılıyor; Postman ve HTTPX ile GET/POST çalışması |
 
-İlk haftanın teorik notu açıklamalar, beş şema, örnekler ve cevaplı değerlendirme soruları içerir. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
+İlk haftanın teorik notu, uygulamadaki kitap örneğini dokuz bölümde kısa açıklamalar, kod örnekleri ve üç görselle anlatır. Görseller notun yanındaki `Gorseller` klasöründe saklanır; Markdown belgeleri ve görseller birlikte sürüm takibine alınır.
 
 İkinci hafta birinci haftanın üç kitaplı son sürümünü sürdürür. Teori, “yeni kitabı istemciden nasıl ekleriz?” ihtiyacından hareket eder. Uygulamada gövdeyi almak, kaydetmek ve yanıtı istemcide yorumlamak ayrı gözlemlerle ilerler. POST ve `Location`, tekrar gönderim ve hatalı gövde deneyleri aynı kitapla çalışılır. Föy, her kod değişikliğinde tam dosyayı; her deneyde amaç, teori bağlantısı, başlangıç durumu, beklenen sonuç ve gerekçeli kontrol sorusu verir. PUT/PATCH/DELETE teorinin başvuru bölümündedir; uygulanmaları dördüncü haftadadır.
 
@@ -40,7 +40,11 @@ API/
 │   └── 03_Ders_Isleme_Yaklasimi.md
 ├── 01_Kurulum_Rehberleri/
 ├── 02_Haftalik_Materyaller/
-│   └── Hafta_01/ ... Hafta_14/
+│   ├── Hafta_01/
+│   │   ├── 01_Lecture_Notes.md
+│   │   ├── 02_Practice.md
+│   │   └── Gorseller/
+│   └── Hafta_02/ ... Hafta_14/
 │       ├── 01_Teorik_Ders_Notu.md
 │       ├── 02_Uygulama_Foyu.md
 │       └── Gorseller/
