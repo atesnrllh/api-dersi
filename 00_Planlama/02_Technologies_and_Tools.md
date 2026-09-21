@@ -1,38 +1,21 @@
 # Kullanılacak Teknolojiler ve Araçlar
 
-**Ana yapı:** Python + FastAPI + PostgreSQL. Araçlar ihtiyaç duyuldukları haftada tanıtılır; hepsi ilk derste kurulup öğretilmez.
+**Ana yapı:** Python + FastAPI + PostgreSQL
 
-## İlk iki haftada kullanılanlar
-
-| Araç | Görevi |
-|---|---|
-| **Python 3.10 veya üzeri** | Sunucu ve istemci kodunu yazmak ve çalıştırmak. |
-| **VS Code + Python eklentisi** | Dosyaları düzenlemek; sunucu ve istemciyi iki terminalde çalıştırmak. |
-| **venv + uv** | Projeye özel `api-env` Python ortamını kullanmak ve paketleri bu ortama kurmak. |
-| **FastAPI** | Gelen HTTP isteğini yazdığımız fonksiyonla ilişkilendirmek ve yanıt hazırlamak. |
-| **Uvicorn** | FastAPI uygulamasını çalıştırıp HTTP bağlantılarını kabul etmek. |
-| **HTTPX** | `client.py` içinden önce GET, ikinci haftada POST göndermek ve yanıtı incelemek. |
-| **Pydantic 2** | İstek gövdesinin beklenen alanlarını ve türlerini tanımlamak. |
-
-İlk iki haftada aynı ortam, `server.py` ve `client.py` kullanılır. HTTPX ana istemcidir.
-
-## Dönem projesinde eklenecekler
-
-| Araç | Ne zaman ve ne için? |
-|---|---|
-| **Git + GitHub** | Üçüncü haftadan itibaren proje değişikliklerini kaydetmek ve çalışmayı paylaşmak. |
-| **OpenAPI + Swagger UI** | Üçüncü haftadan itibaren API işlemlerini ve modellerini incelemek; kullanım belgesini dönem boyunca geliştirmek. |
-| **PostgreSQL** | Altıncı haftadan itibaren proje kayıtlarını sunucu kapansa da korumak. Ana veritabanı dönem içinde değiştirilmez. |
-| **[SQLModel](https://sqlmodel.tiangolo.com/)** | Python modelleriyle veritabanındaki kayıtlar arasında çalışmak; mevcut ekleme, okuma, güncelleme ve silme işlemlerini veritabanına taşımak. |
-| **pytest + FastAPI TestClient** | Yedinci haftadan itibaren başarılı ve hatalı istekleri otomatik olarak kontrol etmek. |
-
-## Yardımcı araçlar ve ek çalışmalar
-
-- **Postman:** İkinci haftanın sonunda bilinen isteği farklı bir araçla gönderme; isteğe bağlı.
-- **curl:** Gerektiğinde terminalden kısa HTTP kontrolü.
-- **pgAdmin:** Veritabanındaki tablo ve kayıtları görsel olarak inceleme.
-- **Redis:** On ikinci haftada hazır ortamla geçici önbellek örneği. Kalıcı kayıtlar PostgreSQL'de kalır.
-
-## Ortam hazırlığı
-
-Veritabanı, kimlik doğrulama ve yayın için gerekli ortam önceden hazırlanır; verilen hazır kodun görevi açıklanır. Paket sürümleri, örnekler birlikte doğrulandıktan sonra sabitlenir. Kurulum ayrıntıları rehberlerde, kullanılacak komutlar uygulama föyünde yer alır. Haftalık sıra [Weekly Course Plan](01_Weekly_Course_Plan.md) belgesindedir.
+| İşlev | Seçilen araç | Dersteki kullanım amacı |
+|---|---|---|
+| **Programlama dili** | **Python 3.10 veya üzeri** | Sunucu ve istemci kodunu, veri işlemlerini ve erişim kontrollerini yazmak. |
+| **API geliştirme** | **FastAPI** | API işlemlerini tanımlamak, gelen HTTP isteklerini ilgili fonksiyonlarla karşılamak ve yanıt hazırlamak. |
+| **Uygulama sunucusu** | **Uvicorn** | FastAPI uygulamasını çalıştırmak ve HTTP bağlantılarını kabul etmek. |
+| **Veri modelleri ve doğrulama** | **Pydantic 2** | Verinin alanlarını, türlerini ve kabul edilecek değerlerini tanımlamak; gelen bilgileri bu kurallara göre kontrol etmek. |
+| **HTTP istemcisi ve harici API kullanımı** | **HTTPX** | Python kodundan kendi sunucumuza veya harici API'lere istek göndermek; yanıtları ve bağlantı hatalarını işlemek. |
+| **Elle API denemesi** | **Postman + curl** | Metot, adres, başlık ve gövdeyi belirleyerek HTTP istekleri göndermek ve yanıtları incelemek. |
+| **Kalıcı veri saklama** | **PostgreSQL** | Uygulamanın kayıtlarını kalıcı olarak saklamak ve ilişkili verilerle çalışmak. |
+| **Veritabanı erişimi / ORM** | **SQLModel** | Python modellerini veritabanı tablolarıyla ilişkilendirmek; kayıt ekleme, okuma, güncelleme ve silme işlemlerini yapmak. |
+| **Veritabanını inceleme ve sorgulama** | **pgAdmin** | Tabloları ve kayıtları incelemek, SQL sorguları çalıştırmak. |
+| **Önbellekleme** | **Redis** | Sık kullanılan verileri geçici saklamak; saklama süresini ve veri değiştiğinde önbelleğin yenilenmesini öğrenmek. |
+| **Otomatik test** | **pytest + FastAPI TestClient** | Başarılı işlemleri, hatalı girdileri ve yetkisiz erişimleri tekrar çalıştırılabilir testlerle kontrol etmek. |
+| **API tanımı ve dokümantasyon** | **OpenAPI + Swagger UI** | API işlemlerini ve veri modellerini belgelemek; etkileşimli dokümantasyon üzerinden istekleri denemek. |
+| **Sürüm takibi ve proje paylaşımı** | **Git + GitHub** | Kod değişikliklerini kaydetmek, önceki sürümlere dönmek ve projeyi paylaşmak. |
+| **Kod editörü ve hata ayıklama** | **VS Code + Python eklentisi** | Dosyaları düzenlemek, programları çalıştırmak ve hataları incelemek. |
+| **Paket ve çalışma ortamı yönetimi** | **venv + uv** | Projeye özel Python ortamı oluşturmak ve paketleri bu ortama kurmak. |
