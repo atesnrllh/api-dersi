@@ -70,7 +70,7 @@
 <text x="782" y="847" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">client.py</text>
 <rect x="781" y="871" width="538" height="166" rx="13" fill="#F1F5FC" stroke="#D6DFED" stroke-width="2"/>
 <text x="798" y="909" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">location = response.headers[&quot;Location&quot;]</text>
-<text x="798" y="943" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">book_response = httpx.get(</text>
+<text x="798" y="943" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">read_response = httpx.get(</text>
 <text x="798" y="977" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">    base_url + location</text>
 <text x="798" y="1011" font-family="Consolas, monospace" font-size="22" font-weight="400" fill="#162C4B" text-anchor="start">)</text>
 <text x="782" y="1093" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="600" fill="#087D72" text-anchor="start">Bu ikinci isteği httpx.get(...) başlatır.</text>
