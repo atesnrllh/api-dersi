@@ -4,6 +4,8 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 
 ## Ders materyalleri
 
+[Introduction — Hava durumu API'siyle başlangıç](01_Introduction/README.md) · [Projeksiyon notu](01_Introduction/projection.md)
+
 | Hafta | Konu | Practice | Lecture Notes |
 |---|---|---|---|
 | 01 | İlk kitap kataloğu API'si | [Practice](02_Weekly_Materials/Week_01/02_Practice.md) | [Lecture Notes](02_Weekly_Materials/Week_01/01_Lecture_Notes.md) |
