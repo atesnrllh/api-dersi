@@ -20,7 +20,7 @@ print("En yüksek sıcaklık:", weather["temperature_2m_max"][0], "°C")
 print("Günün en yüksek yağış olasılığı:", weather["precipitation_probability_max"][0], "%")
 
 
-if weather["precipitation_probability_max"][0] >= 50:
+if weather["precipitation_probability_max"][0] >= 2:
     print("Dışarı çıkarken yanına şemsiye al.")
 else:
-    print("Bugün için en yüksek yağış olasılığı %50'nin altında.")
+    print("Bugün için en yüksek yağış olasılığı %2'nin altında.")

@@ -4,7 +4,10 @@ Bu giriş dersinde önce Open-Meteo sitesinde Samsun'un sıcaklık ve yağış o
 
 - [Practice](02_Practice.md): Siteden başlayıp API yanıtına ve çalışan koda ilerleyen ders akışı.
 - [Lecture Notes](01_Lecture_Notes.md): Uygulamada gördüğümüz kavramların kısa açıklaması.
+- [Projection](projection.md): Sınıfta projeksiyonla izlenecek kısa ders akışı.
 - [client.py](client.py): Bugünün tahminini alan örnek program.
+
+`client.py` dosyasında şemsiye önerisini denemek için eşik %2 olarak bırakılmıştır. Ders notlarındaki örnek eşik %50'dir; bu değer programda seçtiğimiz bir kuraldır.
 
 ## Kodu çalıştırma
 
