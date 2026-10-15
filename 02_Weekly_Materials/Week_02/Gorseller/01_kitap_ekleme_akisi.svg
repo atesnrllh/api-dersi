@@ -49,7 +49,7 @@
 <text x="1492" y="452" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    response: Response</text>
 <text x="1492" y="486" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">):</text>
 <text x="1492" y="520" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    ...</text>
-<text x="1492" y="554" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    books.append(new_book)</text>
+<text x="1492" y="554" font-family="Consolas, monospace" font-size="23" font-weight="400" fill="#162C4B" text-anchor="start">    books.append(created_book)</text>
 <text x="1477" y="621" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="600" fill="#087D72" text-anchor="start">Yeni kimlik: 74 · Listenin yeri: sunucu belleği</text>
 <line x1="1745" y1="668" x2="1745" y2="723" stroke="#1E5CD8" stroke-width="4" marker-end="url(#arrow-blue)"/>
 <text x="1715" y="703" font-family="Segoe UI, Arial, sans-serif" font-size="23" font-weight="600" fill="#087D72" text-anchor="end">Yanıt</text>
@@ -85,7 +85,7 @@
 <text x="87" y="1032" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">Sunucu, books listesindeki 74 numaralı</text>
 <text x="87" y="1069" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="400" fill="#516178" text-anchor="start">kaydı bulur ve istemciye gönderir.</text>
 <rect x="60" y="1208" width="1980" height="147" rx="20" fill="#FFFFFF" stroke="#D6DFED" stroke-width="2"/>
-<text x="91" y="1256" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#162C4B" text-anchor="start">POST / 201: Kaydı oluşturan, sunucudaki books.append(new_book) satırıdır. 201 yalnızca sonucu bildirir.</text>
+<text x="91" y="1256" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#162C4B" text-anchor="start">POST / 201: Kaydı oluşturan, sunucudaki books.append(created_book) satırıdır. 201 yalnızca sonucu bildirir.</text>
 <text x="91" y="1298" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="600" fill="#162C4B" text-anchor="start">Location: Yeni kaydın yolunu bildirir. Bu başlık kendi başına GET isteği göndermez.</text>
 <text x="91" y="1333" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="400" fill="#516178" text-anchor="start">Kod parçaları işlemin ilgili satırlarını gösterir; tam programlar Practice notundadır.</text>
 </svg>

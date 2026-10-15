@@ -1,32 +1,54 @@
-# Hafta 02 — Practice
+# Hafta 02 — Uygulama Föyü
 
-## İstemciden yeni kitap eklemek: POST ve istek gövdesi
+## 0. Bu hafta ne yapacağız: İstemciden sunucuya yeni kitap göndermek
 
-Birinci haftanın sonunda kataloğumuzda üç kitap vardı. Üçüncü kitabı eklemek için `server.py` dosyasını açıp `books` listesine yeni bir sözlük yazmıştık.
+Birinci haftada kitapları yalnızca okuduk; üçüncü kitabı eklemek için `server.py` içindeki `books` listesini elle değiştirdik. Bu hafta kitabın bilgilerini istemciden göndereceğiz; sunucuda yazacağımız kod da kitabı listeye ekleyecek.
 
-**Bu hafta kitabın bilgilerini `client.py` dosyasına yazıp sunucuya göndereceğiz.** Bunun için **POST** adlı HTTP metodunu kullanacağız. Sunucuya, “Bu bilgilerle kataloğa yeni bir kitap ekle” isteğinde bulunacağız. Kitabı listeye ekleyecek fonksiyonu da `server.py` içinde yazacağız. Bu fonksiyonu hazırladıktan sonra her yeni kitap için sunucu dosyasındaki listeyi elle değiştirmemiz gerekmeyecek.
+Bu haftanın ek notları:
 
-Önce mevcut üç kitabı GET ile okuyacağız. Ardından yeni kitabın bilgilerinin sunucuya ulaştığını kontrol edecek, bir sonraki deneyde bu bilgileri listeye ekleyeceğiz. Sonraki deneylerde eklenen kitabı okuyacak; başlık eksik gönderildiğinde, aynı istek tekrarlandığında ve sunucu yeniden başlatıldığında ne olduğunu göreceğiz.
+- [İstemcinin ve sunucunun adresi](03_Supplement_Addresses.md)
+- [JSON'dan başka veri biçimleri](04_Supplement_Data_Formats.md)
+- [`Location` başlığı ne işe yarar?](05_Supplement_Location.md)
+- [Sunucunun sakladığı kayıt, gönderdiğimizden farklı olabilir](06_Supplement_Stored_Record.md)
+- [Durum kodunu kendimiz belirleyebilir miyiz?](07_Supplement_Status_Codes.md)
 
-## Başlamadan önce
+### 0.1 Bu haftanın sonunda neler yapabileceksin?
 
-Bu hafta sunucuya gönderilen kitap bilgilerinin kontrolü için **Pydantic** paketini kullanacağız. Örneğin, gönderilen bilgilerde kitap başlığının bulunmasını isteyeceğiz. Pydantic, FastAPI ile birlikte kurulur. Şu komutla sürümünü kontrol et:
+- POST isteğiyle, istek gövdesinde JSON gönderebileceksin.
+- Pydantic ile sunucunun kabul edeceği veri modelini tanımlayabileceksin.
+- Kayıt oluşturan bir işlemde `201` durum kodunu ve `Location` başlığını kullanabileceksin.
+- Eksik bilgi gönderildiğinde `422` yanıtını kimin ürettiğini açıklayabileceksin.
+- Aynı POST isteğini tekrarlamanın ve sunucuyu yeniden başlatmanın sonucunu açıklayabileceksin.
+
+### 0.2 Bu föy nasıl okunur?
+
+Her deney aynı sırayla ilerler: **Amaç → Kod → Çalıştır → Çıktı → Ana fikir.**
+
+Kod değiştiğinde ya dosyanın tamamı ya da yalnızca değişen kısım verilir. Hangisi olduğu kodun hemen üstünde yazar.
+
+> **Kitap sayılarını izlemek için:** Sunucu her başlatıldığında dosyada yazılı üç kitapla (`42`, `57`, `73`) başlar. İstekle eklenen kitaplar yalnızca sunucu çalıştığı sürece bellekte durur. Deneylerdeki "sunucuyu yeniden başlat" ve "bir kez çalıştır" adımlarını izlersen çıktıların föydekilerle aynı olur.
+
+### 0.3 Başlamadan önce: Pydantic 2 kurulu mu?
+
+Bu hafta sunucuya gelen kitap bilgilerini **Pydantic** ile kontrol edeceğiz. Pydantic, FastAPI ile birlikte kurulur. Ortam etkinken sürümünü kontrol et:
 
 ```bash
 python -c "import pydantic; print(pydantic.__version__)"
 ```
 
-Komut, yüklü Pydantic sürümünü ekrana yazar. Çıktı `2.` ile başlamalı; örneğin `2.13.5`. Örneklerde kullanacağımız `model_dump()` işlemi bu sürüme aittir. Çıktı `1.` ile başlıyorsa etkin ortamda `uv pip install --upgrade fastapi "pydantic>=2,<3"` çalıştır, sonra sunucuyu yeniden başlat.
+Çıktı `2.` ile başlamalı, örneğin `2.13.5`. `1.` ile başlıyorsa şu komutu çalıştır ve sunucuyu yeniden başlat:
 
-**Kitap sayılarını doğru izlemek için:** Bu haftaki sunucu her açıldığında dosyada yazılı üç kitapla başlar: `42`, `57`, `73`. İstekle eklediğimiz kitaplar, sunucu çalıştığı sürece bellekteki `books` listesinde tutulur. Henüz onları bir dosyaya veya veritabanına kaydeden kod yazmıyoruz. Bu yüzden sunucuyu yeniden başlatınca başlangıçtaki üç kitaba döneriz. Deneylerdeki “yeniden başlat” ve “bir kez çalıştır” adımlarını izlersen ekrandaki kitap sayıları aşağıdaki çıktılarla aynı olur.
+```bash
+uv pip install --upgrade fastapi "pydantic>=2,<3"
+```
 
-## Deney 1 — Bildiğimiz kataloğu aç
+---
 
-Önce birinci haftadaki sunucu ile istemcinin çalıştığını ve katalogda üç kitap bulunduğunu kontrol edeceğiz. Aşağıdaki `server.py`, birinci haftanın son sunucusudur: `GET /book` kitap listesini, `GET /book/42` ise `42` kimlikli kitabı döndürür.
+## Deney 1 — Sunucu çalışıyor mu, katalogda kaç kitap var?
 
-Arama ve kitabın bir okuyucuya verilebilir olup olmadığını seçen `available` filtresi kodda duruyor. Bu deneyde filtre göndermeyip üç kitabın tamamını okuyacağız.
+**Amaç:** Birinci haftanın son sunucusunun çalıştığını ve katalogda üç kitap olduğunu görmek.
 
-### `server.py` dosyasının tamamı
+`server.py`, birinci haftanın son hâlidir:
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -95,9 +117,7 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 ```
 
-İstemcinin çıktısını bu hafta yapacağımız değişiklikleri izlemek için kısaltıyoruz: durum kodunu, kitap sayısını, kimlik ve başlıkları yazdırması yeterli. Sunucudaki diğer kitap alanları silinmiyor.
-
-### `client.py` dosyasının tamamı
+Bu hafta istemcinin çıktısını kısaltıyoruz: durum kodu, kitap sayısı ve her kitabın kimliğiyle adı yeterli. `client.py`:
 
 ```python
 import httpx
@@ -117,7 +137,7 @@ else:
         print("Response body:", response.text)
 ```
 
-Beklenen çıktı:
+Sunucuyu başlat ve istemciyi çalıştır:
 
 ```text
 Status code: 200
@@ -127,28 +147,29 @@ Book count: 3
 73 - Python ile Web API
 ```
 
-Bu istemci sunucudan kitap listesini istedi. Sonraki deneyde ise istemcide hazırladığımız yeni bir kitabın bilgilerini sunucuya göndereceğiz.
+Bu istemciyi Deney 6'da yeniden kullanacağız.
 
-## Deney 2 — Kitap bilgilerini sunucuya gönder ve ulaştığını kontrol et
+---
 
-Kataloğa eklemek istediğimiz kitabın başlığı **HTTP ile Yeni Bir Kitap**, yazarı **Ada Yıldız** olsun. Bu bilgiler önce istemcide bulunacak. Sunucunun kitabı ekleyebilmesi için başlığı, yazarı ve diğer alanları ona göndermemiz gerekir.
+## Deney 2 — Yeni kitabı POST ile gönder ve sunucuya ulaştığını gör
 
-### Kitap bilgileri HTTP isteğinin neresinde gönderilir?
+**Amaç:** Yeni bir kitabın bilgilerini istek gövdesinde göndermek ve bilgilerin sunucuya ulaştığını görmek.
 
-Birinci haftada `GET /book/42` gönderdiğimizde, adresin sonundaki `42` ile **hangi kitabı istediğimizi** belirtiyorduk. Kitabın başlığını veya yazarını sunucuya göndermiyorduk; bu bilgileri sunucunun yanıtından alıyorduk.
+### 2.1 Yeni kitabın bilgileri isteğin neresinde gönderilir?
 
-Şimdi `POST /book` isteğinde bulunacağız. `POST`, HTTP isteğinin metot adıdır; uygulamamızda yeni kitap ekleme işlemi için bu metodu kullanacağız. Adres yine `http://127.0.0.1:8000/book` olacak. Yeni kitabın bilgilerini adresin sonuna yazmak yerine, isteğin **gövde (body)** denilen veri bölümüne JSON biçiminde koyacağız.
+Birinci haftada `GET /book/42` isteğinde **hangi kitabı istediğimizi** yolda belirtiyorduk. Şimdi sunucuya yeni bir kitabın bilgilerini göndereceğiz:
 
-İstek ile yanıt iki ayrı HTTP mesajıdır. **İstek gövdesi**, istemcinin sunucuya gönderdiği veriyi; **yanıt gövdesi**, sunucunun istemciye gönderdiği veriyi taşır. [FastAPI: istek gövdesi](https://fastapi.tiangolo.com/tutorial/body/)
+| İsteğin parçası | Bu deneyde |
+|---|---|
+| Metot | `POST`: Sunucuya işlemesi için veri gönderen metot. Bu derste yeni kitap ekleme isteği için kullanacağız. |
+| Adres | `http://127.0.0.1:8000/book`: değişmedi |
+| Kitap bilgileri | İsteğin **gövdesinde (body)**, JSON biçiminde |
 
-| Bu deneydeki mesaj | Gönderen → alan | Gövdede ne var? |
-|---|---|---|
-| `POST /book` isteği | İstemci → sunucu | İstemcide hazırladığımız yeni kitabın başlığı, yazarı ve diğer alanları. |
-| Bu POST isteğinin yanıtı | Sunucu → istemci | Sunucunun aldığı ve kontrol ettiği kitap bilgileri. İstemci bunları terminale yazdıracak. |
+İstek ile yanıt ayrı mesajlardır. **İstek gövdesi** istemciden sunucuya, **yanıt gövdesi** sunucudan istemciye veri taşır.
 
-Önce istemcinin göndereceği kitabı ve isteği, ardından sunucunun bu isteği nasıl karşılayacağını inceleyelim. İki dosyayı da hazırladıktan sonra bölümün sonundaki adımda çalıştıracağız.
+### 2.2 İstemci kitabı nasıl hazırlar ve POST ile gönderir?
 
-### `client.py` dosyasının tamamı
+`client.py`:
 
 ```python
 import httpx
@@ -183,189 +204,52 @@ else:
         print("List status:", list_response.status_code)
 ```
 
-Bu istemci sırayla **iki ayrı istek** gönderir. İlk `httpx.post(...)` çağrısı kitabı gönderir ve sunucunun yanıtını `response` değişkenine verir. Ardından `httpx.get(...)` çağrısı katalogdaki kitap listesini ister ve onun yanıtını `list_response` değişkenine verir. İkinci isteğin amacı kitap sayısının değişip değişmediğini kontrol etmektir.
-
-### İstemcide kitabı hazırla ve POST ile gönder
-
-Yukarıdaki `client.py` içinde yeni kitabın bilgilerini `new_book` adlı **Python sözlüğüne** yazıyoruz. `httpx.post(..., json=new_book)` satırındaki `json=`, HTTPX'e “Bu sözlüğü JSON'a çevir ve isteğin gövdesinde gönder” der. `new_book` sözlüğünde anahtarlar ve değerler bizim hazırladığımız kitap bilgileridir; `json` ise HTTPX'in bu amaçla kullandığı parametre adıdır.
-
-Python sözlüğünde `True` ve `None` yazacağız. HTTPX JSON'a çevirirken bunları `true` ve `null` olarak gönderir; dönüştürmeyi elle yapmamız gerekmez.
-
-Birinci haftadaki `params=` ile bu deneydeki `json=` farklı yerlerde bilgi taşır:
-
-| Kullandığımız ifade | Bilginin gittiği yer |
+| Kod | Ne yapar? |
 |---|---|
-| `params={"search": "Python"}` | Birinci haftadaki gibi adresin sorgu bölümü: `/book?search=Python`. |
-| `json=new_book` | Bu deneydeki gibi isteğin gövdesi. Kitabın bilgileri adresin sonuna eklenmez. |
+| `new_book = {...}` | Göndereceğimiz kitabı Python sözlüğü olarak hazırlar. `id` yok; kimliği sunucu verecek. |
+| `json=new_book` | HTTPX sözlüğü JSON'a çevirip isteğin gövdesine koyar. `True` → `true`, `None` → `null` olur. |
+| `response` | POST isteğinin yanıtı. |
+| `list_response` | Ardından gönderilen `GET /book` isteğinin yanıtı. Kitap sayısı değişti mi diye buna bakarız. |
+| `response.request` | Sunucuya **bizim gönderdiğimiz** isteğin kendisi. İsteğin metodunu ve `Content-Type` başlığını buradan okuruz. |
 
-#### Content-Type başlığı nereden geliyor?
+`json=` kullandığımızda HTTPX isteğe `Content-Type: application/json` başlığını **kendisi ekler**. Bu başlık, gövdenin JSON biçiminde olduğunu sunucuya bildirir. Kodda bu başlığı biz yazmadık; `print` satırı yalnızca gönderilen başlığı okuyup ekrana yazar.
 
-HTTPX ayrıca isteğe `Content-Type: application/json` başlığını ekler. **HTTP başlığı**, mesajla ilgili ek bilgi taşıyan ad–değer çiftidir. Burada `Content-Type`, gönderdiğimiz gövdenin biçimini; `application/json` ise bu biçimin JSON olduğunu bildirir. Bu başlık kitabın başlığı olan `title` alanından farklıdır. [HTTPX: JSON gönderme](https://www.python-httpx.org/quickstart/#sending-json-encoded-data)
+Birinci haftadaki `params=` ile bu haftaki `json=` bilgiyi farklı yerlerde taşır:
 
-**Kodda bu başlığı açıkça yazmadık; `json=new_book` kullandığımız için HTTPX kendisi ekliyor.**
+| İfade | Bilginin gittiği yer |
+|---|---|
+| `params={"search": "Python"}` | Adresin sorgu bölümü: `/book?search=Python` |
+| `json=new_book` | İsteğin gövdesi; adreste görünmez |
 
-Şu çağrıda:
+### 2.3 Sunucuda POST fonksiyonu yokken istek gönderilirse ne olur?
 
-```python
-response = httpx.post(
-    "http://127.0.0.1:8000/book",
-    json=new_book
-)
-```
-
-HTTPX, `json=new_book` nedeniyle:
-
-1. `new_book` sözlüğünü JSON’a çevirip isteğin gövdesine koyar.
-2. Gövdenin JSON olduğunu sunucuya bildirmek için isteğe otomatik olarak `Content-Type: application/json` başlığını ekler. [HTTPX kaynak kodu](https://github.com/encode/httpx/blob/master/httpx/_content.py#L160-L167)
-
-Örneğimizde bu başlığı **görmek için** şu satır bulunuyor:
-
-```python
-print("Request Content-Type:", response.request.headers.get("Content-Type"))
-```
-
-Çıktısı:
+`server.py` dosyasında henüz hiçbir şeyi değiştirme. Birinci haftanın sunucusu çalışırken istemciyi çalıştır:
 
 ```text
+Request method: POST
 Request Content-Type: application/json
+Status code: 405
+Response body: {"detail":"Method Not Allowed"}
+Book count: 3
 ```
 
-Bu `print` satırı başlığı **eklemez**; HTTPX’in gönderdiği istekteki başlığı **okuyup ekrana yazar**. Buradaki `response.request`, sunucudan gelen yanıta yol açan, bizim gönderdiğimiz isteğe erişmemizi sağlar.
+**405 Method Not Allowed:** Sunucuda `/book` yolu var, ama yalnızca GET için. POST isteğini karşılayacak bir fonksiyon yazmadığımız için sunucu isteği kabul etmedi. Ardından gönderilen GET isteği normal çalıştı; kitap sayısı 3 kaldı.
 
-#### İstemcinin terminale yazdırdığı bilgiler
+FastAPI isteği karşılayacak fonksiyonu ararken her zaman hem yola hem metoda bakar. Birinci haftada bütün işlemlerimiz GET olduğu için bu fark görünmüyordu:
 
-| İstemcide okuduğumuz ifade | Terminalde gösterdiği bilgi |
-|---|---|
-| `response.request.method` | İlk isteği `POST` metoduyla gönderdiğimizi gösterir. |
-| `response.request.headers.get("Content-Type")` | Gönderdiğimiz **isteğin** gövde biçimini gösterir: `application/json`. |
-| `response.status_code` | Sunucunun POST isteğine verdiği **yanıtın** durum kodudur. |
-| `response.text` | POST yanıtının gövdesini metin olarak gösterir; sunucunun geri gönderdiği kitap bilgilerini burada göreceğiz. |
-| `len(list_response.json())` | GET yanıtındaki JSON kitap listesini Python listesine çevirip eleman sayısını bulur. |
+| İstek | Yol var mı? | Bu metot için fonksiyon var mı? | Sonuç |
+|---|---|---|---|
+| `GET /book` | Evet | Evet | `200` |
+| `POST /book` | Evet | **Hayır** | `405 Method Not Allowed` |
+| `POST /books` | **Hayır** | — | `404 Not Found` |
 
-### Sunucunun kabul edeceği kitap alanlarını tanımla
+`404` "böyle bir yol yok", `405` ise "yol var ama bu metotla olmaz" demektir. İsteğin karşılanması için sunucuda `@app.post("/book")` ile bir fonksiyon yazmamız gerekiyor.
 
-Sunucuda, “Kitabın `title` alanında bir başlık, `author` alanında yazar bilgisi bulunmalı” gibi kuralları **biz yazacağız**. FastAPI bu kuralları kendiliğinden tahmin etmez. **Alan**, `title` veya `author` gibi bir bilginin adıdır; **tür** ise o alanda metin, sayı veya liste gibi hangi çeşit değer beklediğimizdir.
+### 2.4 Sunucuda veri modelini ve POST fonksiyonunu yaz
 
-Bu kuralları Pydantic'in `BaseModel` sınıfını kullanarak tanımlarız. Tanıma **veri modeli** denir. Aşağıdaki `Author`, yazar bilgisinin; `BookCreate`, sunucuya gönderilecek yeni kitap bilgisinin modelidir. Bu sınıfları `server.py` içine yazıyoruz; tam dosya biraz aşağıda verilmiştir.
+Sunucunun hangi alanları ve hangi türde değerleri kabul edeceğini **biz** yazarız. Bu tanıma **veri modeli** denir ve Pydantic'in `BaseModel` sınıfıyla yazılır.
 
-```python
-from pydantic import BaseModel
-
-
-class Author(BaseModel):
-    first_name: str
-    last_name: str
-
-
-class BookCreate(BaseModel):
-    title: str
-    author: Author
-    available: bool
-    tags: list[str]
-    rating: float | None = None
-```
-
-| Satır | Bu kitap örneğinde anlamı |
-|---|---|
-| `from pydantic import BaseModel` | Pydantic paketindeki `BaseModel` sınıfını kodumuzda kullanmak üzere alır. |
-| `class Author(BaseModel):` | `Author` adlı bir sınıf tanımlar. Parantezdeki `BaseModel`, Pydantic'in alanları kontrol etme ve gelen değerleri tutma özelliklerini bu sınıfa kazandırır. |
-| `first_name: str`, `last_name: str` | Yazarın adı ve soyadı metin olmalıdır. Göndereceğimiz örnekte bunlar `"Ada"` ve `"Yıldız"` olacak. |
-| `class BookCreate(BaseModel):` | Yeni kitap gönderirken kullanılacak modeli tanımlar. `BookCreate` adını biz seçtik; sınıfın adı listeye kitap ekleyen bir komut değildir. |
-| `title: str` | JSON içindeki `"title"` alanından metin beklediğimizi belirtir; bu satır bir başlık değeri atamaz. Göndereceğimiz değer `"HTTP ile Yeni Bir Kitap"` olacak. |
-| `author: Author` | `author` içinde, yukarıdaki `Author` modeline uygun `first_name` ve `last_name` alanları bulunmalıdır. İstemci `"author": {"first_name": "Ada", "last_name": "Yıldız"}` gönderecek. |
-| `available: bool` | Kitap şu anda bir okuyucuya verilebilir mi? `bool` iki mantıksal değeri belirtir: Python'da `True` / `False`, JSON'da `true` / `false`. |
-| `tags: list[str]` | Etiketler metinlerden oluşan bir liste olmalıdır; örneğin `["http", "python"]`. Etiket yoksa `[]` gönderilebilir. |
-| `rating: float \| None = None` | `float`, `4.5` gibi bir sayıyı; `None`, henüz puan bulunmadığını belirtir. `\|`, bu iki türden birini kabul ettiğimizi söyler. Sondaki `= None` ise alan hiç gönderilmezse kullanılacak değerdir. |
-
-Bu modelde `title`, `author`, `available`, `tags` ve yazarın iki alanına bir **varsayılan değer** atamadık; bu yüzden istemcinin bunları göndermesi gerekir. `rating` içinse `= None` yazdık: istemci puanı göndermeyebilir. Henüz puan olmadığını JSON içinde belirtmek isterse `"rating": null` kullanır. Bu durumda da Python tarafındaki değer `None` olur.
-
-Modeli tanımlarken belirli bir kitabın başlığını ve yazarını sınıfa yazmadık. **Sınıf, beklediğimiz alanları tanımlar; model nesnesi ise bir istekle gelen gerçek değerleri tutar.** Örneğin Ada Yıldız'ın kitabı geldiğinde, bu değerleri taşıyan bir `BookCreate` nesnesi oluşturulur. [Pydantic: modeller](https://docs.pydantic.dev/latest/concepts/models/)
-
-`id` alanı bu modelde yok. İstemci yeni kitabın kimliğini seçmeyecek; Deney 3'te bunu sunucudaki kod hesaplayacak.
-
-### Gelen bilgileri fonksiyonda al ve yanıt olarak döndür
-
-```python
-@app.post("/book")
-def create_book(book_data: BookCreate):
-    return book_data.model_dump()
-```
-
-| Satır | Ne yapıyor? |
-|---|---|
-| `@app.post("/book")` | FastAPI'ye, `POST /book` isteğini altındaki `create_book` fonksiyonunun karşılayacağını bildirir. |
-| `def create_book(book_data: BookCreate):` | `book_data`, fonksiyon içinde gelen kitap bilgilerine erişeceğimiz parametredir. `: BookCreate`, bu bilgilerin hangi modele göre kontrol edileceğini belirtir. |
-| `return book_data.model_dump()` | `book_data` içindeki değerleri bir Python sözlüğüne çevirip döndürür. FastAPI bu sözlüğü JSON'a çevirerek istemciye yanıt gönderir. |
-
-İstemci POST isteğini gönderdiğinde **FastAPI önce JSON gövdesini okur ve Pydantic ile `BookCreate` kurallarına göre kontrol eder**. Bilgiler uygunsa oluşturduğu model nesnesini `book_data` parametresine vererek `create_book` fonksiyonunu çağırır. Böylece fonksiyonun içinde `book_data.title`, gönderdiğimiz `"HTTP ile Yeni Bir Kitap"` değeridir. Kitap başlığı gibi zorunlu bir alan eksikse fonksiyon çağrılmadan hata yanıtı verilir; bunu Deney 5'te deneyeceğiz.
-
-`book_data`, bizim seçtiğimiz Python parametre adıdır. JSON'a `book_data` adında ek bir alan yazmayacağız. FastAPI, bu parametrenin türü `BookCreate` adlı Pydantic modeli olduğu için kitap bilgilerini isteğin gövdesinden alır. Birinci haftadaki `search: str = ""` ise arama değerini `/book?search=Python` adresinin sorgu bölümünden alıyordu.
-
-`book_data`, istemcinin gönderdiği kitap bilgilerini tutan bir **`BookCreate` nesnesidir**. Örneğin başlığı `book_data.title` yazarak okuruz.
-
-Pydantic’in sağladığı **`model_dump()`**, bu nesnedeki alan adlarını ve değerlerini alıp **yeni bir Python sözlüğü oluşturur**:
-
-```python
-book_dict = book_data.model_dump()
-```
-
-Bu tek satır, dönüşümün sonucunu ayrı bir değişkende göstermek için verilmiş bir açıklama örneğidir. `book_dict` adını biz seçtik; oluşturulan sözlüğü tutar. Bu satırı `server.py` dosyasına ayrıca eklemiyoruz. Tam dosyadaki `return book_data.model_dump()` satırı, sözlüğü ayrı bir değişkene atamadan doğrudan döndürür.
-
-Bu işlemden sonra `book_dict` şu bilgileri içerir:
-
-```python
-{
-    "title": "HTTP ile Yeni Bir Kitap",
-    "author": {
-        "first_name": "Ada",
-        "last_name": "Yıldız"
-    },
-    "available": True,
-    "tags": ["http", "python"],
-    "rating": None
-}
-```
-
-**Kitap bilgileri aynıdır; onları tuttuğumuz yapı ve okuma biçimimiz değişmiştir:**
-
-| Bilgi | `book_data` nesnesinden okuma | Oluşturulan sözlükten okuma |
-|---|---|---|
-| Kitap başlığı | `book_data.title` | `book_dict["title"]` |
-| Yazarın adı | `book_data.author.first_name` | `book_dict["author"]["first_name"]` |
-
-İçerideki `author` nesnesi de bir sözlüğe dönüşür. Ancak **`book_data` değişmez**; model nesnesi olarak kalır. Oluşturulan yeni sözlüğü `book_dict` değişkeninde tutarız. [Pydantic belgeleri](https://docs.pydantic.dev/latest/concepts/serialization/#python-mode)
-
-`model_dump()` tek başına:
-
-- **JSON metni oluşturmaz.** Yukarıdaki sonuç bir Python sözlüğüdür.
-- **Kitabı listeye eklemez veya dosyaya kaydetmez.**
-- **İstemciye yanıt göndermez.**
-
-Bizim kodumuzdaki:
-
-```python
-return book_data.model_dump()
-```
-
-satırı iki işi birleştirir: `model_dump()` sözlüğü oluşturur; `return` bu sözlüğü fonksiyonun sonucu olarak FastAPI’ye verir. **FastAPI de JSON yanıtını oluşturur.**
-
-Şimdilik sözlüğü yanıt olarak döndürüyoruz. Sonraki deneyde sözlüğe kitabın `id` bilgisini ekleyip onu `books` listesine koyacağız.
-
-Aynı `/book` yolunda hem okuma hem kitap gönderme işlemi bulunabilir. FastAPI, hangi fonksiyonu çağıracağını seçerken **hem HTTP metoduna hem yola** bakar:
-
-| İstek | Çalışan fonksiyon |
-|---|---|
-| `GET /book` | `get_books(...)` |
-| `POST /book` | `create_book(...)` |
-| `GET /book/42` | `get_book(book_id=42)` |
-
-### Sunucu neden aldığı kitabı hemen listeye eklemiyor?
-
-Bu deneyde `client.py`, yeni kitabın bilgilerini sunucuya gönderecek. FastAPI, gönderilen bilgileri okuyup kontrol edecek ve `create_book` fonksiyonuna verecek. Fonksiyon bu bilgileri henüz kitap listesine eklemeyecek; yanıt olarak istemciye geri gönderecek. Böylece istemcinin gönderdiği başlık ve yazar bilgilerinin sunucudaki fonksiyona ulaştığını çıktıda göreceğiz.
-
-Bu kontrolden sonra GET ile listeyi tekrar okuyacağız. Sayı hâlâ üç olacak; çünkü henüz listeye ekleme kodunu yazmadık. Deney 3'te aynı fonksiyona ekleme satırlarını yazıp sayının dörde çıktığını göreceğiz. Sunucu, gönderilen kitap bilgilerini kontrol ettikten sonra doğrudan listeye ekleyebilir. Biz bu deneyde henüz ekleme kodunu yazmıyoruz. Önce bilgilerin sunucuya doğru ulaştığını görmek için onları yanıt olarak geri gönderiyoruz; listeye eklemeyi sonraki deneyde yapacağız.
-
-### `server.py` dosyasının tamamı
+`server.py` dosyasının en üstündeki `from fastapi import ...` ve `app = FastAPI()` satırlarını aşağıdaki kodla değiştir. `books` listesi ve GET fonksiyonları aynı kalıyor:
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -384,80 +268,87 @@ class BookCreate(BaseModel):
     tags: list[str]
     rating: float | None = None
 
+
 app = FastAPI()
+```
 
-books = [
-    {
-        "id": 42,
-        "title": "API Yolculuğu",
-        "author": {
-            "first_name": "Deniz",
-            "last_name": "Kaya"
-        },
-        "available": True,
-        "tags": ["software", "education"],
-        "rating": None
-    },
-    {
-        "id": 57,
-        "title": "Veriyle İlk Adımlar",
-        "author": {
-            "first_name": "Ece",
-            "last_name": "Yılmaz"
-        },
-        "available": False,
-        "tags": [],
-        "rating": 0
-    },
-    {
-        "id": 73,
-        "title": "Python ile Web API",
-        "author": {
-            "first_name": "Can",
-            "last_name": "Demir"
-        },
-        "available": True,
-        "tags": ["python", "api"],
-        "rating": 4.5
-    }
-]
+| Satır | Anlamı |
+|---|---|
+| `class Author(BaseModel)` | Yazar bilgisinin modeli: `first_name` ve `last_name` metin olmalı. |
+| `class BookCreate(BaseModel)` | Yeni kitap gönderilirken beklenen alanlar. `BookCreate` adını biz seçtik. |
+| `title: str` | `"title"` alanında metin bekleriz. Bu satır bir değer atamaz, yalnızca beklentiyi tanımlar. |
+| `author: Author` | `author` içinde `Author` modeline uygun bir nesne bekleriz. |
+| `available: bool` | `true` veya `false` bekleriz. |
+| `tags: list[str]` | Metinlerden oluşan bir liste bekleriz; `[]` da olur. |
+| `rating: float \| None = None` | Sayı ya da `null` olabilir. `= None`: Alan hiç gönderilmezse değeri `None` olur. |
 
+`rating` dışındaki alanlara varsayılan değer vermedik; bu yüzden istemcinin onları göndermesi **zorunludur**.
 
-@app.get("/book")
-def get_books(search: str = "", available: bool | None = None):
-    results = []
+Dosyanın sonuna POST isteğini karşılayacak fonksiyonu ekle:
 
-    for book in books:
-        title_matches = search.casefold() in book["title"].casefold()
-        availability_matches = (
-            available is None or book["available"] == available
-        )
-
-        if title_matches and availability_matches:
-            results.append(book)
-
-    return results
-
-
-@app.get("/book/{book_id}")
-def get_book(book_id: int):
-    for book in books:
-        if book["id"] == book_id:
-            return book
-
-    raise HTTPException(status_code=404, detail="Book not found")
-
-
+```python
 @app.post("/book")
 def create_book(book_data: BookCreate):
     return book_data.model_dump()
 ```
 
-### İki dosya hazır: isteği gönder ve sonucu kontrol et
+| Kod | Ne yapar? |
+|---|---|
+| `@app.post("/book")` | FastAPI'ye şunu bildirir: "`POST /book` isteği gelirse `create_book` fonksiyonunu çalıştır." |
+| `book_data: BookCreate` | Gelen gövdenin `BookCreate` modeline uyması gerektiğini belirtir. Gövde uygunsa Pydantic bir model nesnesi oluşturur; FastAPI onu `book_data` parametresine koyar ve fonksiyonu çağırır. |
+| `return book_data.model_dump()` | Model nesnesinden bir Python sözlüğü oluşturup döndürür. FastAPI bu sözlüğü JSON'a çevirip yanıtın gövdesine koyar. |
 
-Sunucuyu yeniden başlat ve istemciyi **bir kez** çalıştır.
+**Gövdeyi kim, nasıl kontrol ediyor?** Bu işi FastAPI ile Pydantic birlikte yapar:
 
-Beklenen çıktı:
+| Kim? | Ne yapar? |
+|---|---|
+| FastAPI | İsteğin gövdesini okur. Fonksiyonda `book_data: BookCreate` yazdığı için gövdeyi bu modele göre kontrol ettirmesi gerektiğini anlar ve gövdeyi Pydantic'e verir. |
+| Pydantic | Gelen bilgileri `BookCreate` modelinin kurallarıyla karşılaştırır: Zorunlu alanların hepsi var mı? Değerler beklenen türde mi? Uygunsa bir `BookCreate` nesnesi oluşturur; uygun değilse hataları bildirir. |
+| FastAPI | Nesne oluştuysa onu `book_data` parametresine koyup `create_book` fonksiyonunu çağırır. Pydantic hata bildirdiyse fonksiyonu hiç çağırmadan `422` yanıtı gönderir. |
+
+Bir değer beklenen türde gelmezse Pydantic onu hemen reddetmez. Önce değeri modelde yazan türe çevirmeyi dener. Çevirebilirse kabul eder, çeviremezse `422` verir:
+
+| Gelen değer | Modelde beklenen tür | Sonuç |
+|---|---|---|
+| `"rating": "4.5"` | Sayı (`float`) | `"4.5"` tırnak içinde olduğu için bir metindir. Ama içinde bir sayı yazdığı için `4.5` sayısına çevrilir ve **kabul edilir**. |
+| `"available": "belki"` | Mantıksal değer (`bool`) | `"belki"` metni `true` ya da `false` olarak okunamaz. Çevrilemediği için **`422`** verilir. |
+
+İkinci durumda Pydantic hata bildirir, FastAPI de `create_book` fonksiyonunu çağırmadan `422` yanıtı gönderir. Yanıtın gövdesi şudur:
+
+```json
+{"detail":[{"type":"bool_parsing","loc":["body","available"],"msg":"Input should be a valid boolean, unable to interpret input","input":"belki"}]}
+```
+
+`"loc":["body","available"]`, sorunun gövdedeki `available` alanında olduğunu; `"input":"belki"` ise gelen değeri gösterir. Zorunlu bir alanın hiç gönderilmediği durumu Deney 5'te göreceğiz.
+
+`book_data`, `BookCreate` sınıfından oluşturulmuş bir **model nesnesidir**. `model_dump()` ise aynı bilgilerden sıradan bir **Python sözlüğü** (`dict`) oluşturur; birinci haftadaki `books` listesinin içindeki sözlüklerle aynı türdendir. İçindeki `author` da bir sözlük olur. Bilgiler aynıdır, ama okuma biçimi farklıdır. Deney 3'te bu sözlüğü `created_book` değişkenine atayacağız:
+
+| Bilgi | Model nesnesinden okuma | Sözlükten okuma |
+|---|---|---|
+| Kitabın adı | `book_data.title` | `created_book["title"]` |
+| Yazarın adı | `book_data.author.first_name` | `created_book["author"]["first_name"]` |
+
+Model nesnesinde alanlara nokta (`.`) ile, sözlükte köşeli parantez (`[...]`) ile ulaşılır.
+
+`return book_data.model_dump()` satırında üç iş sırayla yapılır:
+
+1. `model_dump()`, model nesnesinden bir Python sözlüğü oluşturur.
+2. `return`, bu sözlüğü FastAPI'ye verir.
+3. FastAPI, sözlüğü JSON'a çevirip istemciye yanıt olarak gönderir.
+
+Fonksiyonda kitabı `books` listesine ekleyen bir satır yok. Yani gelen kitap listeye **eklenmiyor**; yalnızca yanıt olarak istemciye geri gönderiliyor. Böylece önce bilgilerin sunucuya doğru ulaştığını göreceğiz. Listeye eklemeyi Deney 3'te yapacağız.
+
+POST fonksiyonunu ekledikten sonra aynı `/book` yolunda iki işlem olur. 2.3'te gördüğümüz gibi FastAPI bunları metoda göre ayırır:
+
+| İstek | Çalışan fonksiyon |
+|---|---|
+| `GET /book` | `get_books` |
+| `POST /book` | `create_book` |
+| `GET /book/42` | `get_book` |
+
+### 2.5 Kitap sunucuya ulaştı, peki listeye eklendi mi?
+
+Sunucuyu yeniden başlat ve istemciyi **bir kez** çalıştır:
 
 ```text
 Request method: POST
@@ -467,135 +358,33 @@ Response body: {"title":"HTTP ile Yeni Bir Kitap","author":{"first_name":"Ada","
 Book count: 3
 ```
 
-`Response body` satırında **HTTP ile Yeni Bir Kitap** ve **Ada Yıldız** bilgilerini görüyorsan sunucu gönderdiğimiz bilgileri alıp yanıt olarak döndürmüştür. Bu fonksiyon için farklı bir başarı kodu belirtmediğimizden FastAPI, yanıtı varsayılan `200` durum koduyla gönderir.
-
-`Book count: 3`, sunucudaki listeye henüz kitap eklenmediğini gösterir. Fonksiyonda yalnızca `return book_data.model_dump()` var; bu satır yanıtı oluşturmak için veri döndürür. Listeye ekleme işlemini yapacak `books.append(...)` satırı henüz yok. Sonraki deneyde onu ekleyeceğiz.
-
-## Deney 3 — Gelen kitabı listeye ekle
-
-Deney 2'de bilgilerin sunucuya ulaştığını gördük. Şimdi **aynı POST isteği geldiğinde yeni kitabı sunucudaki `books` listesine ekleyeceğiz**. GET fonksiyonları bu listeyi okuduğu için, eklediğimiz kitap daha sonraki GET yanıtlarında da görünecek.
-
-Bu deneyde yalnızca `server.py` değişecek. `client.py` yine kitabı POST ile gönderecek ve ardından GET ile listedeki kitap sayısını okuyacak.
-
-### Ekleme işlemi için fonksiyona yazacağımız satırlar
-
-Aşağıdaki karşılaştırmada `-` ile başlayan satırlar eski kodu, `+` ile başlayan satırlar yeni kodu gösterir. Bu işaretleri Python dosyasına yazma; hemen alttaki tam `server.py` kodunu kullan.
-
-```diff
--@app.post("/book")
--def create_book(book_data: BookCreate):
--    return book_data.model_dump()
-+@app.post("/book", status_code=201)
-+def create_book(book_data: BookCreate):
-+    new_id = 1
-+    for book in books:
-+        if book["id"] >= new_id:
-+            new_id = book["id"] + 1
-+
-+    new_book = book_data.model_dump()
-+    new_book["id"] = new_id
-+    books.append(new_book)
-+    return new_book
-```
-
-| Satır veya bölüm | Ne yapıyor? |
+| Satır | Anlamı |
 |---|---|
-| `status_code=201` | Fonksiyon başarıyla döndüğünde yanıta **201 Created** durum kodunu koyar. Bu kod, isteğin sonucunda yeni kayıt oluşturduğumuzu bildirir. |
-| `new_id = 1` ve `for` döngüsü | Yeni kitap için kullanılmamış bir kimlik bulur. Her kitabın kimliğine bakar; `new_id` değerini gerekirse o kimliğin bir fazlasına çıkarır. `42`, `57`, `73` sırasıyla incelendiğinde `new_id` önce `43`, sonra `58`, son olarak `74` olur. |
-| `new_book = book_data.model_dump()` | İstekten gelen kitap bilgilerini model nesnesinden Python sözlüğüne dönüştürür. Bu sözlükte henüz `id` yoktur. |
-| `new_book["id"] = new_id` | Sunucunun belirlediği kimliği bu sözlüğe ekler. |
-| `books.append(new_book)` | `new_book` sözlüğünü `books` listesinin sonuna ekler; üç kitaplık liste dört kitap olur. **Kitabı listeye ekleyen satır budur.** |
-| `return new_book` | Eklenen kitabı, kimliğiyle birlikte yanıt olarak döndürür. |
+| `Request method`, `Request Content-Type` | Gönderdiğimiz isteğin metodu ve gövde biçimi. |
+| `Status code: 200` | Başarı kodu belirtmediğimiz için FastAPI varsayılan `200` kodunu gönderdi. |
+| `Response body` | Gönderdiğimiz kitap sunucudan geri geldi. |
+| `Book count: 3` | Kitap listeye eklenmedi; fonksiyonda ekleme yapan bir satır yok. |
 
-`books`, `server.py` içinde fonksiyonların dışında tanımlanmış listedir. Hem `get_books` hem `create_book` bu listeye erişir. `append`, mevcut listenin içeriğini değiştirir; bu nedenle bu satır için `global books` yazmamız gerekmez.
+> **Ana fikir:** Deney 2'deki POST isteği sırayla şu adımlardan geçti. Kitap bu adımların hiçbirinde listeye eklenmedi.
 
-İstemcideki `new_book` sözlüğü ile sunucudaki `new_book` sözlüğü ayrı programlardadır. Sunucu kendi sözlüğüne `id` eklediğinde istemcinin gönderdiği sözlük değişmez. İstemci yeni kimliği sunucunun gönderdiği **yanıtın içinden** öğrenir. Kitap sayısı dört olurken kimliğin `74` olmasının nedeni, kimliği kitap sayısından değil en büyük mevcut kimlikten hesaplamamızdır.
+| Adım | Kim? | Ne oldu? |
+|---|---|---|
+| 1 | İstemci (HTTPX) | Kitabın bilgilerini JSON'a çevirip isteğin gövdesinde gönderdi. |
+| 2 | FastAPI | Gövdeyi okudu ve `BookCreate` modeline göre kontrol edilmesi için Pydantic'e verdi. |
+| 3 | Pydantic | Bilgileri modelin kurallarıyla karşılaştırdı ve bir `BookCreate` nesnesi oluşturdu. |
+| 4 | FastAPI | Nesneyi `book_data` parametresine koyup `create_book` fonksiyonunu çağırdı. |
+| 5 | `create_book` | `model_dump()` ile bir Python sözlüğü oluşturup döndürdü. Listeye ekleyen bir satır yok. |
+| 6 | FastAPI | Sözlüğü JSON'a çevirip `200` durum koduyla istemciye gönderdi. |
 
-Burada kimliği, sırayla eklediğimiz birkaç kitap için döngüyle hesaplıyoruz. Veritabanına geçtiğimizde yeni kayıtların kimliklerini veritabanına ürettireceğiz.
+---
 
-### `server.py` dosyasının tamamı
+## Deney 3 — Gelen kitaba kimlik ver ve listeye ekle (201 Created)
+
+**Amaç:** Gelen kitaba bir kimlik verip sunucudaki listeye eklemek.
+
+Bu deneyde yalnızca `server.py` değişiyor. `create_book` fonksiyonunu şununla değiştir:
 
 ```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-
-class Author(BaseModel):
-    first_name: str
-    last_name: str
-
-
-class BookCreate(BaseModel):
-    title: str
-    author: Author
-    available: bool
-    tags: list[str]
-    rating: float | None = None
-
-app = FastAPI()
-
-books = [
-    {
-        "id": 42,
-        "title": "API Yolculuğu",
-        "author": {
-            "first_name": "Deniz",
-            "last_name": "Kaya"
-        },
-        "available": True,
-        "tags": ["software", "education"],
-        "rating": None
-    },
-    {
-        "id": 57,
-        "title": "Veriyle İlk Adımlar",
-        "author": {
-            "first_name": "Ece",
-            "last_name": "Yılmaz"
-        },
-        "available": False,
-        "tags": [],
-        "rating": 0
-    },
-    {
-        "id": 73,
-        "title": "Python ile Web API",
-        "author": {
-            "first_name": "Can",
-            "last_name": "Demir"
-        },
-        "available": True,
-        "tags": ["python", "api"],
-        "rating": 4.5
-    }
-]
-
-
-@app.get("/book")
-def get_books(search: str = "", available: bool | None = None):
-    results = []
-
-    for book in books:
-        title_matches = search.casefold() in book["title"].casefold()
-        availability_matches = (
-            available is None or book["available"] == available
-        )
-
-        if title_matches and availability_matches:
-            results.append(book)
-
-    return results
-
-
-@app.get("/book/{book_id}")
-def get_book(book_id: int):
-    for book in books:
-        if book["id"] == book_id:
-            return book
-
-    raise HTTPException(status_code=404, detail="Book not found")
-
-
 @app.post("/book", status_code=201)
 def create_book(book_data: BookCreate):
     new_id = 1
@@ -603,15 +392,26 @@ def create_book(book_data: BookCreate):
         if book["id"] >= new_id:
             new_id = book["id"] + 1
 
-    new_book = book_data.model_dump()
-    new_book["id"] = new_id
-    books.append(new_book)
-    return new_book
+    created_book = book_data.model_dump()
+    created_book["id"] = new_id
+    books.append(created_book)
+    return created_book
 ```
 
-Sunucuyu yeniden başlat; Deney 2'deki istemciyi **bir kez** çalıştır.
+| Kod | Ne yapar? |
+|---|---|
+| `status_code=201` | Fonksiyon hatasız biterse yanıtın durum kodu **201 Created** ("yeni kayıt oluşturuldu") olur. Bu ayar kaydı oluşturmaz; yalnızca durum kodunu belirler. |
+| `new_id` döngüsü | En büyük kimliğin bir fazlasını bulur: `42`, `57`, `73` → `74`. |
+| `created_book = book_data.model_dump()` | Gelen bilgilerden bir sözlük oluşturur. Bu sözlükte henüz `id` yok. |
+| `created_book["id"] = new_id` | Sunucunun belirlediği kimliği sözlüğe ekler. |
+| `books.append(created_book)` | **Kitabı listeye ekleyen satır budur.** |
+| `return created_book` | Eklenen kitabı, kimliğiyle birlikte yanıt olarak gönderir. |
 
-Beklenen çıktı:
+`books` fonksiyonların dışında tanımlı bir listedir. `append` listenin içeriğini değiştirdiği için `global books` yazmak gerekmez.
+
+Kimliği kitap sayısından değil en büyük kimlikten hesapladığımız için dördüncü kitabın kimliği `4` değil `74` olur.
+
+Sunucuyu yeniden başlat. İstemciyi değiştirmeden **bir kez** çalıştır:
 
 ```text
 Request method: POST
@@ -621,39 +421,21 @@ Response body: {"title":"HTTP ile Yeni Bir Kitap","author":{"first_name":"Ada","
 Book count: 4
 ```
 
-Bu kez yanıt gövdesinde `"id":74` var ve GET ile okuduğumuz liste **4** kitap içeriyor. Sunucu yeni kitaba `74` kimliğini verdi ve `append` satırıyla onu listeye ekledi.
+> **Ana fikir:** Kaydı `books.append(...)` ekler; `201` ise bu sonucu istemciye bildirir. İstemci yeni kitabın kimliğini (`74`) yanıtın gövdesinden öğrenir.
 
-Deney 2’de durum kodunu kodda belirtmemiştik; FastAPI varsayılan olarak `200` göndermişti. Deney 3’te yeni kitap oluşturduğumuz için, bu sonucu istemciye bildirmek amacıyla `@app.post(...)` satırına `status_code=201` yazdık. Kitabı listeye ekleyen satır `books.append(new_book)`; yanıtta `201` gönderilmesini sağlayan ayar ise `status_code=201` ifadesidir. [FastAPI: yanıt durum kodu](https://fastapi.tiangolo.com/tutorial/response-status-code/)
+---
 
-## Deney 4 — Yanıta Location başlığı ekle ve istemcide oku
+## Deney 4 — Eklenen kitabın yolunu Location başlığıyla bildir ve kitabı geri oku
 
-### Deney 3'te zaten neleri yapabiliyorduk?
+**Amaç:** Yanıta bir başlık eklemek, bu başlığı istemcide okumak ve eklenen kitabı ayrı bir istekle geri okumak.
 
-Deney 3'te eklediğimiz kitap, sunucudaki `books` listesinde duruyor. Veritabanına yazmadık; ancak bu örnekte sunucu çalıştığı sürece kitaba hem bütün listeyi isteyerek hem de kimliğiyle tek başına erişebiliriz.
+### 4.1 Sunucunun gönderdiği yanıt hangi parçalardan oluşur?
 
-Şu üç işlemin görevleri farklıdır:
-
-- `books.append(new_book)`, kitabı sunucudaki listeye ekler.
-- `return new_book`, ekleme isteğine cevap olarak kitabın bilgilerini gönderir.
-- Daha sonra göndereceğimiz GET isteği, listede duran kitabı yeniden okumamızı sağlar.
-
-Yeni kitabın kimliği `74` ise, **Deney 3'ün sunucusuyla bile** şu istek çalışır:
-
-```python
-response = httpx.get("http://127.0.0.1:8000/book/74")
-```
-
-Çünkü sunucuda `@app.get("/book/{book_id}")` ile tanımladığımız `get_book` fonksiyonu zaten var. Bu fonksiyon yalnızca son eklenen kitabı değil, kimliğini verdiğimiz herhangi bir kitabı listede arar. Deney 4'te yeni bir GET yolu veya kitap arama fonksiyonu eklemeyeceğiz.
-
-### Bu deneyin amacı: yanıt başlığı eklemek ve okumak
-
-Sunucu yeni kitaba `74` kimliğini veriyor. İstemci `/book` yolunu zaten biliyor; kimliği de yanıt gövdesindeki `"id": 74` alanından öğrenip `/book/74` yolunu kendisi oluşturabilir. Biz bu deneyde aynı yolu `Location` başlığında da göndererek **sunucuda yanıt başlığı eklemeyi ve istemcide bu başlığı okumayı** öğreniyoruz. Kitaba erişmek için bu başlığı kullanmak zorunlu değildir.
-
-Kitap ekleme işlemi aynı kalacak. İlk eklemenin HTTP/1.1 yanıtı aşağıdaki gibi görünür; tarih ve saat örnektir:
+Bu deneyden sonra kitap eklendiğinde sunucunun gönderdiği yanıtın tamamı şöyle görünecek (tarih sende farklı olur):
 
 ```http
 HTTP/1.1 201 Created
-date: Tue, 22 Sep 2026 09:00:00 GMT
+date: Wed, 14 Oct 2026 06:19:10 GMT
 server: uvicorn
 content-length: 152
 content-type: application/json
@@ -662,52 +444,33 @@ location: /book/74
 {"title":"HTTP ile Yeni Bir Kitap","author":{"first_name":"Ada","last_name":"Yıldız"},"available":true,"tags":["http","python"],"rating":null,"id":74}
 ```
 
-İlk satır **durum satırı**, sonraki beş satır **başlıklar**, boş satır **ayırıcı**, son satır ise **yanıt gövdesidir**. `date` yanıtın zamanını, `server` sunucu yazılımını, `content-length` gövdenin bayt cinsinden uzunluğunu, `content-type` ise gövdenin JSON biçiminde olduğunu bildirir.
-
-Bu beş başlıktan `Location` başlığını kodda biz ekleyeceğiz; diğerlerini FastAPI ve Uvicorn hazırlayacak. [HTTP standardı: Location](https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.2)
-
-POST yanıtı kitabın bilgilerini zaten içerir. Bu deneyde başlıktan okuduğumuz yola ayrıca GET göndererek kitabı yeniden okuyacağız. Bu adım, başlığı nasıl kullandığımızı görmek içindir; kitap ekleme işleminin zorunlu bir parçası değildir.
-
-### İstek başlığı ile yanıt başlığını ayır
-
-| Başlık | Kim gönderiyor? | Bu örnekte ne bildiriyor? |
-|---|---|---|
-| `Content-Type: application/json` | İstemci, POST **isteğinde** | “Gönderdiğim kitap bilgileri JSON biçiminde.” Deney 2'de HTTPX bunu eklemişti. |
-| `Location: /book/74` | Sunucu, POST **yanıtında** | “Oluşturduğum kitaba bu yoldan ulaşabilirsin.” Şimdi bu başlığı ekleyeceğiz. |
-
-### `server.py`: yanıta Location başlığını ekle
-
-Aşağıdaki fark gösterimi değişen satırları gösterir. `...`, aradaki mevcut kodun devam ettiğini belirtir; bunu dosyana yazma. Hemen altında kopyalayabileceğin tam `server.py` var.
-
-```diff
--from fastapi import FastAPI, HTTPException
-+from fastapi import FastAPI, HTTPException, Response
-
- @app.post("/book", status_code=201)
--def create_book(book_data: BookCreate):
-+def create_book(book_data: BookCreate, response: Response):
-     ...
-     books.append(new_book)
-+    response.headers["Location"] = f"/book/{new_id}"
-     return new_book
-```
-
-`from fastapi import ... Response` satırıyla FastAPI'nin `Response` sınıfını alıyoruz. `create_book` içindeki iki parametrenin görevi farklıdır:
-
-| Parametre | Nereden gelir, ne için kullanılır? |
+| Bölüm | Bu örnekte |
 |---|---|
-| `book_data: BookCreate` | FastAPI'nin istek gövdesinden okuyup kontrol ettiği kitap bilgilerini taşır. Bu bilgilerle yeni kaydı oluştururuz. |
-| `response: Response` | FastAPI'nin, göndereceğimiz yanıtı hazırlamak için fonksiyona verdiği nesnedir. Burada `headers` üzerinden `Location` başlığını ekleriz. İstemci `response` adlı bir alan göndermez. |
+| Durum satırı | `HTTP/1.1 201 Created` |
+| Başlıklar | `date`, `server`, `content-length`, `content-type`, `location` |
+| Boş satır | Başlıkları gövdeden ayırır |
+| Gövde | Eklenen kitabın JSON bilgileri |
 
-Burada büyük harfle başlayan `Response` sınıfın adı, küçük harfli `response` ise fonksiyon içinde kullandığımız parametrenin adıdır. `response.headers["Location"] = ...` başlığı ayarlar; `return new_book` yine JSON gövdesini belirler. FastAPI ikisini aynı HTTP yanıtında gönderir. [FastAPI: yanıt başlıkları](https://fastapi.tiangolo.com/advanced/response-headers/)
+Bu beş başlığı üç farklı yer ekler:
 
-`f"/book/{new_id}"`, `new_id` değerini metne yerleştirir: değer `74` ise sonuç `"/book/74"` olur. Burada belirli bir kitap için yol metni oluşturuyoruz. `@app.get("/book/{book_id}")` ise farklı kimliklerle gelen GET isteklerini karşılayan yol tanımıdır.
+| Başlık | Kim ekler? | Neden orası? |
+|---|---|---|
+| `date`, `server` | Uvicorn | Her yanıtta aynı türden bilgiler: yanıtın gönderildiği zaman ve sunucu programının adı. Bunları yanıtı ağa gönderen Uvicorn ekler. |
+| `content-length`, `content-type` | FastAPI | `return` ile döndürdüğümüz sözlüğü JSON'a FastAPI çevirir. Bu yüzden gövdenin JSON olduğunu ve kaç bayt tuttuğunu da o bilir ve yazar. |
+| `location` | Bizim kodumuz | Yeni kitabın hangi kimliği aldığını yalnızca bizim kodumuz bilir. FastAPI kitabın hangi yolda bulunacağını tahmin edemez; bu başlığı biz eklemeliyiz. |
 
-<a id="final-server"></a>
+Bu yanıtı 7.1'deki curl komutuyla kendin de görebilirsin.
 
-### `server.py` dosyasının tamamı
+İstek başlığı ile yanıt başlığını karıştırmayalım:
 
-`server.py` içeriğini aşağıdaki kodla değiştir.
+| Başlık | Kim gönderir? | Ne bildirir? |
+|---|---|---|
+| `Content-Type: application/json` | İstemci, POST **isteğinde** | "Gönderdiğim gövde JSON biçiminde." |
+| `Location: /book/74` | Sunucu, POST **yanıtında** | "Oluşturduğum kitaba bu yoldan ulaşabilirsin." |
+
+### 4.2 Sunucu yanıta Location başlığını nasıl ekler?
+
+İki değişiklik yapıyoruz: `from fastapi import ...` satırına `Response` ekliyoruz; `create_book` fonksiyonuna `response: Response` parametresini ve `Location` satırını ekliyoruz. `server.py` dosyasının bu haftaki son hâli:
 
 ```python
 from fastapi import FastAPI, HTTPException, Response
@@ -725,6 +488,7 @@ class BookCreate(BaseModel):
     available: bool
     tags: list[str]
     rating: float | None = None
+
 
 app = FastAPI()
 
@@ -797,22 +561,24 @@ def create_book(book_data: BookCreate, response: Response):
         if book["id"] >= new_id:
             new_id = book["id"] + 1
 
-    new_book = book_data.model_dump()
-    new_book["id"] = new_id
-    books.append(new_book)
+    created_book = book_data.model_dump()
+    created_book["id"] = new_id
+    books.append(created_book)
     response.headers["Location"] = f"/book/{new_id}"
-    return new_book
+    return created_book
 ```
 
-### `client.py`: verilen adrese GET isteği gönder
+| Kod | Ne yapar? |
+|---|---|
+| `response: Response` | FastAPI'nin göndereceği yanıtı temsil eden nesne. Bu parametre istek gövdesinden gelmez; FastAPI, türüne (`Response`) bakarak onu fonksiyona kendisi verir. |
+| `response.headers["Location"] = f"/book/{new_id}"` | Yanıta `Location: /book/74` başlığını ekler. `f"/book/{new_id}"`, `new_id` değerini metne yerleştirir. |
+| `return created_book` | Yanıtın gövdesini belirler. FastAPI başlığı ve gövdeyi aynı yanıtta gönderir. |
 
-Bu istemci, ekleme yanıtından kitabın adresini okuyacak ve o adrese GET gönderecek. Sonunda da önceki deneydeki gibi bütün listeyi isteyip kitap sayısını kontrol edecek.
+Sunucudaki `response` parametresi ile istemcideki `response` değişkeninin adı aynı, ama ayrı programlardaki ayrı şeylerdir. Sunucuda yanıta başlık **yazıyoruz**; istemcide gelen yanıttan bu başlığı **okuyoruz**.
 
-<a id="final-client"></a>
+### 4.3 İstemci Location başlığını okuyup kitabı nasıl geri ister?
 
-### `client.py` dosyasının tamamı
-
-`client.py` içeriğini aşağıdaki kodla değiştir.
+`client.py`:
 
 ```python
 import httpx
@@ -858,35 +624,17 @@ except httpx.ConnectError:
     print("Connection failed: Check that the server is running.")
 ```
 
-### İstemci kodu hangi sırayla çalışıyor?
+İstemci üç ayrı istek gönderir ve her yanıtı ayrı bir değişkende tutar:
 
-Başarılı akışta istemci **üç ayrı HTTP isteği** gönderir:
+| Sıra | İstek | Yanıtı tutan değişken | Amacı |
+|---|---|---|---|
+| 1 | `POST /book` | `response` | Kitabı eklemek ve `Location` başlığını okumak |
+| 2 | `GET /book/74` | `read_response` | Başlıktaki yoldan kitabı geri okumak |
+| 3 | `GET /book` | `list_response` | Toplam kitap sayısını kontrol etmek |
 
-| Sıra | İstek | Amacı |
-|---|---|---|
-| 1 | `POST /book` | Kitabı eklemek ve yanıtın `Location` başlığını okumak. |
-| 2 | `GET /book/74` | Başlıktan okuduğumuz yolu kullanarak o kitabı istemek. |
-| 3 | `GET /book` | Önceki deneydeki gibi toplam kitap sayısını kontrol etmek. |
+`base_url + location` adresi birleştirir: `http://127.0.0.1:8000` + `/book/74`. `Location` başlığı kendi başına istek göndermez; ikinci isteği bizim yazdığımız `httpx.get(...)` gönderir.
 
-İstemci önce POST yapacak. Yanıt `201` ise `response.headers["Location"]` ile sunucunun verdiği yolu okuyacak. `base_url + location`, sunucu adresiyle bu yolu birleştirir: `http://127.0.0.1:8000` + `/book/74` → `http://127.0.0.1:8000/book/74`.
-
-Ardından `httpx.get(base_url + location)` satırı kitabı okumak için **yeni bir istek** gönderecek. `201` yanıtındaki `Location` başlığı kendi başına GET isteği göndermez; bu adımı istemcide biz yazıyoruz. Sondaki `GET /book` ile de katalogdaki toplam kitap sayısını kontrol edeceğiz.
-
-İstemcide her yanıtı ayrı bir değişkende tutuyoruz; böylece hangi isteğin sonucunu okuduğumuz bellidir:
-
-| İstemcideki değişken | Tuttuğu yanıt |
-|---|---|
-| `response` | Kitap eklemek için gönderilen POST'un yanıtı. `201` kodunu ve `Location` başlığını buradan okuruz. |
-| `read_response` | `GET /book/74` yanıtı **tek bir kitap** içerir. JSON'u okuduktan sonra `book["title"]` ile başlığı alırız. |
-| `list_response` | `GET /book` yanıtı **kitap listesi** içerir. `len(list_response.json())` ile bu listedeki kitap sayısını buluruz. |
-
-`response.text`, alınmış yanıtın gövdesini metin olarak verir. `response.json()` aynı gövdeyi Python'da kullanabileceğimiz sözlük veya listeye çevirir. **İkisi de yeni HTTP isteği göndermez**; yeni istekleri `httpx.post(...)` ve `httpx.get(...)` satırları gönderir. [HTTPX: yanıt gövdesini okuma](https://www.python-httpx.org/quickstart/#response-content)
-
-Sunucudaki `response` parametresi ile istemcideki `response` değişkeni ayrı programlardadır. Sunucuda bir başlık **yazıyoruz**; istemcide HTTPX'in aldığı yanıttan bu başlığı **okuyoruz**. İsimlerinin aynı olması bu iki nesneyi ortak yapmaz.
-
-Üç kitapla başlamak için sunucuyu yeniden başlat; istemciyi **bir kez** çalıştır.
-
-Beklenen çıktı:
+Sunucuyu yeniden başlat ve istemciyi **bir kez** çalıştır:
 
 ```text
 Status code: 201
@@ -897,29 +645,19 @@ Book title: HTTP ile Yeni Bir Kitap
 Book count: 4
 ```
 
-| Çıktı | Bu deneyde neyi gösteriyor? |
-|---|---|
-| `Status code: 201` | POST isteğiyle kitap oluşturulduğunu bildirir. Bu kodu Deney 3'te `status_code=201` ile belirlemiştik. |
-| `Location: /book/74` | İstemcinin yanıtın `Location` başlığından okuduğu yoldur. |
-| `Read status: 200` | Bu yola gönderdiğimiz ayrı GET isteğinin kitabı bulduğunu gösterir. |
-| `Book id: 74`, `Book title: HTTP ile Yeni Bir Kitap` | İkinci isteğin yanıtından okuduğumuz kitabın kimliği ve başlığıdır. |
-| `Book count: 4` | Son GET isteğiyle aldığımız listede toplam dört kitap olduğunu gösterir. |
-
 ![Kitap ekleme ve ayrı bir GET ile geri okuma](Gorseller/01_kitap_ekleme_akisi.svg)
 
-Şema, POST isteğini ve verilen adrese gönderilen GET isteğini gösterir. İstemci en son kitap sayısını kontrol etmek için bir `GET /book` isteği daha gönderir.
+> **Ana fikir:** Yanıt; durum kodu, başlıklar ve gövdeden oluşur. `Location` başlığını sunucu ekler, istemci okur. Kitabın kimliği gövdede de olduğu için bu başlık zorunlu değildir; ama istemcinin kitabın yolunu kendisi oluşturmasına gerek bırakmaz.
 
-## Deney 5 — Başlık gönderilmezse ne olur?
+---
 
-Sunucunun eksik bilgiyle kitap ekleyip eklemediğini kontrol edeceğiz. `BookCreate` modelinde `title: str` yazmıştık. Bu alan için varsayılan değer vermediğimizden istemcinin başlığı göndermesi gerekiyor. Aşağıdaki istemcide yalnızca `title` alanını çıkarıyoruz; JSON'un yazımı geçerli, fakat kitap bilgisi eksik olacak.
+## Deney 5 — Kitabın adı (`title`) gönderilmezse sunucu ne yapar? (422)
 
-**`server.py` Deney 4'teki haliyle kalacak.** Sunucuyu yeniden başlatıp üç kitapla başla. `client.py` içeriğini aşağıdaki kodla değiştir. İstemci eksik bilgili bir POST gönderecek, sonra GET ile kitap sayısına bakacak; bu sayede başarısız isteğin listeyi değiştirip değiştirmediğini göreceğiz.
+**Amaç:** Modele uymayan bir gövdeyle kitap eklenip eklenmediğini görmek.
 
-### `client.py` dosyasının tamamı
+`server.py` değişmiyor. Sunucuyu yeniden başlat. `client.py` dosyasında `new_book` sözlüğünden yalnızca `"title"` satırını sil:
 
 ```python
-import httpx
-
 new_book = {
     "author": {
         "first_name": "Ada",
@@ -929,107 +667,38 @@ new_book = {
     "tags": ["http", "python"],
     "rating": None
 }
-
-try:
-    response = httpx.post(
-        "http://127.0.0.1:8000/book",
-        json=new_book
-    )
-    list_response = httpx.get("http://127.0.0.1:8000/book")
-except httpx.ConnectError:
-    print("Connection failed: Check that the server is running.")
-else:
-    print("Request method:", response.request.method)
-    print("Request Content-Type:", response.request.headers.get("Content-Type"))
-    print("Status code:", response.status_code)
-    print("Response body:", response.text)
-    if list_response.status_code == 200:
-        print("Book count:", len(list_response.json()))
-    else:
-        print("List status:", list_response.status_code)
 ```
 
-Bu istemciyi çalıştırdığında POST yanıtının durum kodu **422** olur. **422, sunucunun isteği aldığı ancak gönderilen bilgiler beklenen koşulları karşılamadığı için işleyemediği anlamına gelen HTTP durum kodudur.** Bu istekte eksik olan bilgi kitap başlığıdır. Kitap sayısı **3** kalır; sebebini yanıt gövdesinden de okuyabiliriz.
+İstemciyi çalıştır:
 
-`Response body` satırında, `detail` adlı listenin içinde bir hata açıklaması bulunur. Aşağıda bu açıklamanın ilgili alanları gösteriliyor; çıktında `input` gibi ek alanlar da olabilir:
-
-```json
-{
-  "type": "missing",
-  "loc": ["body", "title"],
-  "msg": "Field required"
-}
+```text
+Status code: 422
+Response body: {"detail":[{"type":"missing","loc":["body","title"],"msg":"Field required","input":{"author":{"first_name":"Ada","last_name":"Yıldız"},"available":true,"tags":["http","python"],"rating":null}}]}
+Book count: 3
 ```
 
-| Hata bilgisindeki bölüm | Bu istekte ne söylüyor? |
+| Hata bilgisindeki bölüm | Anlamı |
 |---|---|
-| `loc: ["body", "title"]` | Eksik bilgi, isteğin gövdesindeki `title` alanı. |
-| `msg: "Field required"` | Bu alanı göndermelisin. |
-| `type: "missing"` | Hatanın türü: eksik alan. |
+| `"type":"missing"` | Hatanın türü: eksik alan. |
+| `"loc":["body","title"]` | Sorunun yeri: gövdedeki `title` alanı. |
+| `"msg":"Field required"` | Bu alanın gönderilmesi zorunlu. |
+| `"input":{...}` | Sunucuya gelen gövdenin kendisi. |
 
-**Bu `422` yanıtını FastAPI oluşturur; fonksiyonumuza hata kodu yazmamız gerekmedi.** FastAPI, `create_book` fonksiyonunu çağırmadan önce gövdeyi Pydantic ile `BookCreate` modeline göre kontrol eder. Eksik `title` nedeniyle kontrol başarısız olur ve FastAPI `422` yanıtını gönderir. **`create_book` çağrılmadığından** kimlik hesaplayan kod ve `books.append(...)` çalışmaz; kitap sayısı üç kalır. [FastAPI: istek doğrulama hataları](https://fastapi.tiangolo.com/tutorial/handling-errors/#override-request-validation-exceptions)
+FastAPI, `create_book` fonksiyonunu çağırmadan önce gövdeyi Pydantic'e `BookCreate` modeline göre kontrol ettirir. `title` eksik olduğu için Pydantic hata bildirir ve FastAPI `422` yanıtını kendisi gönderir. Fonksiyon hiç çalışmadığı için `books.append(...)` da çalışmaz; kitap sayısı 3 kalır.
 
-Model, alanların türlerini de kontrol eder; ancak bu deneyde yalnızca zorunlu bir alanın eksik olmasını denedik. Başlığın boş olmaması veya puanın belirli aralıkta olması gibi ek kuralları beşinci haftada yazacağız.
+> **Ana fikir:** Bu `422` yanıtını bizim kodumuz değil, FastAPI üretti. Model, hatalı veriyi fonksiyona ulaşmadan durdurur. Kitap adının boş olmaması gibi ek kuralları 5. haftada yazacağız.
 
-## Deney 6 — Aynı isteği tekrar gönder ve sunucuyu yeniden başlat
+---
 
-Önce aynı POST istemcisini iki kez çalıştırıp aynı bilgilerle iki kayıt oluştuğunu göreceğiz. Ardından sunucuyu yeniden başlatıp eklenen kayıtların hâlâ bulunup bulunmadığını GET ile kontrol edeceğiz.
+## Deney 6 — Aynı POST isteği tekrarlanırsa ve sunucu yeniden başlatılırsa ne olur?
 
-**`server.py` Deney 4'teki haliyle kalacak.** `client.py` içeriğini aşağıdaki kodla değiştir. Bu, Deney 4'teki geçerli kitap gönderen istemcidir; `title` alanı yeniden vardır.
+**Amaç:** Aynı POST isteğini tekrarlamanın ve sunucuyu yeniden başlatmanın listeye etkisini görmek.
 
-### `client.py` dosyasının tamamı
+`client.py` dosyasında `"title"` satırını geri ekle; istemci yeniden Deney 4'teki hâline döner.
 
-```python
-import httpx
-
-base_url = "http://127.0.0.1:8000"
-
-new_book = {
-    "title": "HTTP ile Yeni Bir Kitap",
-    "author": {
-        "first_name": "Ada",
-        "last_name": "Yıldız"
-    },
-    "available": True,
-    "tags": ["http", "python"],
-    "rating": None
-}
-
-try:
-    response = httpx.post(base_url + "/book", json=new_book)
-    print("Status code:", response.status_code)
-
-    if response.status_code == 201:
-        location = response.headers["Location"]
-        print("Location:", location)
-
-        read_response = httpx.get(base_url + location)
-        print("Read status:", read_response.status_code)
-        if read_response.status_code == 200:
-            book = read_response.json()
-            print("Book id:", book["id"])
-            print("Book title:", book["title"])
-        else:
-            print("Response body:", read_response.text)
-    else:
-        print("Response body:", response.text)
-
-    list_response = httpx.get(base_url + "/book")
-    if list_response.status_code == 200:
-        print("Book count:", len(list_response.json()))
-    else:
-        print("List status:", list_response.status_code)
-except httpx.ConnectError:
-    print("Connection failed: Check that the server is running.")
-```
-
-### Sunucu çalışırken istemciyi iki kez çalıştır
-
-1. Sunucuyu yeniden başlatarak üç kitapla başla.
-2. İstemciyi çalıştır. POST ile `74` kimlikli kitap eklenir ve kitap sayısı **4** olur. İstemci çıktıyı yazdırıp kapanır.
-3. Sunucuyu açık bırakıp istemciyi tekrar çalıştır. Yeni bir POST gönderilir; bu kez `75` kimlikli kitap eklenir ve kitap sayısı **5** olur.
-
-İkinci çalıştırmanın çıktısı:
+1. Sunucuyu yeniden başlat.
+2. İstemciyi çalıştır. `74` kimlikli kitap eklenir, kitap sayısı 4 olur.
+3. Sunucuyu kapatmadan istemciyi **tekrar** çalıştır:
 
 ```text
 Status code: 201
@@ -1040,39 +709,25 @@ Book title: HTTP ile Yeni Bir Kitap
 Book count: 5
 ```
 
-`client.py` her çalıştırıldığında baştan başlar ve kodundaki POST isteğini yeniden gönderir. Sunucudaki `create_book` da her geçerli POST'ta yeni kimlik hesaplayıp bir kayıt ekler. Başlığı ve yazarı aynı olan kitapları birleştiren bir kural yazmadık. Bu nedenle aynı bilgilerle **iki ayrı kayıt** oluşur: `74` ve `75`.
+Aynı bilgilerle **iki ayrı kayıt** oluştu: `74` ve `75`. İstemci her çalıştığında yeni bir POST gönderir; sunucu da her geçerli POST'ta yeni bir kimlikle kayıt ekler. Aynı adla gelen bir kitabın listede zaten olup olmadığını kontrol eden bir kod yazmadık.
 
-İlk istemci kapanmasına rağmen `74` kimlikli kitap kaybolmadı. Çünkü `books` listesi sunucu programındadır ve sunucu çalışmaya devam etmektedir. Sonraki istemci çalışması, sunucuda duran aynı listeye bir kitap daha ekler.
+İlk istemci kapandığı hâlde `74` kaybolmadı: Liste **sunucunun** belleğinde duruyor ve sunucu çalışmaya devam ediyor.
 
-### Sunucuyu yeniden başlatınca listeyi kontrol et
+Şimdi `client.py` dosyasının içeriğini Deney 1'deki GET istemcisiyle değiştir. Listeyi kontrol ederken POST istemcisini kullansaydık, her çalıştırmada bir kitap daha eklenirdi.
 
-Şimdi **yalnızca `client.py` dosyasını** aşağıdaki GET istemcisiyle değiştir. POST istemcisini kullanmaya devam etseydik her kontrolde bir kitap daha eklerdik. Bu istemci yalnızca mevcut listeyi okuyacak.
+4. Sunucuyu yeniden başlatmadan GET istemcisini çalıştır:
 
-### `client.py` dosyasının tamamı
-
-```python
-import httpx
-
-try:
-    response = httpx.get("http://127.0.0.1:8000/book")
-except httpx.ConnectError:
-    print("Connection failed: Check that the server is running.")
-else:
-    print("Status code:", response.status_code)
-    if response.status_code == 200:
-        books = response.json()
-        print("Book count:", len(books))
-        for book in books:
-            print(book["id"], "-", book["title"])
-    else:
-        print("Response body:", response.text)
+```text
+Status code: 200
+Book count: 5
+42 - API Yolculuğu
+57 - Veriyle İlk Adımlar
+73 - Python ile Web API
+74 - HTTP ile Yeni Bir Kitap
+75 - HTTP ile Yeni Bir Kitap
 ```
 
-1. Sunucuyu yeniden başlatmadan GET istemcisini çalıştır: **5** kitap görmelisin.
-2. Sunucuyu yeniden başlat.
-3. Aynı GET istemcisini tekrar çalıştır: başlangıçtaki **3** kitap görünür.
-
-Son çıktı:
+5. Sunucuyu yeniden başlat ve GET istemcisini tekrar çalıştır:
 
 ```text
 Status code: 200
@@ -1082,22 +737,42 @@ Book count: 3
 73 - Python ile Web API
 ```
 
+![İstemci sona erdiğinde kitapların korunması; ikinci POST ile 75 numaralı kitabın eklenmesi ve sunucu yeniden başlatıldığında üç kitaba dönülmesi](Gorseller/02_kaydin_omru.svg)
 
-## Ek çalışma — Aynı kitabı Postman ile gönder
+> **Ana fikir:** Bizim sunucumuzda aynı POST isteğini tekrarlamak yeni bir kayıt daha oluşturur; GET isteğini tekrarlamak listeyi değiştirmez. Eklenen kayıtlar yalnızca çalışan sunucunun belleğindedir. Sunucu yeniden başlayınca `server.py` içindeki başlangıç listesi yeniden oluşur. Kayıtları kalıcı saklamayı 6. haftada veritabanıyla yapacağız.
 
-Şimdi `client.py` yerine Postman kullanarak aynı POST isteğini göndereceğiz. Postman, adresi, metodu ve gövdeyi arayüzünden seçerek HTTP isteği hazırladığımız bir uygulamadır. Sunucu açısından isteğin Python programından veya Postman'dan gelmesi işlemi değiştirmez.
+---
 
-`server.py`, Deney 4'teki haliyle VS Code terminalinde çalışmaya devam etsin.
+## 7. Ek çalışmalar: curl, Postman ve desteklenmeyen metot
 
-Postman'ın web sürümü de vardır; bu derste yardımcı program ve tarayıcı bağlantı ayarlarıyla uğraşmadan istek göndermek için **masaüstü uygulamasını** kullanacağız. Kurulu değilse [resmî indirme sayfasından](https://www.postman.com/downloads/) işletim sistemine uygun sürümü indirip kur, ardından uygulamayı aç. [Postman'ın başlangıç yönergesi](https://learning.postman.com/docs/getting-started/quick-start/) yeni isteğin nereden açıldığını gösterir.
+### 7.1 Aynı kitabı terminalden curl ile göndermek
 
-Hesap açma ekranı gelirse **Without an account…** bölümündeki **Open Lightweight API Client** düğmesine tıkla; bu deney için hesap açman gerekmez.
+**curl**, terminalden HTTP isteği gönderen bir programdır; WSL ve Linux'ta genellikle hazır gelir. Sunucuyu yeniden başlat ve şu komutu çalıştır:
 
-Sunucuyu yeniden başlatarak üç kitapla başla, sonra Postman'da:
+```bash
+curl -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/json" -d '{"title": "HTTP ile Yeni Bir Kitap", "author": {"first_name": "Ada", "last_name": "Yıldız"}, "available": true, "tags": ["http", "python"], "rating": null}'
+```
+
+| Seçenek | Anlamı |
+|---|---|
+| `-i` | Yanıtın başlıklarını da göster. |
+| `-X POST` | Metodu POST yap. |
+| `-H "Content-Type: application/json"` | İsteğe bu başlığı ekle. HTTPX bunu `json=` ile kendisi ekliyordu; curl'de biz yazarız. |
+| `-d '...'` | İsteğin gövdesi. JSON olduğu için `true` ve `null` yazılır. |
+
+Çıktı, tarih satırı dışında 4.1'de gördüğün yanıtın aynısıdır: `201 Created` durum satırı, `location: /book/74` başlığı ve eklenen kitabın gövdesi.
+
+### 7.2 Aynı kitabı Postman uygulamasıyla göndermek
+
+**Postman**, metodu, adresi ve gövdeyi arayüzden seçerek HTTP isteği hazırladığımız bir uygulamadır. Sunucu açısından isteğin Python'dan, curl'den ya da Postman'dan gelmesi bir şey değiştirmez.
+
+Postman'ın masaüstü uygulamasını kullanacağız. Kurulu değilse [resmî indirme sayfasından](https://www.postman.com/downloads/) indirip kur. Hesap açma ekranı gelirse **Without an account…** bölümündeki **Open Lightweight API Client** düğmesine tıkla; hesap açman gerekmez.
+
+Sunucuyu yeniden başlat, sonra Postman'da:
 
 1. Yeni bir **HTTP isteği** aç.
-2. Adresin yanındaki metot seçimini **POST** yap; adresi `http://127.0.0.1:8000/book` yaz.
-3. **Body → raw → JSON** seç. Aşağıdaki JSON'u gövde alanına yapıştır.
+2. Metodu **POST**, adresi `http://127.0.0.1:8000/book` yap.
+3. **Body → raw → JSON** seç ve aşağıdaki JSON'u yapıştır:
 
 ```json
 {
@@ -1107,35 +782,24 @@ Sunucuyu yeniden başlatarak üç kitapla başla, sonra Postman'da:
     "last_name": "Yıldız"
   },
   "available": true,
-  "tags": [
-    "http",
-    "python"
-  ],
+  "tags": ["http", "python"],
   "rating": null
 }
 ```
 
-4. İsteği hazırladığın bölümdeki **Headers** sekmesinde `Content-Type: application/json` bulunduğunu kontrol et. **raw → JSON** seçimi bu istek başlığını ekler. [Postman: istek gövdesi](https://learning.postman.com/docs/use/send-requests/create-requests/parameters/#raw-data)
-5. **Send** düğmesine **bir kez** bas. Gelen yanıtın durum kodu `201`, JSON gövdesindeki `id` değeri `74` olmalı. Bu kez **yanıtın Headers bölümüne** bak: `Location` değeri `/book/74` olmalı. İsteğin Headers sekmesi gönderdiğin, yanıtın Headers bölümü ise sunucudan gelen başlıkları gösterir.
-6. Yeni bir HTTP isteği aç. Metodu **GET**, adresi `http://127.0.0.1:8000/book/74` yap ve **Send** düğmesine bas. Eklenen kitabı `200` yanıtıyla görmelisin.
-
-Postman'a JSON yazdığımız için `true` ve `null` kullandık. Python sözlüğünde bunlar `True` ve `None` idi; HTTPX onları JSON'a çeviriyordu. Sunucu iki istekte de aynı kitap bilgilerini alır.
-
-POST isteğinin **Send** düğmesine yeniden basarsan Deney 6'daki gibi bir kitap daha eklenir. GET isteğini tekrar göndermek ise kitap eklemez; mevcut kaydı okur.
+4. İsteğin **Headers** sekmesinde `Content-Type: application/json` bulunduğunu kontrol et. **raw → JSON** seçimi bu başlığı ekler.
+5. **Send** düğmesine **bir kez** bas. Durum kodu `201`, gövdedeki `id` değeri `74` olmalı. **Yanıtın** Headers bölümünde `Location: /book/74` görünmeli.
+6. Yeni bir istek aç. Metodu **GET**, adresi `http://127.0.0.1:8000/book/74` yap ve **Send** düğmesine bas. Eklenen kitap `200` ile gelmeli.
 
 ![Postman'da POST /book isteği ve 201 Created yanıtı](Gorseller/03_postman_book_created.png)
 
 *Bu ekran örneğinde birkaç kez kitap eklendiği için yeni kitabın kimliği `77` olmuştur.*
 
-## Ek çalışma — Yol var ama metot desteklenmiyorsa
+### 7.3 Yol var ama DELETE metodu tanımlı değilse ne olur? (405)
 
-**Bu deneyin amacı**, istemcide `httpx.delete(...)` yazmanın kitabı kendiliğinden silmediğini görmektir. İstemci silme isteği gönderir; işlemin gerçekleşmesi için sunucuda bu isteği karşılayan bir fonksiyon ve kitabı listeden çıkaran kod bulunmalıdır. Adresin yanında **GET veya DELETE gibi metot seçimi de hangi işlemin yapılacağını belirler.**
+**Amaç:** İstemcide `httpx.delete(...)` yazmanın kitabı kendiliğinden silmediğini görmek. Bir işlemin gerçekleşmesi için sunucuda o metodu karşılayan bir fonksiyon bulunmalıdır.
 
-Sunucumuzda `@app.get("/book/{book_id}")` ile okuma işlemi tanımlı; aynı yol için DELETE işlemi tanımlamadık. Şimdi GET ile okuyabildiğimiz `/book/42` yoluna DELETE gönderip sonucu göreceğiz.
-
-**`server.py` değişmeyecek.** Sunucu çalışırken `client.py` içeriğini aşağıdaki kodla değiştir. Silme kodunu dördüncü haftada yazacağız.
-
-### `client.py` dosyasının tamamı
+`server.py` değişmiyor. `client.py` içeriğini şununla değiştir:
 
 ```python
 import httpx
@@ -1145,31 +809,49 @@ print("Status code:", response.status_code)
 print("Response body:", response.text)
 ```
 
-Bu DELETE isteğinin beklenen yanıtı:
-
 ```text
 Status code: 405
 Response body: {"detail":"Method Not Allowed"}
 ```
 
-**405 Method Not Allowed**, bu adreste gönderdiğimiz HTTP metodunun desteklenmediğini bildirir. Sunucu DELETE isteğini GET fonksiyonuna yönlendirmez; `get_book` çalışmaz ve kitap silinmez. Aynı adrese GET gönderirsek kitabı yine okuyabiliriz. [HTTP standardı: 405](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.6)
+**405 Method Not Allowed**, bu yolda gönderilen metodun desteklenmediğini bildirir. `/book/42` yolu için yalnızca GET tanımlı; DELETE için bir fonksiyon yok. Sunucu DELETE isteğini GET fonksiyonuna yönlendirmez ve kitap silinmez. Silme işlemini 4. haftada yazacağız.
 
-Bu uygulamada iki hata farklı yerde oluşur: `GET /book/999` isteğinde `get_book` çalışır, kitabı bulamaz ve kodumuzdaki **404** yanıtını verir. `DELETE /book/42` isteğinde ise bu metodu karşılayan fonksiyon olmadığı için sunucu **405** yanıtını verir.
+| İstek | Ne olur? | Durum kodu |
+|---|---|---|
+| `GET /book/999` | `get_book` çalışır, kitabı bulamaz; `404` yanıtını bizim kodumuzdaki `HTTPException` oluşturur. | `404` |
+| `DELETE /book/42` | Bu metodu karşılayan bir fonksiyon yok; `405` yanıtını FastAPI oluşturur. | `405` |
 
-Bu ek çalışmadan sonra kitap listesini görmek için Deney 6'nın sonundaki tam GET istemcisini `client.py` dosyasına geri koy.
+Ek çalışmadan sonra `client.py` dosyasına Deney 1'deki GET istemcisini geri koy.
 
-## Kendini kontrol et
+---
 
-1. Deney 2'de kitap bilgileri yanıtta geldiği halde kitap sayısı neden artmadı?
-2. Kaydı gerçekten ekleyen satır hangisi? `201` hangi bilgiyi bildiriyor?
-3. `Location: /book/74` hangi mesajda gelir ve istemci bu bilgiyle ne yapar?
-4. `title` eksik olduğunda `422` yanıtını kim oluşturur? `books.append(...)` neden çalışmaz?
-5. Aynı POST istemcisini iki kez çalıştırınca neden iki kayıt oluşur? Sunucuyu yeniden başlatınca bu kayıtlar neden kaybolur?
+## 8. Kendini kontrol et: Bu haftanın altı sorusu
 
-**Cevaplarını karşılaştır:**
+1. `params=` ve `json=` bilgiyi isteğin neresinde taşır?
+2. Deney 2'de kitap bilgileri yanıtta geldiği hâlde kitap sayısı neden artmadı?
+3. Kaydı gerçekten ekleyen satır hangisi? `201` neyi bildirir?
+4. `Location: /book/74` hangi mesajda gelir? İstemci bu bilgiyle ne yapar?
+5. `title` eksik olduğunda `422` yanıtını kim oluşturur? `books.append(...)` neden çalışmaz?
+6. Aynı POST istemcisini iki kez çalıştırınca neden iki kayıt oluşur? Sunucuyu yeniden başlatınca bu kayıtlar neden kaybolur?
 
-1. Deney 2'deki fonksiyon yalnızca aldığı bilgileri geri döndürür; listeye ekleyen satır henüz yoktur.
-2. Kaydı `books.append(new_book)` ekler. `201`, istemciye yeni kayıt oluşturulduğunu bildirir.
-3. `Location`, POST yanıtının başlığıdır. İstemci bu yolu sunucu adresiyle birleştirip kitabı okumak için GET gönderir.
-4. Eksik başlığı model kontrolü yakalar; FastAPI `422` yanıtını oluşturur. `create_book` çağrılmadığından içindeki ekleme satırı çalışmaz.
-5. İstemci her çalışmada yeni POST gönderir ve sunucu her geçerli POST'ta yeni kayıt ekler. Kayıtlar yalnızca çalışan sunucunun belleğinde tutulduğu için sunucu yeniden başladığında başlangıçtaki listeye dönülür.
+### 8.1 Soruların cevapları
+
+1. `params=` bilgiyi adresin sorgu bölümünde, `json=` isteğin gövdesinde taşır.
+2. Deney 2'deki fonksiyon aldığı bilgileri yalnızca geri gönderir; listeye ekleyen bir satır yoktur.
+3. Kaydı `books.append(created_book)` ekler. `201`, istemciye yeni bir kayıt oluşturulduğunu bildirir.
+4. `Location`, POST yanıtının başlığıdır. İstemci bu yolu sunucu adresiyle birleştirip kitabı okumak için ayrı bir GET isteği gönderir.
+5. Eksik kitap adını (`title`) model kontrolü yakalar ve FastAPI `422` yanıtını oluşturur. `create_book` hiç çağrılmadığı için içindeki ekleme satırı çalışmaz.
+6. İstemci her çalıştığında yeni bir POST gönderir, sunucu da her geçerli POST'ta yeni kayıt ekler. Kayıtlar yalnızca çalışan sunucunun belleğinde tutulduğu için sunucu yeniden başlayınca başlangıçtaki listeye dönülür.
+
+---
+
+## 9. Kaynaklar: Konuların resmî belgeleri
+
+- [FastAPI — Request Body](https://fastapi.tiangolo.com/tutorial/body/)
+- [FastAPI — Response Status Code](https://fastapi.tiangolo.com/tutorial/response-status-code/)
+- [FastAPI — Response Headers](https://fastapi.tiangolo.com/advanced/response-headers/)
+- [FastAPI — Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/)
+- [HTTPX — Sending JSON Encoded Data](https://www.python-httpx.org/quickstart/#sending-json-encoded-data)
+- [Pydantic — Models](https://docs.pydantic.dev/latest/concepts/models/)
+- [HTTP standardı (RFC 9110) — Location](https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.2)
+- [HTTP standardı (RFC 9110) — 405 Method Not Allowed](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.6)
