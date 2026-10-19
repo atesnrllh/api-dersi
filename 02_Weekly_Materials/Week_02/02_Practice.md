@@ -762,7 +762,71 @@ curl -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/json" -
 
 Çıktı, tarih satırı dışında 4.1'de gördüğün yanıtın aynısıdır: `201 Created` durum satırı, `location: /book/74` başlığı ve eklenen kitabın gövdesi.
 
-### 7.2 Aynı kitabı Postman uygulamasıyla göndermek
+### 7.2 curl nedir?
+
+**curl**, terminalden HTTP isteği gönderen bir programdır. `client.py` dosyasında HTTPX ile yaptığımız işi Python kodu yazmadan, tek bir komutla yapar. Adı "client URL" sözcüklerinden gelir; yani "bir adrese istek gönderen istemci" demektir.
+
+Üç farklı istemci aynı isteği gönderebilir:
+
+| İstemci | Nasıl kullanılır? |
+|---|---|
+| `client.py` (HTTPX) | Python kodu yazarız, dosyayı çalıştırırız. |
+| **curl** | Terminale tek bir komut yazarız. |
+| Postman | Metodu, adresi ve gövdeyi bir pencereden seçeriz. |
+
+Sunucu açısından isteğin hangisinden geldiği fark etmez. Üçü de aynı HTTP isteğini gönderir.
+
+#### 7.2.1 En basit kullanımı
+
+Kitap listesini istemek için:
+
+```bash
+curl http://127.0.0.1:8000/book
+```
+
+Bu komut `httpx.get("http://127.0.0.1:8000/book")` ile aynı isteği gönderir. Yanıtın gövdesini, yani kitap listesinin JSON'unu terminale yazar.
+
+#### 7.2.2 7.1'deki komut `client.py` ile karşılaştırınca
+
+| curl'de | `client.py`'de | Anlamı |
+|---|---|---|
+| `-X POST` | `httpx.post(...)` | Metodu POST yap. |
+| `http://127.0.0.1:8000/book` | `base_url + "/book"` | İsteğin adresi |
+| `-H "Content-Type: application/json"` | HTTPX `json=` ile kendisi ekler | Gövdenin JSON olduğunu bildir. |
+| `-d '{...}'` | `json=new_book` | İsteğin gövdesi. curl'de JSON'u kendimiz yazarız; bu yüzden `True` değil `true`, `None` değil `null` yazılır. |
+| `-i` | `print(response.headers ...)` | Yanıtın başlıklarını da göster. |
+
+#### 7.2.3 curl neden işe yarar?
+
+- **Hızlı deneme:** Bir API'yi denemek için dosya oluşturup kod yazmaya gerek kalmaz.
+- **Her yerde var:** WSL ve Linux'ta genellikle hazır gelir.
+- **Yanıtın tamamını gösterir:** `-i` seçeneğiyle durum satırı, başlıklar ve gövde ham haliyle görünür. 4.1 bölümündeki yanıtı bu şekilde aldık.
+
+7.1'deki komut WSL veya Linux terminali (Bash) içindir. Windows PowerShell'de tırnak işaretleri farklı çalıştığı için aynı komut olduğu gibi çalışmayabilir. PowerShell kullanıyorsan 7.2.4'e bak.
+
+#### 7.2.4 PowerShell kullanıyorsan
+
+Windows 10 ve 11'de curl hazır gelir. Ancak PowerShell'de yalnızca `curl` yazınca curl yerine PowerShell'in kendi komutu (`Invoke-WebRequest`) çalışabilir. Bu yüzden komutu **`curl.exe`** diye yaz. Önce kurulu olup olmadığını kontrol et:
+
+```powershell
+curl.exe --version
+```
+
+Komut bulunamazsa curl'ü kur ve PowerShell'i kapatıp yeniden aç:
+
+```powershell
+winget install cURL.cURL
+```
+
+PowerShell tırnak işaretlerini farklı işlediği için JSON'u komutun içine yazma; bir dosyaya koy. Komutu çalıştırdığın klasörde `book.json` dosyası oluştur, 7.3'teki JSON'u içine yapıştır ve şu komutu çalıştır:
+
+```powershell
+curl.exe -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/json" -d "@book.json"
+```
+
+`-d "@book.json"`, isteğin gövdesini `book.json` dosyasından okur.
+
+### 7.3 Aynı kitabı Postman uygulamasıyla göndermek
 
 **Postman**, metodu, adresi ve gövdeyi arayüzden seçerek HTTP isteği hazırladığımız bir uygulamadır. Sunucu açısından isteğin Python'dan, curl'den ya da Postman'dan gelmesi bir şey değiştirmez.
 
@@ -795,7 +859,7 @@ Sunucuyu yeniden başlat, sonra Postman'da:
 
 *Bu ekran örneğinde birkaç kez kitap eklendiği için yeni kitabın kimliği `77` olmuştur.*
 
-### 7.3 Yol var ama DELETE metodu tanımlı değilse ne olur? (405)
+### 7.4 Yol var ama DELETE metodu tanımlı değilse ne olur? (405)
 
 **Amaç:** İstemcide `httpx.delete(...)` yazmanın kitabı kendiliğinden silmediğini görmek. Bir işlemin gerçekleşmesi için sunucuda o metodu karşılayan bir fonksiyon bulunmalıdır.
 
