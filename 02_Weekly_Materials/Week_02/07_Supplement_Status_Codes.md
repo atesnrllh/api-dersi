@@ -4,9 +4,9 @@ Föyün Deney 2'sinde şu cümle geçiyor: "Başarı kodu belirtmediğimiz için
 
 ---
 
-## 1. Durum kodunu belirlemenin yolları
+## 1. Durum kodu nasıl belirlenir?
 
-| Yol | Kod | Gönderilen durum kodu | Derste nerede gördük? |
+| Seçenek | Kod | Gönderilen durum kodu | Derste nerede gördük? |
 |---|---|---|---|
 | Hiçbir şey belirtmemek | `@app.post("/book")` | `200` | Föy, Deney 2 |
 | Dekoratörde belirtmek | `@app.post("/book", status_code=201)` | `201` | Föy, Deney 3 |
@@ -17,7 +17,7 @@ Föyün Deney 2'sinde şu cümle geçiyor: "Başarı kodu belirtmediğimiz için
 
 ## 2. Hangisi ne zaman kullanılır?
 
-| Yol | Ne zaman? |
+| Seçenek | Ne zaman? |
 |---|---|
 | Dekoratörde `status_code` | Fonksiyon her başarılı çalıştığında **aynı** kod gönderilecekse. Örneğin kitap her eklendiğinde `201`. |
 | `HTTPException` | Bir **hata** durumunda. Fonksiyon o satırda durur ve hata yanıtı gönderilir. |
@@ -25,13 +25,13 @@ Föyün Deney 2'sinde şu cümle geçiyor: "Başarı kodu belirtmediğimiz için
 
 ---
 
-## 3. Dört yolu deneyen örnek
+## 3. Dört seçeneği deneyen örnek
 
 > **Not:** Bu örnekteki `server.py` ve `client.py`, föydeki dosyalardan ayrıdır. Föydeki dosyalarını bozmamak için örneği ayrı bir klasörde dene.
 
 ### 3.1 `server.py`
 
-Her yol için ayrı bir işlem tanımladık:
+Her seçenek için ayrı bir yol tanımladık:
 
 ```python
 from fastapi import FastAPI, HTTPException, Response
@@ -130,4 +130,4 @@ FastAPI hangi sayıyı yazdığımıza karışmaz; örneğin bir hata durumunda 
 | `409` | Çakışma | Eklenmek istenen kitap zaten var. |
 | `422` | Gönderilen bilgi kurallara uymuyor | Kitabın adı gönderilmedi. Bu kodu FastAPI kendisi gönderir. |
 
-Bunların dışında, fonksiyonun yanıtı tamamen kendisinin oluşturduğu bir yol daha vardır: `return JSONResponse(status_code=201, content={...})`. Bu yolu derste henüz kullanmıyoruz.
+Bunların dışında, fonksiyonun yanıtı tamamen kendisinin oluşturduğu bir seçenek daha vardır: `return JSONResponse(status_code=201, content={...})`. Bunu derste henüz kullanmıyoruz.

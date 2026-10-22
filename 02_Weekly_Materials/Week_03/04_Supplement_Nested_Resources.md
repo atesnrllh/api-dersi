@@ -51,7 +51,7 @@ def get_reviews(book_id: int | None = None, reader: str | None = None):
     return results
 ```
 
-Bu kod, Hafta 1'deki `get_books` fonksiyonuyla aynı kalıbı kullanıyor. İki sorgu parametresi var, ikisi de isteğe bağlı. Bir parametre gönderilmezse değeri `None` olur ve o koşul filtrelemede yok sayılır.
+Bu kod, Hafta 1'deki `get_books` fonksiyonuyla aynı kalıbı kullanıyor. İki sorgu parametresi var, ikisi de isteğe bağlı. Bir sorgu parametresi gönderilmezse fonksiyondaki karşılığının değeri `None` olur ve o koşul filtrelemede yok sayılır.
 
 Sunucuyu başlat ve üç isteği gönder:
 

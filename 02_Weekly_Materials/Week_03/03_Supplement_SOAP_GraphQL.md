@@ -25,13 +25,13 @@ SOAPAction: "GetBook"
 
 | Parça | Anlamı |
 |---|---|
-| `POST /BookService` | SOAP'ta bütün işlemler genellikle aynı adrese, POST ile gönderilir. Adres hangi işlemin istendiğini söylemez. |
+| `POST /BookService` | SOAP'ta bütün istekler genellikle aynı yola, POST ile gönderilir. Yol hangi işlemin istendiğini söylemez. |
 | `Content-Type: text/xml` | Gövdenin XML olduğunu bildirir. |
 | `SOAPAction: "GetBook"` | İstenen işlemin adı. SOAP'ın bu örnekteki 1.1 sürümünde işlem adı, mesajın içinin yanında bu başlıkta da yazılır. |
 | `<?xml ... ?>` | Bunun bir XML belgesi olduğunu ve hangi karakter kodlamasıyla yazıldığını söyler. |
 | `<soap:Envelope>` | **Zarf.** Mesajın tamamını sarar. `xmlns:soap="..."` kısmı, mesajın hangi SOAP kurallarına göre yazıldığını gösteren bir addır; bir web sayfası değildir. |
 | `<soap:Body>` | Mesajın asıl içeriği bu öğenin içindedir. |
-| `<GetBook>` | İstenen işlem: "kitabı getir". REST'te bunu metot ve yol söylüyordu (`GET /books/42`). |
+| `<GetBook>` | İstenen işlem: "kitabı getir". REST'te bunu HTTP metodu ve yol söylüyordu (`GET /books/42`). |
 | `<BookId>42</BookId>` | İşlemin parametresi: kitabın kimliği. REST'te bu bilgi yoldaydı. |
 
 REST'te `GET /books/42` yazdığımız tek satırın karşılığı, SOAP'ta XML ile yazılmış bir mesajdır.
@@ -121,7 +121,7 @@ Bir hata olduğunda yanıtta `"errors"` adlı bir alan bulunur ve hata orada aç
 
 | Bilgi | REST | SOAP | GraphQL |
 |---|---|---|---|
-| İstenen işlem | Metot: `GET` | `<GetBook>` öğesi ve `SOAPAction` başlığı | Sorgudaki `book` |
+| İstenen işlem | HTTP metodu: `GET` | `<GetBook>` öğesi ve `SOAPAction` başlığı | Sorgudaki `book` |
 | Kitabın kimliği | Yolda: `/books/42` | `<BookId>42</BookId>` | Sorgudaki `id: 42` |
 | İstenen alanlar | Seçilemez; sunucu belirler | Seçilemez; sunucu belirler | Sorguda istemci seçer |
 | Sonucun başarılı olup olmadığı | Durum kodu | Gövdedeki `<soap:Fault>` öğesi (durum kodu `500`) | Gövdedeki `"errors"` alanı (durum kodu çoğu zaman `200`) |

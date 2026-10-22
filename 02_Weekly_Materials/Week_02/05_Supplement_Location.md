@@ -10,14 +10,14 @@ Bu notta şu soruyu cevaplıyoruz: **Kitabın yolunu zaten kendimiz kurabiliyors
 
 | Bilgi | Örnek | İstemci ne zaman öğrenir? |
 |---|---|---|
-| Kitap ekleme adresi | `POST /book` | **Önceden.** Bu adresi bilmeden kitap eklenemez. |
+| Kitabı ekleyen istek | `POST /book` | **Önceden.** Bunu bilmeden kitap eklenemez. |
 | Yeni kitabın kimliği | `74` | **Sonradan.** Kimliği sunucu verir; istemci onu yanıttan öğrenir. |
 
 Kimliği istemci önceden bilemez. Bizim sunucumuzda ilk eklenen kitap `74`, ikincisi `75` olur. Sunucu yeniden başlatılırsa sayılar yine `74`'ten başlar.
 
 ---
 
-## 2. Bizim örneğimizde kitabın yolunu bulmanın iki yolu
+## 2. Bizim örneğimizde istemci kitabın yolunu nasıl bulur?
 
 Sunucunun yanıtı hem gövdede kimliği hem de `Location` başlığını içeriyor:
 
@@ -30,12 +30,12 @@ location: /book/74
 
 İstemci yeni kitabın yolunu iki şekilde bulabilir:
 
-| Yol | İstemci ne yapar? | Sonuç |
+| Seçenek | İstemci ne yapar? | Sonuç |
 |---|---|---|
 | Gövdedeki kimliği kullanmak | `/book/` ile `74`'ü kendisi birleştirir. | `/book/74` |
 | `Location` başlığını okumak | Sunucunun verdiği yolu doğrudan alır. | `/book/74` |
 
-**Önemli:** `Location` başlığındaki yol, POST ile gönderdiğimiz adresten türetilmez. Sunucuyu yazan kişi oraya, yeni kitabın **GET ile okunacağı yolu** yazar. Bizim sunucumuzda bu başlığı yazan satır şudur:
+**Önemli:** `Location` başlığındaki yol, POST isteğini gönderdiğimiz yoldan türetilmez. Sunucuyu yazan kişi oraya, yeni kitabın **GET ile okunacağı yolu** yazar. Bizim sunucumuzda bu başlığı yazan satır şudur:
 
 ```python
 response.headers["Location"] = f"/book/{new_id}"
@@ -53,7 +53,7 @@ Deney 4'te `Location` başlığını kullanmamızın nedeni, sunucuda bir **yan�
 
 İstemcinin yolu kendisi kuramadığı iki durumda:
 
-**3.1 Sunucu gövdede kimliği göndermiyorsa.** Bazı API'ler kayıt oluşturduğunda yanıtın gövdesini boş bırakır, yalnızca `Location` başlığını gönderir. Kimlik gövdede olmadığı için yolu kurmak mümkün değildir. Yeni kaydın yerini öğrenmenin tek yolu bu başlıktır.
+**3.1 Sunucu gövdede kimliği göndermiyorsa.** Bazı API'ler kayıt oluşturduğunda yanıtın gövdesini boş bırakır, yalnızca `Location` başlığını gönderir. Kimlik gövdede olmadığı için yolu kurmak mümkün değildir. İstemci yeni kaydın yolunu yalnızca bu başlıktan öğrenebilir.
 
 **3.2 Tek kitabın yolu bizimki gibi kurulmuyorsa.** Tek bir kitabın hangi yoldan okunacağına, API'yi yazan kişi karar verir. Bu yol, sunucudaki dekoratöre ne yazıldığına bağlıdır. Bizim sunucumuzda tek kitabı okuyan fonksiyon şöyle tanımlı:
 
@@ -90,7 +90,7 @@ Location yolu: /book-detail?id=74 -> 200 {'title': 'HTTP ile Yeni Bir Kitap', 'i
 
 Kendi kurduğumuz `/book/74` yolu bu sunucuda yok. `Location` başlığındaki yol ise kitabı getirdi, çünkü o yolu sunucu kendi okuma yoluna göre yazdı.
 
-Kısacası, yolu kimlikten kurabilmemiz bizim API'mizin böyle yazılmış olmasından kaynaklanır. Her API böyle değildir.
+Kısacası, yolu kimlikten kurabilmemizin nedeni API'mizi böyle yazmış olmamızdır. Her API böyle değildir.
 
 ---
 
@@ -103,7 +103,7 @@ location = response.headers["Location"]
 read_response = httpx.get(base_url + location)
 ```
 
-POST yanıtında kitap zaten geldiği hâlde neden tekrar okuyoruz? Çünkü GET yanıtı, kitabın sunucuda **gerçekten kaydedildiğini** ve **hangi haliyle kaydedildiğini** gösterir.
+POST yanıtında kitap zaten geldiği hâlde neden tekrar okuyoruz? Çünkü GET yanıtı, kitabın sunucuda **gerçekten saklandığını** ve **hangi haliyle saklandığını** gösterir.
 
 Gerçek uygulamalarda sunucu, kaydı saklarken bazı bilgileri kendisi ekler: kimlik, oluşturulma zamanı ya da gönderilmeyen alanlar için varsayılan değerler. GET ile okuyunca istemcinin gönderdiğini değil, **sunucunun sakladığını** görürüz.
 

@@ -2,11 +2,11 @@
 
 ## 0. Bu hafta ne yapacağız: API'yi kaynaklara göre tasarlamak
 
-İlk iki haftada kitap kataloğumuza okuma ve ekleme işlemleri yazdık. Bu hafta önce bir adım geri çekilip şunu soracağız: **İşlemlerimizin yolları ve metotları nasıl seçilmeli?** Bu sorunun en yaygın cevabı **REST** yaklaşımıdır.
+İlk iki haftada kitap kataloğumuza okuma ve ekleme işlemleri yazdık. Bu hafta önce bir adım geri çekilip şunu soracağız: **İşlemlerimizin yolları ve HTTP metotları nasıl seçilmeli?** Bu sorunun en yaygın cevabı **REST** yaklaşımıdır.
 
 REST, web API'lerini tasarlamak için yaygın kullanılan bir yaklaşımdır. Temel fikri şudur:
 
-- Sunucudaki veriler, adreslerle ulaşılan **kaynaklar** olarak düşünülür: kitaplar, bir kitap, bir kitabın yorumları…
+- Sunucudaki veriler **kaynaklar** olarak düşünülür: kitaplar, bir kitap, bir kitabın yorumları… Her kaynağın bir yolu vardır, örneğin `/books/42`.
 - Bir kaynak üzerinde yapılacak iş **HTTP metoduyla** belirtilir: okumak için GET, eklemek için POST…
 
 REST bir program ya da kütüphane değildir; bir tasarım yaklaşımıdır. FastAPI ile REST'e uyan da, uymayan da bir API yazabiliriz. Bu hafta ikisini karşılaştıracağız.
@@ -19,7 +19,7 @@ Bu haftanın ek notları:
 ### 0.1 Bu haftanın sonunda neler yapabileceksin?
 
 - Bir API'deki kaynakları ve işlemleri ayırt edebileceksin.
-- Koleksiyon ve tek kayıt için yol seçebileceksin: `/books` ve `/books/42`.
+- Koleksiyon ve tek bir kitap için yol seçebileceksin: `/books` ve `/books/42`.
 - Yolda neden fiil değil isim kullanıldığını açıklayabileceksin.
 - GET isteğinin neden veriyi değiştirmemesi gerektiğini açıklayabileceksin.
 - Bir kaynağın altındaki başka bir kaynak için okuma ve ekleme işlemi yazabileceksin: bir kitabın yorumları.
@@ -32,7 +32,7 @@ Her deney aynı sırayla ilerler: **Amaç → Kod → Çalıştır → Çıktı 
 
 Kod değiştiğinde ya dosyanın tamamı ya da yalnızca değişen kısım verilir. Hangisi olduğu kodun hemen üstünde yazar.
 
-> **Kayıt sayılarını izlemek için:** Sunucu her başlatıldığında dosyada yazılı üç kitapla başlar. Deney 5'ten sonra bir de dosyada yazılı tek bir yorumla başlar. İstekle eklenen kayıtlar yalnızca sunucu çalıştığı sürece bellekte durur. Deneylerdeki "sunucuyu yeniden başlat" adımlarını izlersen çıktıların föydekilerle aynı olur.
+> **Kitap ve yorum sayılarını izlemek için:** Sunucu her başlatıldığında dosyada yazılı üç kitapla başlar. Deney 5'ten sonra bir de dosyada yazılı tek bir yorumla başlar. İstekle eklenen kitaplar ve yorumlar yalnızca sunucu çalıştığı sürece bellekte durur. Deneylerdeki "sunucuyu yeniden başlat" adımlarını izlersen çıktıların föydekilerle aynı olur.
 
 ### 0.3 Başlangıç dosyaları
 
@@ -53,21 +53,37 @@ Hafta 2'nin sonundaki dosyalarla başla:
 
 | Kavram | Anlamı | Kitap kataloğunda |
 |---|---|---|
-| **Kaynak** | Sunucunun bir adresle sunduğu şey | Bir kitap |
-| **Koleksiyon** | Aynı türden kaynakların topluluğu | Bütün kitaplar |
-| **İşlem** | Bir kaynak üzerinde yapılan iş: **metot + yol** | `GET /book/42`: 42 numaralı kitabı oku |
+| **Kaynak** | Sunucuda bir yolu olan şey | Bir kitap: `/book/42` |
+| **Koleksiyon** | Aynı türden kaynakların topluluğu | Bütün kitaplar: `/book` |
+| **İşlem** | Bir kaynak üzerinde yapılan iş. REST'te **HTTP metodu + yol** ile belirtilir. | `GET /book/42`: 42 numaralı kitabı oku |
 
 Hafta 2'nin sonundaki sunucumuzda üç işlem var:
 
-| Metot | Yol | Fonksiyon | Hangi kaynak? | Ne yapar? |
+| HTTP metodu | Yol | Fonksiyon | Hangi kaynak? | Ne yapar? |
 |---|---|---|---|---|
 | `GET` | `/book` | `get_books` | Kitap koleksiyonu | Kitapları listeler; arama ve filtre uygulayabilir. |
 | `POST` | `/book` | `create_book` | Kitap koleksiyonu | Koleksiyona yeni bir kitap ekler. |
 | `GET` | `/book/{book_id}` | `get_book` | Tek bir kitap | Kimliği verilen kitabı döndürür. |
 
-Dikkat et: İki işlem aynı yolu (`/book`) kullanıyor. Yol **hangi kaynağın** istendiğini, metot **onunla ne yapılacağını** söylüyor.
+Dikkat et: İki işlem aynı yolu (`/book`) kullanıyor. Yol **hangi kaynağın** istendiğini, HTTP metodu **onunla ne yapılacağını** söylüyor.
 
-### 1.2 Koleksiyonu ve tek kaydı iste
+Tabloda `GET` ile `get_books` yan yana duruyor. "get" kelimesi bu derste dört yerde geçer; bunlar ayrı şeylerdir:
+
+**1. Mesajın içinde: HTTP metodu**
+
+| Yazım | Ne? |
+|---|---|
+| `GET` | Sunucuya giden mesajın ilk kelimesi. İsteğin türünü söyler: "oku". Bir kod değildir; curl, Postman ve HTTPX aynı kelimeyi gönderir. |
+
+**2. Python kodunda: "get" geçen üç ad**
+
+| Yazım | Nerede? | Ne iş yapar? |
+|---|---|---|
+| `httpx.get(...)` | İstemcide | Başında `GET` yazan mesajı hazırlar ve sunucuya **gönderir**. |
+| `@app.get("/book")` | Sunucuda | Başında `GET` yazan mesaj gelince hangi fonksiyonun çalışacağını FastAPI'ye **bildirir**. FastAPI'nin metodudur. |
+| `def get_books(...)` | Sunucuda | O mesaj gelince **çalışan** bizim fonksiyonumuz. Adındaki `get` kelimesini biz seçtik. |
+
+### 1.2 Koleksiyonu ve tek bir kitabı iste
 
 Hafta 2'nin sunucusunu başlat. Koleksiyonu ve tek bir kitabı curl ile iste:
 
@@ -103,7 +119,12 @@ print(response.text)
 | `GET /book` | Dizi `[...]` | Koleksiyon birden çok kitap içerir. |
 | `GET /book/42` | Nesne `{...}` | Tek bir kitap istendi. |
 
-> **Ana fikir:** API'yi tasarlarken önce kaynakları belirleriz: kitaplar ve bir kitap. Sonra her kaynakta yapılacak işleri metotlarla ifade ederiz. Bir işlem, metot ile yolun birleşimidir.
+> **Ana fikir:** Bir API'yi tasarlamak iki soruya cevap vermektir:
+>
+> 1. **Hangi kaynaklar var?** Bizim API'mizde iki kaynak var: bütün kitaplar (koleksiyon) ve tek bir kitap. Her kaynağın bir yolu vardır: `/book` ve `/book/42`.
+> 2. **Her kaynakla ne yapılabilir?** Bunu HTTP metodu söyler: Kitap koleksiyonunu `GET` ile okuruz, ona `POST` ile yeni kitap ekleriz; tek bir kitabı `GET` ile okuruz.
+>
+> Yol ile HTTP metodu bir araya gelince bir işlem ortaya çıkar: `GET /book` "kitapları listele", `POST /book` "kitap ekle", `GET /book/42` "42 numaralı kitabı getir" demektir.
 
 ---
 
@@ -177,7 +198,7 @@ Book count: 4
 
 `Location` başlığı da artık `/books/74` geliyor, çünkü sunucuda o satırı da değiştirdik.
 
-> **Ana fikir:** Yol, kaynağın adıdır. Koleksiyon için çoğul bir ad (`/books`), koleksiyondaki tek kayıt için onun altında bir kimlik (`/books/42`) kullanırız. Yollar değişince eski istemciler bozulur; bu yüzden yollar baştan dikkatle seçilir.
+> **Ana fikir:** Yol, kaynağın adıdır. Koleksiyon için çoğul bir ad (`/books`), koleksiyondaki tek bir kitap için onun altında bir kimlik (`/books/42`) kullanırız. Yollar değişince eski istemciler bozulur; bu yüzden yollar baştan dikkatle seçilir.
 
 ---
 
@@ -267,13 +288,13 @@ Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste y
 
 | Sorun | Açıklama |
 |---|---|
-| Fiil iki kez yazılıyor | `GET /getAllBooks` isteğinde "getir" anlamı hem metotta (`GET`) hem yolda (`get`) var. REST'te işi metot söyler, yol yalnızca kaynağı adlandırır. |
+| Fiil iki kez yazılıyor | `GET /getAllBooks` isteğinde "getir" anlamı hem HTTP metodunda (`GET`) hem yolda (`get`) var. REST'te işi HTTP metodu söyler, yol yalnızca kaynağı adlandırır. |
 | Her işlem için yeni bir ad gerekiyor | `getAllBooks`, `getBookById`, `createNewBook`… İstemci bütün adları tek tek öğrenmek zorundadır ve adları tahmin edemez: `getBook` mu, `getBookById` mi, `fetchBook` mu? |
 | Kitap bilgileri adreste gidiyor | Yeni kitabın adı sorgu bölümünde (`?title=...`) gönderiliyor. Bir kitabın bütün alanlarını (yazar, etiketler…) adreste göndermek zordur; bu bilgiler gövdeye aittir. |
 
 Denemeden sonra `bad_server.py` sunucusunu durdur ve kendi sunucunu yeniden başlat.
 
-> **Ana fikir:** Bir API'nin çalışması, iyi tasarlandığı anlamına gelmez. REST'te **yol kaynağı (ismi), metot yapılacak işi (fiili)** söyler. Böylece istemci, yolları tek tek ezberlemek yerine aynı kalıbı her kaynakta kullanabilir.
+> **Ana fikir:** Bir API'nin çalışması, iyi tasarlandığı anlamına gelmez. REST'te **yol kaynağı (ismi), HTTP metodu yapılacak işi (fiili)** söyler. Böylece istemci, yolları tek tek ezberlemek yerine aynı kalıbı her kaynakta kullanabilir.
 
 ---
 
@@ -353,9 +374,9 @@ GET isteği, "yalnızca oku" anlamına gelir. Bu yüzden birçok program GET ist
 
 Bu programlar GET isteğinin hiçbir şeyi değiştirmeyeceğini varsayar. GET ile kitap ekleyen bir API'de bunların her biri istemeden yeni bir kayıt oluşturur.
 
-HTTP standardı da GET'i **güvenli (safe)** bir metot olarak tanımlar: GET isteği sunucudaki veriyi değiştirmemelidir.
+HTTP standardı da GET'i **güvenli (safe)** bir HTTP metodu olarak tanımlar: GET isteği sunucudaki veriyi değiştirmemelidir.
 
-| Metot | Veriyi değiştirir mi? | Tekrar gönderilirse? | Derste |
+| HTTP metodu | Veriyi değiştirir mi? | Tekrar gönderilirse? | Derste |
 |---|---|---|---|
 | `GET` | Hayır | Bir şey değişmez; aynı veri yeniden okunur. | Hafta 1 |
 | `POST` | Evet: yeni kayıt oluşturur | Bizim API'mizde her seferinde yeni bir kayıt oluşur. | Hafta 2 |
@@ -363,7 +384,7 @@ HTTP standardı da GET'i **güvenli (safe)** bir metot olarak tanımlar: GET ist
 
 Denemeden sonra `bad_get_server.py` sunucusunu durdur ve kendi sunucunu yeniden başlat.
 
-> **Ana fikir:** GET yalnızca okumak içindir ve sunucudaki veriyi değiştirmemelidir. Programlar GET isteğini kendiliğinden tekrar gönderebildiği için, veri değiştiren işlemler POST gibi başka metotlarla yapılır.
+> **Ana fikir:** GET yalnızca okumak içindir ve sunucudaki veriyi değiştirmemelidir. Programlar GET isteğini kendiliğinden tekrar gönderebildiği için, veri değiştiren işlemler POST gibi başka HTTP metotlarıyla yapılır.
 
 ---
 
@@ -375,7 +396,7 @@ Denemeden sonra `bad_get_server.py` sunucusunu durdur ve kendi sunucunu yeniden 
 
 Her yorum bir kitaba aittir. Bu ilişkiyi yolda da gösteririz: Bir kitabın yorumları, o kitabın yolunun altında durur.
 
-| Metot | Yol | Ne yapar? |
+| HTTP metodu | Yol | Ne yapar? |
 |---|---|---|
 | `GET` | `/books/{book_id}/reviews` | Kitabın yorumlarını listeler. |
 | `POST` | `/books/{book_id}/reviews` | Kitaba yeni bir yorum ekler. |
@@ -463,7 +484,7 @@ def create_review(book_id: int, review_data: ReviewCreate):
 | `book_exists` | Bir **bayrak** değişkenidir. Başta `False`'tur; döngüde kitap bulunursa `True` olur. Döngü bitince bayrağa bakılır: Kitap yoksa yorumlara hiç geçmeden `404` verilir. |
 | `get_reviews` içindeki ikinci döngü | Yalnızca `book_id` değeri istenen kitapla aynı olan yorumları toplar. Hafta 1'deki `get_books` aramasıyla aynı kalıp. |
 | `create_review` içindeki kimlik hesabı | Yeni yoruma, en büyük yorum kimliğinin bir fazlasını verir. Hafta 2'deki `create_book` ile aynı kalıp. |
-| `created_review["book_id"] = book_id` | Yorumun hangi kitaba ait olduğunu yoldan alıp kayda yazar. İstemci bunu gövdede göndermez. |
+| `created_review["book_id"] = book_id` | Yorumun hangi kitaba ait olduğunu yoldan alıp yorumun `book_id` alanına yazar. İstemci bunu gövdede göndermez. |
 
 `get_book` fonksiyonunda kitabı bulunca hemen `return` ediyorduk, çünkü iş orada bitiyordu. Burada kitabı bulmak işin yalnızca ilk adımı; asıl iş yorumlarla ilgili. Bu yüzden "kitap var mı?" sorusunun cevabını bayrakta saklıyor, döngüden sonra kullanıyoruz.
 
@@ -473,7 +494,7 @@ Bu kontrol iki fonksiyonda da aynen tekrar ediyor. Şimdilik her fonksiyonun tek
 
 `create_review` fonksiyonu bilgiyi iki farklı yerden alıyor. Hafta 1'deki sorgu parametresiyle birlikte, bir fonksiyonun bilgi alabileceği üç yeri de görmüş olduk:
 
-| Parametre | Bilgi nereden gelir? | FastAPI bunu nereden anlar? | İlk gördüğümüz yer |
+| Fonksiyon parametresi | Bilgi nereden gelir? | FastAPI bunu nereden anlar? | İlk gördüğümüz yer |
 |---|---|---|---|
 | `book_id: int` | Yoldan: `/books/42/reviews` | Adı yoldaki `{book_id}` ile aynı | Hafta 1 |
 | `search: str = ""` | Sorgudan: `/books?search=API` | Yolda yok ve basit bir türde | Hafta 1 |
@@ -702,7 +723,7 @@ Book 99: 404 {"detail":"Book not found"}
 
 ### 6.1 Neden belgeleriz?
 
-İstemciyi yazan kişi sunucunun kodunu görmeyebilir. Hangi yolların olduğunu, hangi metotla ne gönderileceğini ve ne cevap geleceğini ancak bir belgeden öğrenebilir. Bu belgeye **API belgesi (dokümantasyon)** denir.
+İstemciyi yazan kişi sunucunun kodunu görmeyebilir. Hangi yolların olduğunu, hangi HTTP metoduyla ne gönderileceğini ve ne cevap geleceğini ancak bir belgeden öğrenebilir. Bu belgeye **API belgesi (dokümantasyon)** denir.
 
 Bu hafta belgeyi elle, proje klasöründe bir `README.md` dosyası olarak yazacağız. `README.md`, bir proje klasörünün tanıtım dosyasıdır; GitHub'da bir klasör açılınca ilk bu dosya görünür. Her örneği önce kendimiz curl ile çalıştıracak, sonra gerçek yanıtı belgeye koyacağız.
 
@@ -719,7 +740,7 @@ Sunucu adresi: `http://127.0.0.1:8000`
 
 ## İşlemler
 
-| Metot | Yol | Ne yapar? |
+| HTTP metodu | Yol | Ne yapar? |
 |---|---|---|
 | `GET` | `/books` | Kitapları listeler. `search` ve `available` sorgu parametreleriyle filtrelenebilir. |
 | `GET` | `/books/{book_id}` | Kimliği verilen kitabı döndürür. |
@@ -778,7 +799,7 @@ Belgede iki işlemin örneği eksik: bütün kitapları listelemek ve yorum ekle
 2. Komutu ve gerçek yanıtı belgeye koy.
 3. Yanıtın durum kodunu ve varsa hata durumunu yaz.
 
-> **Ana fikir:** API belgesi, API'yi kullanacak kişiye her işlemin yolunu, metodunu, ne göndereceğini ve ne cevap alacağını söyler. Belgedeki örnekler, gerçekten gönderilmiş isteklerden ve gelen yanıtlardan alınmalıdır.
+> **Ana fikir:** API belgesi, API'yi kullanacak kişiye her işlemin yolunu, HTTP metodunu, ne göndereceğini ve ne cevap alacağını söyler. Belgedeki örnekler, gerçekten gönderilmiş isteklerden ve gelen yanıtlardan alınmalıdır.
 
 ---
 
@@ -803,7 +824,7 @@ Yanıt (bizim API'mizin gerçek yanıtı):
 
 ### 7.2 SOAP
 
-SOAP'ta bütün istekler genellikle aynı adrese, POST ile gönderilir. Hangi işlemin istendiği XML biçimindeki mesajın içinde yazar:
+SOAP'ta bütün istekler genellikle aynı yola (`/BookService`), POST ile gönderilir. Hangi işlemin istendiği XML biçimindeki mesajın içinde yazar:
 
 ```http
 POST /BookService HTTP/1.1
@@ -840,7 +861,7 @@ Yanıt da XML'dir:
 
 ### 7.3 GraphQL
 
-GraphQL'de de istekler genellikle tek bir adrese, POST ile gönderilir. İstemci, istediği alanları bir **sorgu** ile kendisi seçer:
+GraphQL'de de istekler genellikle tek bir yola (`/graphql`), POST ile gönderilir. İstemci, istediği alanları bir **sorgu** ile kendisi seçer:
 
 ```http
 POST /graphql HTTP/1.1
@@ -859,16 +880,16 @@ Yanıt JSON'dur ve yalnızca sorguda istenen alanları içerir:
 
 |  | REST | SOAP | GraphQL |
 |---|---|---|---|
-| İşlem nasıl belirtilir? | Metot ve yol: `GET /books/42` | Mesajın içindeki işlem adı: `GetBook` | Sorgu metni: `book(id: 42)` |
-| Adres | Her kaynak için ayrı yol | Genellikle tek adres: `/BookService` | Genellikle tek adres: `/graphql` |
-| Metot | İşe göre: GET, POST… | Genellikle POST | Genellikle POST |
+| İşlem nasıl belirtilir? | HTTP metodu ve yol: `GET /books/42` | Mesajın içindeki işlem adı: `GetBook` | Sorgu metni: `book(id: 42)` |
+| Yol | Her kaynak için ayrı yol: `/books/42` | Genellikle tek yol: `/BookService` | Genellikle tek yol: `/graphql` |
+| HTTP metodu | İşe göre: GET, POST… | Genellikle POST | Genellikle POST |
 | Veri biçimi | Genellikle JSON | XML | JSON |
 | Yanıtta hangi alanlar gelir? | Sunucunun belirlediği alanlar | Sunucunun belirlediği alanlar | İstemcinin sorguda istediği alanlar |
 | Nerede karşılaşılır? | Bugünkü web API'lerinin çoğu | Bankacılık gibi alanlardaki daha eski kurumsal sistemler | Farklı verileri tek istekte almak isteyen web ve mobil uygulamalar |
 
 REST yanıtında kitabın bütün alanları geldi; `tags` ve `rating` alanlarını istemesek de. GraphQL'de ise istemci yalnızca istediği alanları aldı. Buna karşılık GraphQL'de sunucuyu kurmak ve sorguları işlemek daha fazla iş gerektirir.
 
-> **Ana fikir:** REST, SOAP ve GraphQL aynı işi farklı yollarla yapar. REST'te işi metot ve yol, SOAP'ta XML mesajındaki işlem adı, GraphQL'de istemcinin yazdığı sorgu belirtir. Bu derste REST yaklaşımıyla devam ediyoruz.
+> **Ana fikir:** REST, SOAP ve GraphQL aynı işi farklı biçimlerde ister. REST'te işi HTTP metodu ve yol, SOAP'ta XML mesajındaki işlem adı, GraphQL'de istemcinin yazdığı sorgu belirtir. Bu derste REST yaklaşımıyla devam ediyoruz.
 
 ---
 
@@ -927,7 +948,7 @@ Bir işleme tıklayıp **Try it out** düğmesiyle tarayıcıdan istek göndereb
 
 **İpuçları:**
 
-- Yolda iki parametre var. Fonksiyonun da iki parametresi olur: `book_id: int` ve `review_id: int`.
+- Yolda süslü parantez içinde iki ad var: `{book_id}` ve `{review_id}`. Fonksiyonun da bu adlarla iki parametresi olur: `book_id: int` ve `review_id: int`.
 - Döngüde iki koşulu birlikte kontrol etmek için Hafta 1'deki `and` kullanımını hatırla.
 - `Location` başlığı için fonksiyona `response: Response` parametresini eklemen gerekir.
 
@@ -954,20 +975,20 @@ Bir işleme tıklayıp **Try it out** düğmesiyle tarayıcıdan istek göndereb
 
 ### 9.1 Soruların cevapları
 
-1. Kaynak, sunucunun adresle sunduğu şeydir (bir kitap); koleksiyon aynı türden kaynakların topluluğudur (bütün kitaplar); işlem ise metot ile yolun birleşimidir. `POST /books` isteğinde kaynak kitap koleksiyonu, işlem bu koleksiyona yeni bir kitap eklemektir.
+1. Kaynak, sunucuda bir yolu olan şeydir (bir kitap: `/books/42`); koleksiyon aynı türden kaynakların topluluğudur (bütün kitaplar: `/books`); işlem ise bir kaynak üzerinde yapılan iştir ve REST'te HTTP metodu ile yolla belirtilir. `POST /books` isteğinde kaynak kitap koleksiyonu, işlem bu koleksiyona yeni bir kitap eklemektir.
 2. Çoğul ad, yolun bir koleksiyonu anlattığını açıkça gösterir: `/books` kitaplar, `/books/42` kitaplardan biri. Yol değişince eski yolu kullanan istemciler `404` alır ve çalışmaz.
-3. "Getir" anlamı hem metotta hem yolda yazılıyor. REST'te işi metot söyler, yol yalnızca kaynağı adlandırır: `GET /books`.
+3. "Getir" anlamı hem HTTP metodunda hem yolda yazılıyor. REST'te işi HTTP metodu söyler, yol yalnızca kaynağı adlandırır: `GET /books`.
 4. GET'in veriyi değiştirmediği varsayılır. Tarayıcılar ve başka programlar GET isteğini kullanıcıya sormadan tekrar gönderebilir; her tekrar yeni bir kitap ekler.
 5. Her yorum bir kitaba aittir. Yorumların yolunu kitabın yolunun altına koymak bu ilişkiyi gösterir; sunucu da hangi kitabın yorumlarının istendiğini yoldan öğrenir. Yorumları ayrı bir koleksiyon olarak (`/reviews?book_id=42`) tasarlamak da mümkündür; ne zaman tercih edildiği [ek notta](04_Supplement_Nested_Resources.md).
-6. REST'te metot ve yolla (`GET /books/42`), SOAP'ta XML mesajındaki işlem adıyla (`GetBook`), GraphQL'de istemcinin yazdığı sorguyla (`book(id: 42)`).
+6. REST'te HTTP metodu ve yolla (`GET /books/42`), SOAP'ta XML mesajındaki işlem adıyla (`GetBook`), GraphQL'de istemcinin yazdığı sorguyla (`book(id: 42)`).
 
 ---
 
-## 10. Kaynaklar: Konuların resmî belgeleri
+## 10. Resmî belgeler
 
 - [MDN — REST](https://developer.mozilla.org/en-US/docs/Glossary/REST)
 - [Roy Fielding — REST'in tanımlandığı tez, 5. bölüm](https://ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm)
-- [HTTP standardı (RFC 9110) — Güvenli metotlar](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.1)
+- [HTTP standardı (RFC 9110) — Güvenli HTTP metotları](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.1)
 - [FastAPI — Body: Multiple Parameters](https://fastapi.tiangolo.com/tutorial/body-multiple-params/)
 - [GraphQL — Learn](https://graphql.org/learn/)
 - [W3C — SOAP](https://www.w3.org/TR/soap/)

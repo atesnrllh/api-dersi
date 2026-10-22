@@ -149,6 +149,6 @@ Stored: {'title': 'HTTP ile Yeni Bir Kitap', 'available': True, 'tags': [], 'id'
 
 İstemci tek bir alan gönderdi; sunucu kaydı beş alanla sakladı ve birinin değerini değiştirdi. İstemcinin kendi elindeki `new_book` sözlüğü ise hiç değişmedi.
 
-Kaydın sunucudaki gerçek hâlini öğrenmenin yolu sunucuya sormaktır. Kaydı ekledikten sonra GET ile okumamızın nedeni budur.
+Kaydın sunucudaki gerçek hâlini ancak sunucuya sorarak öğreniriz. Kaydı ekledikten sonra GET ile okumamızın nedeni budur.
 
 Föydeki Deney 3'te sunucu yalnızca kimlik eklediği için gönderdiğimiz ile sakladığı arasındaki tek fark `id` alanıydı. Gerçek uygulamalarda bu fark çoğu zaman bu örnekteki gibi daha büyüktür.

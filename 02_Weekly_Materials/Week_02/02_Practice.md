@@ -161,7 +161,7 @@ Birinci haftada `GET /book/42` isteğinde **hangi kitabı istediğimizi** yolda 
 
 | İsteğin parçası | Bu deneyde |
 |---|---|
-| Metot | `POST`: Sunucuya işlemesi için veri gönderen metot. Bu derste yeni kitap ekleme isteği için kullanacağız. |
+| HTTP metodu | `POST`: Sunucuya işlemesi için veri gönderir. Bu derste yeni kitap ekleme isteği için kullanacağız. |
 | Adres | `http://127.0.0.1:8000/book`: değişmedi |
 | Kitap bilgileri | İsteğin **gövdesinde (body)**, JSON biçiminde |
 
@@ -210,7 +210,7 @@ else:
 | `json=new_book` | HTTPX sözlüğü JSON'a çevirip isteğin gövdesine koyar. `True` → `true`, `None` → `null` olur. |
 | `response` | POST isteğinin yanıtı. |
 | `list_response` | Ardından gönderilen `GET /book` isteğinin yanıtı. Kitap sayısı değişti mi diye buna bakarız. |
-| `response.request` | Sunucuya **bizim gönderdiğimiz** isteğin kendisi. İsteğin metodunu ve `Content-Type` başlığını buradan okuruz. |
+| `response.request` | Sunucuya **bizim gönderdiğimiz** isteğin kendisi. İsteğin HTTP metodunu ve `Content-Type` başlığını buradan okuruz. |
 
 `json=` kullandığımızda HTTPX isteğe `Content-Type: application/json` başlığını **kendisi ekler**. Bu başlık, gövdenin JSON biçiminde olduğunu sunucuya bildirir. Kodda bu başlığı biz yazmadık; `print` satırı yalnızca gönderilen başlığı okuyup ekrana yazar.
 
@@ -235,15 +235,15 @@ Book count: 3
 
 **405 Method Not Allowed:** Sunucuda `/book` yolu var, ama yalnızca GET için. POST isteğini karşılayacak bir fonksiyon yazmadığımız için sunucu isteği kabul etmedi. Ardından gönderilen GET isteği normal çalıştı; kitap sayısı 3 kaldı.
 
-FastAPI isteği karşılayacak fonksiyonu ararken her zaman hem yola hem metoda bakar. Birinci haftada bütün işlemlerimiz GET olduğu için bu fark görünmüyordu:
+FastAPI isteği karşılayacak fonksiyonu ararken her zaman hem yola hem HTTP metoduna bakar. Birinci haftada bütün işlemlerimiz GET olduğu için bu fark görünmüyordu:
 
-| İstek | Yol var mı? | Bu metot için fonksiyon var mı? | Sonuç |
+| İstek | Yol var mı? | Bu HTTP metodu için fonksiyon var mı? | Sonuç |
 |---|---|---|---|
 | `GET /book` | Evet | Evet | `200` |
 | `POST /book` | Evet | **Hayır** | `405 Method Not Allowed` |
 | `POST /books` | **Hayır** | — | `404 Not Found` |
 
-`404` "böyle bir yol yok", `405` ise "yol var ama bu metotla olmaz" demektir. İsteğin karşılanması için sunucuda `@app.post("/book")` ile bir fonksiyon yazmamız gerekiyor.
+`404` "böyle bir yol yok", `405` ise "yol var ama bu HTTP metoduyla olmaz" demektir. İsteğin karşılanması için sunucuda `@app.post("/book")` ile bir fonksiyon yazmamız gerekiyor.
 
 ### 2.4 Sunucuda veri modelini ve POST fonksiyonunu yaz
 
@@ -338,7 +338,7 @@ Model nesnesinde alanlara nokta (`.`) ile, sözlükte köşeli parantez (`[...]`
 
 Fonksiyonda kitabı `books` listesine ekleyen bir satır yok. Yani gelen kitap listeye **eklenmiyor**; yalnızca yanıt olarak istemciye geri gönderiliyor. Böylece önce bilgilerin sunucuya doğru ulaştığını göreceğiz. Listeye eklemeyi Deney 3'te yapacağız.
 
-POST fonksiyonunu ekledikten sonra aynı `/book` yolunda iki işlem olur. 2.3'te gördüğümüz gibi FastAPI bunları metoda göre ayırır:
+POST fonksiyonunu ekledikten sonra aynı `/book` yolunda iki işlem olur. 2.3'te gördüğümüz gibi FastAPI bunları HTTP metoduna göre ayırır:
 
 | İstek | Çalışan fonksiyon |
 |---|---|
@@ -360,7 +360,7 @@ Book count: 3
 
 | Satır | Anlamı |
 |---|---|
-| `Request method`, `Request Content-Type` | Gönderdiğimiz isteğin metodu ve gövde biçimi. |
+| `Request method`, `Request Content-Type` | Gönderdiğimiz isteğin HTTP metodu ve gövde biçimi. |
 | `Status code: 200` | Başarı kodu belirtmediğimiz için FastAPI varsayılan `200` kodunu gönderdi. |
 | `Response body` | Gönderdiğimiz kitap sunucudan geri geldi. |
 | `Book count: 3` | Kitap listeye eklenmedi; fonksiyonda ekleme yapan bir satır yok. |
@@ -749,7 +749,7 @@ Book count: 3
 
 ---
 
-## 7. Ek çalışmalar: curl, Postman ve desteklenmeyen metot
+## 7. Ek çalışmalar: curl, Postman ve desteklenmeyen HTTP metodu
 
 ### 7.1 Aynı kitabı terminalden curl ile göndermek
 
@@ -762,7 +762,7 @@ curl -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/json" -
 | Seçenek | Anlamı |
 |---|---|
 | `-i` | Yanıtın başlıklarını da göster. |
-| `-X POST` | Metodu POST yap. |
+| `-X POST` | HTTP metodunu POST yap. |
 | `-H "Content-Type: application/json"` | İsteğe bu başlığı ekle. HTTPX bunu `json=` ile kendisi ekliyordu; curl'de biz yazarız. |
 | `-d '...'` | İsteğin gövdesi. JSON olduğu için `true` ve `null` yazılır. |
 
@@ -778,7 +778,7 @@ curl -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/json" -
 |---|---|
 | `client.py` (HTTPX) | Python kodu yazarız, dosyayı çalıştırırız. |
 | **curl** | Terminale tek bir komut yazarız. |
-| Postman | Metodu, adresi ve gövdeyi bir pencereden seçeriz. |
+| Postman | HTTP metodunu, adresi ve gövdeyi bir pencereden seçeriz. |
 
 Sunucu açısından isteğin hangisinden geldiği fark etmez. Üçü de aynı HTTP isteğini gönderir.
 
@@ -796,7 +796,7 @@ Bu komut `httpx.get("http://127.0.0.1:8000/book")` ile aynı isteği gönderir. 
 
 | curl'de | `client.py`'de | Anlamı |
 |---|---|---|
-| `-X POST` | `httpx.post(...)` | Metodu POST yap. |
+| `-X POST` | `httpx.post(...)` | HTTP metodunu POST yap. |
 | `http://127.0.0.1:8000/book` | `base_url + "/book"` | İsteğin adresi |
 | `-H "Content-Type: application/json"` | HTTPX `json=` ile kendisi ekler | Gövdenin JSON olduğunu bildir. |
 | `-d '{...}'` | `json=new_book` | İsteğin gövdesi. curl'de JSON'u kendimiz yazarız; bu yüzden `True` değil `true`, `None` değil `null` yazılır. |
@@ -834,14 +834,14 @@ curl.exe -i -X POST http://127.0.0.1:8000/book -H "Content-Type: application/jso
 
 ### 7.3 Aynı kitabı Postman uygulamasıyla göndermek
 
-**Postman**, metodu, adresi ve gövdeyi arayüzden seçerek HTTP isteği hazırladığımız bir uygulamadır. Sunucu açısından isteğin Python'dan, curl'den ya da Postman'dan gelmesi bir şey değiştirmez.
+**Postman**, HTTP metodunu, adresi ve gövdeyi arayüzden seçerek HTTP isteği hazırladığımız bir uygulamadır. Sunucu açısından isteğin Python'dan, curl'den ya da Postman'dan gelmesi bir şey değiştirmez.
 
 Postman'ın masaüstü uygulamasını kullanacağız. Kurulu değilse [resmî indirme sayfasından](https://www.postman.com/downloads/) indirip kur. Hesap açma ekranı gelirse **Without an account…** bölümündeki **Open Lightweight API Client** düğmesine tıkla; hesap açman gerekmez.
 
 Sunucuyu yeniden başlat, sonra Postman'da:
 
 1. Yeni bir **HTTP isteği** aç.
-2. Metodu **POST**, adresi `http://127.0.0.1:8000/book` yap.
+2. HTTP metodunu **POST**, adresi `http://127.0.0.1:8000/book` yap.
 3. **Body → raw → JSON** seç ve aşağıdaki JSON'u yapıştır:
 
 ```json
@@ -859,15 +859,15 @@ Sunucuyu yeniden başlat, sonra Postman'da:
 
 4. İsteğin **Headers** sekmesinde `Content-Type: application/json` bulunduğunu kontrol et. **raw → JSON** seçimi bu başlığı ekler.
 5. **Send** düğmesine **bir kez** bas. Durum kodu `201`, gövdedeki `id` değeri `74` olmalı. **Yanıtın** Headers bölümünde `Location: /book/74` görünmeli.
-6. Yeni bir istek aç. Metodu **GET**, adresi `http://127.0.0.1:8000/book/74` yap ve **Send** düğmesine bas. Eklenen kitap `200` ile gelmeli.
+6. Yeni bir istek aç. HTTP metodunu **GET**, adresi `http://127.0.0.1:8000/book/74` yap ve **Send** düğmesine bas. Eklenen kitap `200` ile gelmeli.
 
 ![Postman'da POST /book isteği ve 201 Created yanıtı](Gorseller/03_postman_book_created.png)
 
 *Bu ekran örneğinde birkaç kez kitap eklendiği için yeni kitabın kimliği `77` olmuştur.*
 
-### 7.4 Yol var ama DELETE metodu tanımlı değilse ne olur? (405)
+### 7.4 Yol var ama DELETE için fonksiyon yoksa ne olur? (405)
 
-**Amaç:** İstemcide `httpx.delete(...)` yazmanın kitabı kendiliğinden silmediğini görmek. Bir işlemin gerçekleşmesi için sunucuda o metodu karşılayan bir fonksiyon bulunmalıdır.
+**Amaç:** İstemcide `httpx.delete(...)` yazmanın kitabı kendiliğinden silmediğini görmek. Bir işlemin gerçekleşmesi için sunucuda o HTTP metodunu karşılayan bir fonksiyon bulunmalıdır.
 
 `server.py` değişmiyor. `client.py` içeriğini şununla değiştir:
 
@@ -884,12 +884,12 @@ Status code: 405
 Response body: {"detail":"Method Not Allowed"}
 ```
 
-**405 Method Not Allowed**, bu yolda gönderilen metodun desteklenmediğini bildirir. `/book/42` yolu için yalnızca GET tanımlı; DELETE için bir fonksiyon yok. Sunucu DELETE isteğini GET fonksiyonuna yönlendirmez ve kitap silinmez. Silme işlemini 4. haftada yazacağız.
+**405 Method Not Allowed**, bu yolda gönderilen HTTP metodunun desteklenmediğini bildirir. `/book/42` yolu için yalnızca GET'i karşılayan bir fonksiyon var; DELETE için bir fonksiyon yok. Sunucu DELETE isteğini GET fonksiyonuna yönlendirmez ve kitap silinmez. Silme işlemini 4. haftada yazacağız.
 
 | İstek | Ne olur? | Durum kodu |
 |---|---|---|
 | `GET /book/999` | `get_book` çalışır, kitabı bulamaz; `404` yanıtını bizim kodumuzdaki `HTTPException` oluşturur. | `404` |
-| `DELETE /book/42` | Bu metodu karşılayan bir fonksiyon yok; `405` yanıtını FastAPI oluşturur. | `405` |
+| `DELETE /book/42` | Bu HTTP metodunu karşılayan bir fonksiyon yok; `405` yanıtını FastAPI oluşturur. | `405` |
 
 Ek çalışmadan sonra `client.py` dosyasına Deney 1'deki GET istemcisini geri koy.
 
@@ -915,7 +915,7 @@ Ek çalışmadan sonra `client.py` dosyasına Deney 1'deki GET istemcisini geri 
 
 ---
 
-## 9. Kaynaklar: Konuların resmî belgeleri
+## 9. Resmî belgeler
 
 - [FastAPI — Request Body](https://fastapi.tiangolo.com/tutorial/body/)
 - [FastAPI — Response Status Code](https://fastapi.tiangolo.com/tutorial/response-status-code/)
