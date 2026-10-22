@@ -405,6 +405,7 @@ reviews = [
 **3. İki yeni işlem.** Dosyanın sonuna ekle:
 
 ```python
+# Kitabın yorumları: kitap yoksa 404.
 @app.get("/books/{book_id}/reviews")
 def get_reviews(book_id: int):
     book_exists = False
@@ -423,6 +424,7 @@ def get_reviews(book_id: int):
     return results
 
 
+# Yeni yorum: kitaba ekler, 201 döner.
 @app.post("/books/{book_id}/reviews", status_code=201)
 def create_review(book_id: int, review_data: ReviewCreate):
     book_exists = False
@@ -541,6 +543,7 @@ reviews = [
 ]
 
 
+# Kitap listesi: ada ve ödünç durumuna göre süzülebilir.
 @app.get("/books")
 def get_books(search: str = "", available: bool | None = None):
     results = []
@@ -557,6 +560,7 @@ def get_books(search: str = "", available: bool | None = None):
     return results
 
 
+# Tek kitap: kimliğe göre bulur, yoksa 404.
 @app.get("/books/{book_id}")
 def get_book(book_id: int):
     for book in books:
@@ -566,6 +570,7 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 
 
+# Yeni kitap: listeye ekler, 201 ve Location döner.
 @app.post("/books", status_code=201)
 def create_book(book_data: BookCreate, response: Response):
     new_id = 1
@@ -580,6 +585,7 @@ def create_book(book_data: BookCreate, response: Response):
     return created_book
 
 
+# Kitabın yorumları: kitap yoksa 404.
 @app.get("/books/{book_id}/reviews")
 def get_reviews(book_id: int):
     book_exists = False
@@ -598,6 +604,7 @@ def get_reviews(book_id: int):
     return results
 
 
+# Yeni yorum: kitaba ekler, 201 döner.
 @app.post("/books/{book_id}/reviews", status_code=201)
 def create_review(book_id: int, review_data: ReviewCreate):
     book_exists = False

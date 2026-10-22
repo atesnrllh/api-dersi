@@ -529,6 +529,7 @@ books = [
 ]
 
 
+# Kitap listesi: ada ve ödünç durumuna göre süzülebilir.
 @app.get("/book")
 def get_books(search: str = "", available: bool | None = None):
     results = []
@@ -545,6 +546,7 @@ def get_books(search: str = "", available: bool | None = None):
     return results
 
 
+# Tek kitap: kimliğe göre bulur, yoksa 404.
 @app.get("/book/{book_id}")
 def get_book(book_id: int):
     for book in books:
@@ -554,6 +556,7 @@ def get_book(book_id: int):
     raise HTTPException(status_code=404, detail="Book not found")
 
 
+# Yeni kitap: listeye ekler, 201 ve Location döner.
 @app.post("/book", status_code=201)
 def create_book(book_data: BookCreate, response: Response):
     new_id = 1
