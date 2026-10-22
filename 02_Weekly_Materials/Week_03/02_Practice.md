@@ -87,6 +87,17 @@ curl http://127.0.0.1:8000/book/42
 {"id":42,"title":"API Yolculuğu","author":{"first_name":"Deniz","last_name":"Kaya"},"available":true,"tags":["software","education"],"rating":null}
 ```
 
+```python
+# client.py
+import httpx
+
+response = httpx.get("http://127.0.0.1:8000/book")
+print(response.text)
+
+response = httpx.get("http://127.0.0.1:8000/book/42")
+print(response.text)
+```
+
 | İstek | Yanıtın JSON türü | Neden? |
 |---|---|---|
 | `GET /book` | Dizi `[...]` | Koleksiyon birden çok kitap içerir. |
