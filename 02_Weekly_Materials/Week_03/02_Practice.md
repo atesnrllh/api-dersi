@@ -306,7 +306,7 @@ curl -X POST "http://127.0.0.1:8000/createNewBook?title=Yeni%20Kitap"
 {"id":58,"title":"Yeni Kitap"}
 ```
 
-Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste yazılış biçimidir.
+Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste yazılış biçimidir. HTTPX'in boşluğu nasıl gönderdiği [ek notta](05_Supplement_Space_Encoding.md).
 
 ### 3.2 İki tasarımı karşılaştır
 
@@ -322,7 +322,7 @@ Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste y
 |---|---|
 | Fiil iki kez yazılıyor | `GET /getAllBooks` isteğinde "getir" anlamı hem HTTP metodunda (`GET`) hem yolda (`get`) var. REST'te işi HTTP metodu söyler, yol yalnızca kaynağı adlandırır. |
 | Her işlem için yeni bir ad gerekiyor | `getAllBooks`, `getBookById`, `createNewBook`… İstemci bütün adları tek tek öğrenmek zorundadır ve adları tahmin edemez: `getBook` mu, `getBookById` mi, `fetchBook` mu? |
-| Kitap bilgileri adreste gidiyor | Yeni kitabın adı sorgu bölümünde (`?title=...`) gönderiliyor. Bir kitabın bütün alanlarını (yazar, etiketler…) adreste göndermek zordur; bu bilgiler gövdeye aittir. |
+| Kitap bilgileri adreste gidiyor | Yeni kitabın adı sorgu bölümünde (`?title=...`) gönderiliyor. Bir kitabın bütün alanlarını (yazar, etiketler…) adreste göndermek zordur; bu bilgiler gövdeye aittir. İki mesajın farkı [ek notta](06_Supplement_Query_vs_Body.md). |
 
 Denemeden sonra `bad_server.py` sunucusunu durdur ve kendi sunucunu yeniden başlat.
 
