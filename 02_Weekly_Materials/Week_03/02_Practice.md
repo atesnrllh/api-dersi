@@ -153,6 +153,26 @@ REST'te koleksiyonların adı genellikle çoğul yazılır. Bu bir zorunluluk de
 | `@app.post("/book", status_code=201)` | `@app.post("/books", status_code=201)` |
 | `response.headers["Location"] = f"/book/{new_id}"` | `response.headers["Location"] = f"/books/{new_id}"` |
 
+`server.py` dosyasında değişen yerler:
+
+```python
+@app.get("/books")
+def get_books(search: str = "", available: bool | None = None):
+    ...
+
+
+@app.get("/books/{book_id}")
+def get_book(book_id: int):
+    ...
+
+
+@app.post("/books", status_code=201)
+def create_book(book_data: BookCreate, response: Response):
+    ...
+    response.headers["Location"] = f"/books/{new_id}"
+    ...
+```
+
 Fonksiyonların adları ve içindeki kod değişmiyor; yalnızca yollar değişiyor. `server.py` dosyasının bu haftaki tam hâlini Deney 5'in sonunda (5.4) bulabilirsin.
 
 ### 2.3 Eski yol artık çalışmıyor
@@ -184,6 +204,19 @@ Sunucuda artık `/book` diye bir yol yok. Eski yolu kullanan bütün istemciler 
 | `response = httpx.post(base_url + "/book", json=new_book)` | `response = httpx.post(base_url + "/books", json=new_book)` |
 | `list_response = httpx.get(base_url + "/book")` | `list_response = httpx.get(base_url + "/books")` |
 
+`client.py` dosyasında değişen yerler:
+
+```python
+try:
+    # Yeni kitap: POST ile gönder.
+    response = httpx.post(base_url + "/books", json=new_book)
+    ...
+
+    # Kitap listesi: toplam sayıyı kontrol et.
+    list_response = httpx.get(base_url + "/books")
+    ...
+```
+
 İstemciyi çalıştır:
 
 ```text
@@ -195,7 +228,7 @@ Book title: HTTP ile Yeni Bir Kitap
 Book count: 4
 ```
 
-`Location` başlığı da artık `/books/74` geliyor, çünkü sunucuda o satırı da değiştirdik.
+`Location` başlığı da artık `/books/74` geliyor, çünkü sunucuda o satırı da değiştirdik. Kitabı geri okuyan `httpx.get(base_url + location)` satırını ise değiştirmedik: Bu satır yolu `Location` başlığından alıyor, bu yüzden kitabı `/books/74` yolundan okudu.
 
 > **Ana fikir:** Yol, kaynağın adıdır. Koleksiyon için çoğul bir ad (`/books`), koleksiyondaki tek bir kitap için onun altında bir kimlik (`/books/42`) kullanırız. Yollar değişince eski istemciler bozulur; bu yüzden yollar baştan dikkatle seçilir.
 
