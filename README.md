@@ -10,5 +10,6 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 |---|---|---|---|
 | 01 | İlk kitap kataloğu API'si | [Practice](02_Weekly_Materials/Week_01/02_Practice.md) | — |
 | 02 | İstemciden kitap eklemek: POST ve istek gövdesi | [Practice](02_Weekly_Materials/Week_02/02_Practice.md) | — |
+| 03 | API'yi kaynaklara göre tasarlamak: REST | [Practice](02_Weekly_Materials/Week_03/02_Practice.md) | — |
 
 [Haftalık ders planı](00_Planning/01_Weekly_Course_Plan.md)
