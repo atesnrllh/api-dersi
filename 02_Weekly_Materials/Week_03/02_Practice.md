@@ -1,40 +1,39 @@
 # Hafta 03 — Uygulama Föyü
 
-## 0. Bu hafta ne yapacağız: API'yi kaynaklara göre tasarlamak
+## 0. REST nedir?
 
-İlk iki haftada kitap kataloğumuza okuma ve ekleme işlemleri yazdık. Bu hafta önce bir adım geri çekilip şunu soracağız: **İşlemlerimizin yolları ve HTTP metotları nasıl seçilmeli?** Bu sorunun en yaygın cevabı **REST** yaklaşımıdır.
+REST, bir web API'sini nasıl düzenleyeceğimizi anlatan bir **kurallar bütünüdür**. Bir program, kütüphane ya da standart değildir; bir tasarım tarzıdır. Adı İngilizce *Representational State Transfer* sözcüklerinin kısaltması. Roy Fielding 2000 yılında doktora tezinde tanımladı. Fielding web'in neden bu kadar iyi çalıştığını incelemiş ve kurallarını yazıya dökmüştü.
 
-REST, web API'lerini tasarlamak için yaygın kullanılan bir yaklaşımdır. Temel fikri şudur:
+Günlük kullanımda "REST API" denince beş kural kastedilir.
 
-- Sunucudaki veriler **kaynaklar** olarak düşünülür: kitaplar, bir kitap, bir kitabın yorumları… Her kaynağın bir yolu vardır, örneğin `/books/42`.
-- Bir kaynak üzerinde yapılacak iş **HTTP metoduyla** belirtilir: okumak için GET, eklemek için POST…
+**1. Sunucudaki her şey bir kaynaktır ve her kaynağın bir yolu vardır.**
 
-REST bir program ya da kütüphane değildir; bir tasarım yaklaşımıdır. FastAPI ile REST'e uyan da, uymayan da bir API yazabiliriz. Bu hafta ikisini karşılaştıracağız.
+| Yol | Kaynak |
+|---|---|
+| `/books` | Bütün kitaplar |
+| `/books/42` | 42 numaralı kitap |
+| `/books/42/reviews` | O kitabın yorumları |
 
-Bu haftanın ek notları:
+**2. Ne yapılacağını HTTP metodu söyler, yol söylemez.** Yolda isim olur, fiil olmaz.
 
-- [SOAP ve GraphQL mesajları nasıl okunur?](03_Supplement_SOAP_GraphQL.md)
-- [İç içe kaynak mı, ayrı koleksiyon mu?](04_Supplement_Nested_Resources.md)
+| REST'e uygun | REST'e uymayan |
+|---|---|
+| `GET /books` | `GET /getAllBooks` |
+| `POST /books` | `POST /createNewBook` |
 
-### 0.1 Bu haftanın sonunda neler yapabileceksin?
+Okumak için `GET`, eklemek için `POST` kullanılır. İleriki haftalarda güncellemek için `PUT`/`PATCH`, silmek için `DELETE` gelecek.
 
-- Bir API'deki kaynakları ve işlemleri ayırt edebileceksin.
-- Koleksiyon ve tek bir kitap için yol seçebileceksin: `/books` ve `/books/42`.
-- Yolda neden fiil değil isim kullanıldığını açıklayabileceksin.
-- GET isteğinin neden veriyi değiştirmemesi gerektiğini açıklayabileceksin.
-- Bir kaynağın altındaki başka bir kaynak için okuma ve ekleme işlemi yazabileceksin: bir kitabın yorumları.
-- API'nin kullanımını `README.md` dosyasında örneklerle belgeleyebileceksin.
-- Aynı isteğin REST, SOAP ve GraphQL'de nasıl yazıldığını karşılaştırabileceksin.
+**3. Sunucu kaynağın kendisini değil, bir temsilini gönderir.** Kitap sunucunun belleğinde bir Python sözlüğüdür; istemciye onun JSON hâli gider. Adın "Representational" (temsil) kısmı buradan gelir. Aynı kitap JSON yerine XML olarak da gönderilebilirdi; kaynak aynı, temsili farklı olurdu.
 
-### 0.2 Bu föy nasıl okunur?
+**4. Her istek kendi başına yeterlidir.** Sunucu bir önceki isteği hatırlamaz. `GET /books/42` isteği, "hangi kitap?" sorusunun cevabını kendi içinde taşır. "Az önce baktığım kitabı getir" diye bir istek olmaz. İleride giriş yapmayı gördüğümüzde bunun sonucunu göreceğiz: istemci, kim olduğunu gösteren bilgiyi her istekte yeniden gönderecek.
 
-Her deney aynı sırayla ilerler: **Amaç → Kod → Çalıştır → Çıktı → Ana fikir.**
+**5. Sonucu durum kodu söyler.** Örneğin `200` "tamam", `201` "oluşturuldu", `404` "böyle bir kaynak yok" demektir.
 
-Kod değiştiğinde ya dosyanın tamamı ya da yalnızca değişen kısım verilir. Hangisi olduğu kodun hemen üstünde yazar.
+**Ayırt edici nokta:** SOAP ve GraphQL'de istekler genellikle tek bir yola (`/BookService`, `/graphql`) ve `POST` ile gider. Ne istendiği mesajın içinde yazar. REST'te ise ne istendiğini HTTP metodu ve yol birlikte söyler: `GET /books/42`.
 
-> **Kitap ve yorum sayılarını izlemek için:** Sunucu her başlatıldığında dosyada yazılı üç kitapla başlar. Deney 5'ten sonra bir de dosyada yazılı tek bir yorumla başlar. İstekle eklenen kitaplar ve yorumlar yalnızca sunucu çalıştığı sürece bellekte durur. Deneylerdeki "sunucuyu yeniden başlat" adımlarını izlersen çıktıların föydekilerle aynı olur.
+**Bizim API'miz zaten neredeyse REST'e uygun.** Hafta 1 ve 2'de yazdığımız API'de bir tek `/book` yolunun tekil olması uymuyor. Deney 2 de onu `/books` yapıyor. Yani REST'i ilk iki haftada farkında olmadan uygulamış olduk; bu hafta bu kurallara bir ad veriyoruz.
 
-### 0.3 Başlangıç dosyaları
+### 0.1 Başlangıç dosyaları
 
 Hafta 2'nin sonundaki dosyalarla başla:
 
@@ -55,7 +54,7 @@ Hafta 2'nin sonundaki dosyalarla başla:
 |---|---|---|
 | **Kaynak** | Sunucuda bir yolu olan şey | Bir kitap: `/book/42` |
 | **Koleksiyon** | Aynı türden kaynakların topluluğu | Bütün kitaplar: `/book` |
-| **İşlem** | Bir kaynak üzerinde yapılan iş. REST'te **HTTP metodu + yol** ile belirtilir. | `GET /book/42`: 42 numaralı kitabı oku |
+| **İşlem** | Bir kaynak üzerinde yapılan iş. Bizim API'mizde **HTTP metodu + yol** ile belirtilir. | `GET /book/42`: 42 numaralı kitabı oku |
 
 Hafta 2'nin sonundaki sunucumuzda üç işlem var:
 
