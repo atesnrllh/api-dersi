@@ -600,6 +600,7 @@ new_book = {
 }
 
 try:
+    # Yeni kitap: POST ile gönder.
     response = httpx.post(base_url + "/book", json=new_book)
     print("Status code:", response.status_code)
 
@@ -607,6 +608,7 @@ try:
         location = response.headers["Location"]
         print("Location:", location)
 
+        # Eklenen kitap: Location'daki yoldan geri oku.
         read_response = httpx.get(base_url + location)
         print("Read status:", read_response.status_code)
         if read_response.status_code == 200:
@@ -618,6 +620,7 @@ try:
     else:
         print("Response body:", response.text)
 
+    # Kitap listesi: toplam sayıyı kontrol et.
     list_response = httpx.get(base_url + "/book")
     if list_response.status_code == 200:
         print("Book count:", len(list_response.json()))

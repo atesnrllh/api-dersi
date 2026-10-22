@@ -643,16 +643,20 @@ new_review = {
 }
 
 try:
+    # Kitabın yorumları: eklemeden önce oku.
     response = httpx.get(base_url + "/books/42/reviews")
     print("Reviews before:", response.status_code, len(response.json()))
 
+    # Yeni yorum: 42 numaralı kitaba ekle.
     response = httpx.post(base_url + "/books/42/reviews", json=new_review)
     print("Create status:", response.status_code)
     print("Created review:", response.text)
 
+    # Kitabın yorumları: ekledikten sonra tekrar oku.
     response = httpx.get(base_url + "/books/42/reviews")
     print("Reviews after:", response.status_code, len(response.json()))
 
+    # Olmayan kitap: 404 beklenir.
     response = httpx.get(base_url + "/books/99/reviews")
     print("Book 99:", response.status_code, response.text)
 except httpx.ConnectError:
