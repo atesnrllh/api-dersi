@@ -1565,6 +1565,8 @@ Bir işleme tıklayıp **Try it out** düğmesiyle tarayıcıdan istek göndereb
 | `GET /books/42/reviews/9` | `404` | Böyle bir yorum yok. |
 | `GET /books/57/reviews/1` | `404` | 1 numaralı yorum var, ama 57 numaralı kitaba değil 42'ye ait. |
 
+Kodunu yazıp denedikten sonra [ek nottaki cevapla](09_Supplement_Exercise_8_3_Answer.md) karşılaştır.
+
 ---
 
 ## 9. Kendini kontrol et: Bu haftanın altı sorusu
