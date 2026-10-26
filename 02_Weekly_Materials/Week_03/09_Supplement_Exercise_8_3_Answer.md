@@ -8,13 +8,28 @@ Bu not, föyün 8.3 bölümündeki alıştırmanın cevabıdır. Önce kodu kend
 
 ## 1. `create_review` fonksiyonuna `Location` başlığını ekle
 
-Değişen kısım: fonksiyonun ilk satırına `response: Response` parametresi, `return` satırının hemen üstüne de `Location` satırı ekleniyor.
+Fonksiyonun tamamı aşağıda. 5.4'tekinden farkı üç satırda: `def` satırına `response: Response` parametresi, `return` satırının hemen üstüne `Location` satırı eklendi; en üstteki yorum satırı da "201 ve Location döner" olarak güncellendi.
 
 ```python
 # Yeni yorum: kitaba ekler, 201 ve Location döner.
 @app.post("/books/{book_id}/reviews", status_code=201)
 def create_review(book_id: int, review_data: ReviewCreate, response: Response):
-    ...
+    book_exists = False
+    for book in books:
+        if book["id"] == book_id:
+            book_exists = True
+
+    if not book_exists:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    new_id = 1
+    for review in reviews:
+        if review["id"] >= new_id:
+            new_id = review["id"] + 1
+
+    created_review = review_data.model_dump()
+    created_review["id"] = new_id
+    created_review["book_id"] = book_id
     reviews.append(created_review)
     response.headers["Location"] = f"/books/{book_id}/reviews/{new_id}"
     return created_review
