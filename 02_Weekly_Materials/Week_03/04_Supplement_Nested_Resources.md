@@ -98,4 +98,4 @@ Bir uyarı: İç içe yollar derinleştikçe kullanımı zorlaşır. Örneğin b
 
 ## 4. Föyde neden iç içe kaynağı seçtik?
 
-Kitap kataloğumuzda yorumlara her zaman bir kitabın sayfasından bakılıyor; bir okuyucunun bütün yorumlarını listelemek gibi bir ihtiyacımız yok. Bu yüzden `/books/42/reviews` yolu ilişkiyi daha açık gösteriyor. Ayrıca bu tasarım, yoldan alınan bir parametre ile gövdeden alınan bir modeli aynı fonksiyonda kullanmayı görmemizi sağladı.
+Kitap kataloğumuzda yorumlara her zaman bir kitabın sayfasından bakılıyor; bir okuyucunun bütün yorumlarını listelemek gibi bir ihtiyacımız yok. Bu yüzden `/books/42/reviews` yolu ilişkiyi daha açık gösteriyor. İç içe tasarımı seçmemizin bir nedeni daha var: `create_review` fonksiyonu bilgiyi isteğin iki farklı kısmından alıyor. Kitabın kimliğini istek satırındaki yoldan (`/books/42/reviews` → `book_id`), yorumun bilgilerini gövdeden (`review_data`) alıyor. Ayrı koleksiyon tasarımında kitabın kimliği de gövdede giderdi (`POST /reviews`, `{"book_id": 42, ...}`) ve bu ikisini aynı fonksiyonda göremezdik.

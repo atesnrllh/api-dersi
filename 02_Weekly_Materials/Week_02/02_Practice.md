@@ -429,7 +429,7 @@ Book count: 4
 
 **Amaç:** Yanıta bir başlık eklemek, bu başlığı istemcide okumak ve eklenen kitabı ayrı bir istekle geri okumak.
 
-### 4.1 Sunucunun gönderdiği yanıt hangi parçalardan oluşur?
+### 4.1 Sunucunun gönderdiği yanıt hangi kısımlardan oluşur?
 
 Bu deneyden sonra kitap eklendiğinde sunucunun gönderdiği yanıtın tamamı şöyle görünecek (tarih sende farklı olur):
 
@@ -444,12 +444,15 @@ location: /book/74
 {"title":"HTTP ile Yeni Bir Kitap","author":{"first_name":"Ada","last_name":"Yıldız"},"available":true,"tags":["http","python"],"rating":null,"id":74}
 ```
 
-| Bölüm | Bu örnekte |
+Yanıt üç kısımdan oluşur:
+
+| Kısım | Bu örnekte |
 |---|---|
 | Durum satırı | `HTTP/1.1 201 Created` |
 | Başlıklar | `date`, `server`, `content-length`, `content-type`, `location` |
-| Boş satır | Başlıkları gövdeden ayırır |
 | Gövde | Eklenen kitabın JSON bilgileri |
+
+Başlıklar ilk satırda değil, ilk satırdan **sonra** gelir. Başlıklar ile gövde arasındaki boş satır bir kısım değildir; yalnızca başlıkların bittiğini gösterir.
 
 Bu beş başlığı üç farklı yer ekler:
 

@@ -459,7 +459,7 @@ Bu deneyde üç şey göreceğiz:
 
 1. Kitaplar için kullandığımız kalıp (listele, ekle) yeni bir kaynakta da aynen işler.
 2. Bir kaynak başka bir kaynağa aitse, bu ilişki yolda gösterilebilir: `/books/42/reviews`.
-3. Bir fonksiyon bilgiyi aynı anda iki yerden alabilir: kitabın kimliğini yoldan, yorumun bilgilerini istek gövdesinden.
+3. Bir fonksiyon bilgiyi isteğin iki farklı kısmından alabilir: kitabın kimliğini **istek satırındaki yoldan** (`/books/42/reviews`), yorumun bilgilerini **gövdeden**.
 
 Önce yolları seçeceğiz (5.1), sonra sunucuya yorumları ekleyip (5.2–5.4) istemciyle deneyeceğiz (5.5).
 
@@ -563,13 +563,36 @@ Bu kontrol iki fonksiyonda da aynen tekrar ediyor. Şimdilik her fonksiyonun tek
 
 ### 5.3 Bir fonksiyon, üç ayrı yerden bilgi alabilir
 
-`create_review` fonksiyonu bilgiyi iki farklı yerden alıyor. Hafta 1'deki sorgu parametresiyle birlikte, bir fonksiyonun bilgi alabileceği üç yeri de görmüş olduk:
+`create_review` fonksiyonu bilgiyi isteğin iki farklı kısmından alıyor. Bunu görmek için önce isteğin kısımlarına bakalım. 8.1'deki curl komutunun sunucuya gönderdiği istek şöyledir; sağdaki açıklamalar mesajın parçası değildir:
+
+```text
+POST /books/42/reviews HTTP/1.1          ← 1. İstek satırı
+Host: 127.0.0.1:8000                     ← 2. Başlıklar
+User-Agent: curl/7.81.0                  ←    (her satırda bir başlık)
+Accept: */*                              ←
+Content-Type: application/json           ←
+Content-Length: 80                       ←
+                                         ← (ayırıcı boş satır)
+{"reader": "Can", "comment": "İlk API projemi bu kitapla yazdım.", "score": 4}   ← 3. Gövde
+```
+
+Bir istek üç kısımdan oluşur:
+
+| Kısım | Bu istekte | `create_review` buradan ne alır? |
+|---|---|---|
+| 1. İstek satırı | `POST /books/42/reviews HTTP/1.1`. Üç parçası var: HTTP metodu, yol (varsa `?` ile sorgu) ve HTTP sürümü. | Yoldaki `42`: `book_id` |
+| 2. Başlıklar | `Host`, `Content-Type`… İstekle ilgili ek bilgiler. | — |
+| 3. Gövde | `{"reader": "Can", ...}`. Gönderilen veri. | Yorumun bilgileri: `review_data` |
+
+Başlıklar ilk satırda değil, ilk satırdan **sonra** gelir. Başlıklar ile gövde arasındaki boş satır bir kısım değildir; yalnızca başlıkların bittiğini gösterir. Yanıt da aynı üç kısımdan oluşur; yanıtın ilk satırına **durum satırı** denir (Hafta 2, 4.1).
+
+Yol ve sorgu istek satırının içindedir, gövde ise ayrı bir kısımdır. Hafta 1'deki sorgu parametresiyle birlikte, bir fonksiyonun bilgi alabileceği üç yeri de görmüş olduk:
 
 | Fonksiyon parametresi | Bilgi nereden gelir? | FastAPI bunu nereden anlar? | İlk gördüğümüz yer |
 |---|---|---|---|
-| `book_id: int` | Yoldan: `/books/42/reviews` | Adı yoldaki `{book_id}` ile aynı | Hafta 1 |
-| `search: str = ""` | Sorgudan: `/books?search=API` | Yolda yok ve basit bir türde | Hafta 1 |
-| `review_data: ReviewCreate` | İsteğin gövdesinden | Türü bir Pydantic modeli | Hafta 2 |
+| `book_id: int` | İstek satırındaki yoldan: `/books/42/reviews` | Adı yoldaki `{book_id}` ile aynı | Hafta 1 |
+| `search: str = ""` | İstek satırındaki sorgudan: `/books?search=API` | Yolda yok ve basit bir türde | Hafta 1 |
+| `review_data: ReviewCreate` | Gövdeden | Türü bir Pydantic modeli | Hafta 2 |
 
 ### 5.4 `server.py` dosyasının bu haftaki son hâli
 
