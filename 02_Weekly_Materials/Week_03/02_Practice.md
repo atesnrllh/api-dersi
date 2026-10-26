@@ -361,6 +361,8 @@ Yolda fiil kullanan API'lerde de bir kalıp kurulabilir, ama bu kalıbı her API
 
 **Amaç:** GET ile veri değiştiren bir işlemin neden sorun çıkardığını görmek.
 
+Deney 3'te işi yolun değil, HTTP metodunun söylediğini gördük. Bu ancak her program HTTP metotlarını aynı anlamda kullanırsa işe yarar: Tarayıcı, istemci ve sunucu `GET`'in "oku" demek olduğuna güvenir. Bu anlam REST'ten değil, HTTP standardından gelir; REST API'leri işi HTTP metotlarıyla söylediği için bu anlama uymak özellikle önemlidir. Bu deneyde, sunucu `GET`'i veri eklemek için kullanırsa ne olduğunu göreceğiz.
+
 ### 4.1 GET ile kitap ekleyen bir sunucu
 
 Aşağıdaki sunucuda kitap eklemek için GET kullanılıyor. Denemek için ayrı bir `bad_get_server.py` dosyası oluştur:
@@ -433,7 +435,7 @@ GET isteği, "yalnızca oku" anlamına gelir. Bu yüzden birçok program GET ist
 
 Bu programlar GET isteğinin hiçbir şeyi değiştirmeyeceğini varsayar. GET ile kitap ekleyen bir API'de bunların her biri istemeden yeni bir kayıt oluşturur.
 
-HTTP standardı da GET'i **güvenli (safe)** bir HTTP metodu olarak tanımlar: GET isteği sunucudaki veriyi değiştirmemelidir.
+HTTP standardı GET'i **güvenli (safe)** bir HTTP metodu olarak tanımlar: GET isteği sunucudaki veriyi değiştirmemelidir.
 
 | HTTP metodu | Veriyi değiştirir mi? | Tekrar gönderilirse? | Derste |
 |---|---|---|---|
