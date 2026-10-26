@@ -10,3 +10,4 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 | 01 | [İlk kitap kataloğu API'si](02_Weekly_Materials/Week_01/) |
 | 02 | [İstemciden kitap eklemek: POST ve istek gövdesi](02_Weekly_Materials/Week_02/) |
 | 03 | [API'yi kaynaklara göre tasarlamak: REST](02_Weekly_Materials/Week_03/) |
+| 04 | [Kitapları güncellemek ve silmek: CRUD](02_Weekly_Materials/Week_04/) |
