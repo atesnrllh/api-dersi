@@ -14,9 +14,9 @@ Günlük kullanımda "REST API" denince beş kural kastedilir.
 | `/books/42` | 42 numaralı kitap |
 | `/books/42/reviews` | O kitabın yorumları |
 
-**2. Ne yapılacağını HTTP metodu söyler, yol söylemez.** Yolda isim olur, fiil olmaz.
+**2. Ne yapılacağını HTTP metodu söyler.** İş HTTP metodunda söylendiği için yolda fiile gerek kalmaz; yolda kaynağın adı yazılır.
 
-| REST'e uygun | REST'e uymayan |
+| Yaygın biçim | Yolda fiil olan biçim |
 |---|---|
 | `GET /books` | `GET /getAllBooks` |
 | `POST /books` | `POST /createNewBook` |
@@ -29,9 +29,21 @@ Okumak için `GET`, eklemek için `POST` kullanılır. İleriki haftalarda günc
 
 **5. Sonucu durum kodu söyler.** Örneğin `200` "tamam", `201` "oluşturuldu", `404` "böyle bir kaynak yok" demektir.
 
+**Kural ile alışkanlığı ayıralım.** Yukarıdaki örneklerde iki farklı şey var: Bazıları kuraldır, bazıları REST API'lerinin çoğunun uyduğu alışkanlıklardır.
+
+| | Kural mı? | Nereden gelir? |
+|---|---|---|
+| Her kaynağın kendi yolu olur | **Evet** | REST'in temel fikri |
+| `GET` okur, `POST` ekler | **Evet** | HTTP standardı. HTTP metotlarının anlamı her API'de aynıdır. |
+| Koleksiyonun adı çoğul olur: `/books` | **Hayır**, alışkanlık | `/book` ya da `/kitaplar` da REST'e aykırı değildir. |
+| Tek kitap koleksiyonun altında durur: `/books/42` | **Hayır**, alışkanlık | Çok yaygın, ama zorunlu değil. |
+| Yolda fiil olmaz | **Hayır**, güçlü bir alışkanlık | İşi HTTP metodu söylediği için yoldaki fiil gereksiz kalır; yine de yasak değildir. |
+
+Alışkanlıklar zorunlu değildir. Ama REST API'lerinin çoğu bunlara uyduğu için, hiç görmediğimiz bir API'nin yollarını da çoğu zaman tahmin edebiliriz.
+
 **Ayırt edici nokta:** SOAP ve GraphQL'de istekler genellikle tek bir yola (`/BookService`, `/graphql`) ve `POST` ile gider. Ne istendiği mesajın içinde yazar. REST'te ise ne istendiğini HTTP metodu ve yol birlikte söyler: `GET /books/42`.
 
-**Bizim API'miz zaten neredeyse REST'e uygun.** Hafta 1 ve 2'de yazdığımız API'de bir tek `/book` yolunun tekil olması uymuyor. Deney 2 de onu `/books` yapıyor. Yani REST'i ilk iki haftada farkında olmadan uygulamış olduk; bu hafta bu kurallara bir ad veriyoruz.
+**Bizim API'miz zaten REST'e uygun.** Hafta 1 ve 2'de yazdığımız API'de bir tek `/book` yolu, koleksiyonun adını çoğul yazma alışkanlığına uymuyor. Deney 2 de onu `/books` yapıyor. Yani REST'i ilk iki haftada farkında olmadan uygulamış olduk; bu hafta bu kurallara bir ad veriyoruz.
 
 ### 0.1 Başlangıç dosyaları
 
@@ -236,11 +248,11 @@ Book count: 4
 
 ## Deney 3 — Yolda neden fiil değil isim kullanılır?
 
-**Amaç:** Aynı işleri yapan ama yollarında fiil kullanan bir API ile REST'e uygun API'mizi karşılaştırmak.
+**Amaç:** Aynı işleri yapan ama yollarında fiil kullanan bir API ile kendi API'mizi karşılaştırmak.
 
 ### 3.1 İşlem adlarını yola yazan bir sunucu
 
-Aşağıdaki sunucu çalışır, ama REST'e uymaz. Bunu denemek için proje klasöründe `bad_server.py` adlı ayrı bir dosya oluştur:
+Aşağıdaki sunucu çalışır, ama REST API'lerindeki yaygın alışkanlıklara uymaz. Bunu denemek için proje klasöründe `bad_server.py` adlı ayrı bir dosya oluştur:
 
 ```python
 from fastapi import FastAPI, HTTPException
@@ -310,7 +322,7 @@ Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste y
 
 ### 3.2 İki tasarımı karşılaştır
 
-| İşlem | `bad_server.py` | REST'e uygun API'miz |
+| İşlem | `bad_server.py` | Bizim API'miz |
 |---|---|---|
 | Bütün kitaplar | `GET /getAllBooks` | `GET /books` |
 | Tek kitap | `GET /getBookById?id=42` | `GET /books/42` |
@@ -321,12 +333,27 @@ Bütün işlemler çalışıyor. Adresteki `%20`, boşluk karakterinin adreste y
 | Sorun | Açıklama |
 |---|---|
 | Fiil iki kez yazılıyor | `GET /getAllBooks` isteğinde "getir" anlamı hem HTTP metodunda (`GET`) hem yolda (`get`) var. REST'te işi HTTP metodu söyler, yol yalnızca kaynağı adlandırır. |
-| Her işlem için yeni bir ad gerekiyor | `getAllBooks`, `getBookById`, `createNewBook`… İstemci bütün adları tek tek öğrenmek zorundadır ve adları tahmin edemez: `getBook` mu, `getBookById` mi, `fetchBook` mu? |
+| Her işlem için yeni bir ad gerekiyor | `getAllBooks`, `getBookById`, `createNewBook`… İstemci bütün adları o API'nin belgesinden tek tek öğrenmek zorundadır: `getBook` mu, `getBookById` mi, `fetchBook` mu? |
 | Kitap bilgileri adreste gidiyor | Yeni kitabın adı sorgu bölümünde (`?title=...`) gönderiliyor. Bir kitabın bütün alanlarını (yazar, etiketler…) adreste göndermek zordur; bu bilgiler gövdeye aittir. İki mesajın farkı [ek notta](06_Supplement_Query_vs_Body.md). |
 
 Denemeden sonra `bad_server.py` sunucusunu durdur ve kendi sunucunu yeniden başlat.
 
-> **Ana fikir:** Bir API'nin çalışması, iyi tasarlandığı anlamına gelmez. REST'te **yol kaynağı (ismi), HTTP metodu yapılacak işi (fiili)** söyler. Böylece istemci, yolları tek tek ezberlemek yerine aynı kalıbı her kaynakta kullanabilir.
+> **Ana fikir:** Bir API'nin çalışması, iyi tasarlandığı anlamına gelmez. REST'te **yol kaynağı (ismi), HTTP metodu yapılacak işi (fiili)** söyler. REST API'lerinin çoğu aynı yol alışkanlıklarına uyduğu için istemci, yolları tek tek ezberlemek yerine aynı kalıbı her kaynakta kullanabilir.
+
+Yaygın REST alışkanlığıyla yollar aynı kalıba uyar:
+
+| İş | Kitaplar | Yazarlar (aynı kalıp) |
+|---|---|---|
+| Hepsini listele | `GET /books` | `GET /authors` |
+| Birini getir | `GET /books/42` | `GET /authors/7` |
+| Yeni ekle | `POST /books` | `POST /authors` |
+
+Yolda fiil kullanan API'lerde de bir kalıp kurulabilir, ama bu kalıbı her API'yi yazan kişi kendisi seçer. Aynı işi yapan üç API üç farklı ad kullanabilir:
+
+| İş | API 1 | API 2 | API 3 | Yaygın REST biçimi |
+|---|---|---|---|---|
+| Kitapları listele | `GET /getAllBooks` | `GET /listBooks` | `GET /fetchBookList` | `GET /books` |
+| Bir kitabı getir | `GET /getBookById?id=42` | `GET /bookDetail?id=42` | `GET /fetchBook?bookId=42` | `GET /books/42` |
 
 ---
 
