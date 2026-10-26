@@ -1,6 +1,6 @@
 # Ek Not — SOAP ve GraphQL Mesajları Nasıl Okunur?
 
-Föyün Deney 7'sinde "42 numaralı kitabın adını ve yazarını getir" isteğini SOAP ve GraphQL ile yazdık. Bu notta o mesajları parça parça okuyoruz.
+Föyün Deney 7'sinde "42 numaralı kitabın adını ve yazarını getir" isteğini REST, SOAP ve GraphQL ile yazan kodları yan yana gördük. Bu notta SOAP ve GraphQL mesajlarını parça parça okuyoruz. Föydeki gibi burada da üç yaklaşımın yolu `/books`; gerçek uygulamalarda bu tek yola genellikle `/BookService` ya da `/graphql` gibi adlar verilir.
 
 > **Not:** Buradaki mesajlar örnektir. Derste SOAP ya da GraphQL sunucusu kurmuyoruz; amaç mesajların yapısını tanımaktır.
 
@@ -9,7 +9,8 @@ Föyün Deney 7'sinde "42 numaralı kitabın adını ve yazarını getir" isteğ
 ## 1. SOAP isteği
 
 ```http
-POST /BookService HTTP/1.1
+POST /books HTTP/1.1
+Host: 127.0.0.1:8000
 Content-Type: text/xml; charset=utf-8
 SOAPAction: "GetBook"
 
@@ -17,7 +18,7 @@ SOAPAction: "GetBook"
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetBook>
-      <BookId>42</BookId>
+      <id>42</id>
     </GetBook>
   </soap:Body>
 </soap:Envelope>
@@ -25,14 +26,15 @@ SOAPAction: "GetBook"
 
 | Parça | Anlamı |
 |---|---|
-| `POST /BookService` | SOAP'ta bütün istekler genellikle aynı yola, POST ile gönderilir. Yol hangi işlemin istendiğini söylemez. |
+| `POST /books` | SOAP'ta bütün istekler aynı yola, POST ile gönderilir. Yol hangi işlemin istendiğini söylemez. |
+| `Host: 127.0.0.1:8000` | Sunucunun adresi. Her HTTP isteğinde bulunur. |
 | `Content-Type: text/xml` | Gövdenin XML olduğunu bildirir. |
 | `SOAPAction: "GetBook"` | İstenen işlemin adı. SOAP'ın bu örnekteki 1.1 sürümünde işlem adı, mesajın içinin yanında bu başlıkta da yazılır. |
 | `<?xml ... ?>` | Bunun bir XML belgesi olduğunu ve hangi karakter kodlamasıyla yazıldığını söyler. |
 | `<soap:Envelope>` | **Zarf.** Mesajın tamamını sarar. `xmlns:soap="..."` kısmı, mesajın hangi SOAP kurallarına göre yazıldığını gösteren bir addır; bir web sayfası değildir. |
 | `<soap:Body>` | Mesajın asıl içeriği bu öğenin içindedir. |
 | `<GetBook>` | İstenen işlem: "kitabı getir". REST'te bunu HTTP metodu ve yol söylüyordu (`GET /books/42`). |
-| `<BookId>42</BookId>` | İşlemin parametresi: kitabın kimliği. REST'te bu bilgi yoldaydı. |
+| `<id>42</id>` | İşlemin parametresi: kitabın kimliği. REST'te bu bilgi yoldaydı. |
 
 REST'te `GET /books/42` yazdığımız tek satırın karşılığı, SOAP'ta XML ile yazılmış bir mesajdır.
 
@@ -43,12 +45,14 @@ REST'te `GET /books/42` yazdığımız tek satırın karşılığı, SOAP'ta XML
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetBookResponse>
-      <Book>
-        <Id>42</Id>
-        <Title>API Yolculuğu</Title>
-        <AuthorFirstName>Deniz</AuthorFirstName>
-        <AuthorLastName>Kaya</AuthorLastName>
-      </Book>
+      <book>
+        <id>42</id>
+        <title>API Yolculuğu</title>
+        <author>
+          <first_name>Deniz</first_name>
+          <last_name>Kaya</last_name>
+        </author>
+      </book>
     </GetBookResponse>
   </soap:Body>
 </soap:Envelope>
@@ -58,9 +62,9 @@ REST'te `GET /books/42` yazdığımız tek satırın karşılığı, SOAP'ta XML
 |---|---|
 | `<soap:Envelope>`, `<soap:Body>` | Yanıt da aynı zarfın içinde gelir. |
 | `<GetBookResponse>` | `GetBook` işleminin yanıtı olduğunu söyler. |
-| `<Book>` ve içindekiler | Kitabın bilgileri. Her alan bir XML öğesidir. |
+| `<book>` ve içindekiler | Kitabın bilgileri. Her alan bir XML öğesidir; yazarın bilgileri `<author>` öğesinin içinde durur. |
 
-XML'de değerlerin türü yazılıştan anlaşılmaz: `<Id>42</Id>` içindeki `42` yalnızca bir yazıdır. Sayı olduğunu, veriyi okuyan program bilir. Bu farkı Hafta 2'nin [veri biçimleri notunda](../Week_02/04_Supplement_Data_Formats.md) görmüştük.
+XML'de değerlerin türü yazılıştan anlaşılmaz: `<id>42</id>` içindeki `42` yalnızca bir yazıdır. Sayı olduğunu, veriyi okuyan program bilir. Bu farkı Hafta 2'nin [veri biçimleri notunda](../Week_02/04_Supplement_Data_Formats.md) görmüştük.
 
 Bir hata olduğunda SOAP yanıtının gövdesinde `<soap:Fault>` adlı bir öğe bulunur; hatanın açıklaması bu öğenin içinde yazar. SOAP 1.1'de böyle bir yanıtın HTTP durum kodu `500` olur.
 
@@ -71,7 +75,8 @@ SOAP servisleri, hangi işlemleri sunduklarını ve hangi parametreleri bekledik
 ## 3. GraphQL isteği
 
 ```http
-POST /graphql HTTP/1.1
+POST /books HTTP/1.1
+Host: 127.0.0.1:8000
 Content-Type: application/json
 
 {"query": "{ book(id: 42) { title author { first_name last_name } } }"}
@@ -122,6 +127,6 @@ Bir hata olduğunda yanıtta `"errors"` adlı bir alan bulunur ve hata orada aç
 | Bilgi | REST | SOAP | GraphQL |
 |---|---|---|---|
 | İstenen işlem | HTTP metodu: `GET` | `<GetBook>` öğesi ve `SOAPAction` başlığı | Sorgudaki `book` |
-| Kitabın kimliği | Yolda: `/books/42` | `<BookId>42</BookId>` | Sorgudaki `id: 42` |
+| Kitabın kimliği | Yolda: `/books/42` | `<id>42</id>` | Sorgudaki `id: 42` |
 | İstenen alanlar | Seçilemez; sunucu belirler | Seçilemez; sunucu belirler | Sorguda istemci seçer |
 | Sonucun başarılı olup olmadığı | Durum kodu | Gövdedeki `<soap:Fault>` öğesi (durum kodu `500`) | Gövdedeki `"errors"` alanı (durum kodu çoğu zaman `200`) |

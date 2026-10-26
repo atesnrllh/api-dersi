@@ -899,31 +899,305 @@ Belgeni tamamladıktan sonra [ek nottaki cevapla](08_Supplement_Exercise_6_3_Ans
 
 ---
 
-## Deney 7 — Aynı istek REST, SOAP ve GraphQL'de nasıl görünür?
+## Deney 7 — Aynı istek REST, SOAP ve GraphQL'de nasıl yazılır?
 
 **Amaç:** REST'in tek yaklaşım olmadığını görmek ve üç yaklaşımı aynı istek üzerinden karşılaştırmak.
 
-Bu deneydeki SOAP ve GraphQL mesajları **örnektir**; derste bu yaklaşımlarla bir sunucu kurmayacağız. Amaç, aynı isteğin nasıl yazıldığını yan yana görmektir: "42 numaralı kitabın adını ve yazarını getir." Mesajların satır satır açıklaması [ek notta](03_Supplement_SOAP_GraphQL.md).
+Bu föy boyunca API'mizi REST yaklaşımıyla yazdık. API yazmanın başka yaklaşımları da var; en çok karşılaşılan ikisi **SOAP** ve **GraphQL**. SOAP daha çok bankacılık gibi alanlardaki eski kurumsal sistemlerde, GraphQL ise tek istekte farklı verileri almak isteyen web ve mobil uygulamalarda karşımıza çıkar.
 
-### 7.1 REST
+Üç yaklaşım da istemci ile sunucu arasında aynı HTTP mesajını kullanır. Aralarındaki fark, "ne istiyorum?" bilgisinin mesajın neresine yazıldığındadır: REST bunu istek satırına (HTTP metoduna ve yola) yazar, SOAP ve GraphQL ise gövdeye.
+
+Bu deneyde aynı isteği, "42 numaralı kitabın adını ve yazarını getir", üç yaklaşımla yazan basit sunucu ve istemcileri yan yana koyuyoruz. Her bölümde önce kodlara, sonra altlarındaki açıklamalara bak.
+
+> **Not:** Bu deneydeki kodlar basit örneklerdir; derste çalıştırmıyoruz. Gerçek SOAP ve GraphQL sunucuları genellikle bu iş için yazılmış hazır paketlerle kurulur. GraphQL sunucusu, FastAPI belgelerinde önerilen **Strawberry** paketini kullanıyor; bu paket derste kurulu değil. Kitap bulunamazsa ne olacağını, kodlar kısa kalsın diye yazmadık.
+
+**Adlar bilerek aynı seçildi.** Üç örnekte de yol `/books`, alanlar `id`, `title` ve `author`. Böylece gördüğün her fark yaklaşımdan gelir, adlardan gelmez. Gerçek uygulamalarda SOAP ve GraphQL'in tek yoluna genellikle `/BookService` ya da `/graphql` gibi adlar verilir.
+
+### 7.1 Sunucu
+
+<table>
+<tr>
+<th>REST: <code>rest_server.py</code></th>
+<th>SOAP: <code>soap_server.py</code></th>
+<th>GraphQL: <code>graphql_server.py</code></th>
+</tr>
+<tr>
+<td valign="top">
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        }
+    }
+]
+
+
+@app.get("/books/{book_id}")
+def get_book(book_id: int):
+    for book in books:
+        if book["id"] == book_id:
+            return book
+```
+
+</td>
+<td valign="top">
+
+```python
+import xml.etree.ElementTree as ET
+
+from fastapi import Body, FastAPI, Response
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        }
+    }
+]
+
+
+@app.post("/books")
+def book_service(request_xml: bytes = Body()):
+    envelope = ET.fromstring(request_xml)
+    book_id = int(envelope.find(".//GetBook/id").text)
+
+    for book in books:
+        if book["id"] == book_id:
+            response_xml = f"""<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetBookResponse>
+      <book>
+        <id>{book["id"]}</id>
+        <title>{book["title"]}</title>
+        <author>
+          <first_name>{book["author"]["first_name"]}</first_name>
+          <last_name>{book["author"]["last_name"]}</last_name>
+        </author>
+      </book>
+    </GetBookResponse>
+  </soap:Body>
+</soap:Envelope>"""
+            return Response(content=response_xml, media_type="text/xml")
+```
+
+</td>
+<td valign="top">
+
+```python
+import strawberry
+from fastapi import FastAPI
+from strawberry.fastapi import GraphQLRouter
+from strawberry.schema.config import StrawberryConfig
+
+
+@strawberry.type
+class Author:
+    first_name: str
+    last_name: str
+
+
+@strawberry.type
+class Book:
+    id: int
+    title: str
+    author: Author
+
+
+books = [
+    Book(
+        id=42,
+        title="API Yolculuğu",
+        author=Author(
+            first_name="Deniz",
+            last_name="Kaya"
+        )
+    )
+]
+
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def book(self, id: int) -> Book | None:
+        for book in books:
+            if book.id == id:
+                return book
+        return None
+
+
+schema = strawberry.Schema(
+    query=Query,
+    config=StrawberryConfig(auto_camel_case=False)
+)
+
+app = FastAPI()
+app.include_router(GraphQLRouter(schema), prefix="/books")
+```
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+Her işlemin kendi fonksiyonu var. İstek gelince FastAPI, HTTP metoduna ve yola bakıyor (`GET` + `/books/42`) ve `get_book` fonksiyonunu çağırıyor. Yoldaki `42`'yi `book_id` parametresine de kendisi koyuyor. Fonksiyon kitabı döndürüyor, FastAPI onu JSON'a çeviriyor.
+
+</td>
+<td valign="top">
+
+Bütün istekler aynı yola (`/books`) geldiği için tek bir fonksiyon (`book_service`) hepsini karşılıyor. Hangi işin istendiğini ve kitabın kimliğini, gövdedeki XML'i okuyarak fonksiyon kendisi buluyor. Yanıtın XML'ini de kendimiz yazıyoruz.
+
+</td>
+<td valign="top">
+
+Yol yine tek. Gövdede gelen **GraphQL sorgusunu**, yani istemcinin ne istediğini tarif ettiği metni, Strawberry paketi çözüyor. Biz iki şey yazıyoruz: **şema**, yani sunucuda hangi verilerin ve alanların bulunduğunu söyleyen tanım (`Author`, `Book`); ve sorguda `book` yazılınca çalışacak fonksiyon. Yanıtı paket hazırlıyor.
+
+</td>
+</tr>
+</table>
+
+### 7.2 İstemci
+
+<table>
+<tr>
+<th>REST: <code>rest_client.py</code></th>
+<th>SOAP: <code>soap_client.py</code></th>
+<th>GraphQL: <code>graphql_client.py</code></th>
+</tr>
+<tr>
+<td valign="top">
+
+```python
+import httpx
+
+response = httpx.get(
+    "http://127.0.0.1:8000/books/42"
+)
+book = response.json()
+
+print(response.status_code)
+print(book["title"])
+print(book["author"]["first_name"])
+```
+
+</td>
+<td valign="top">
+
+```python
+import xml.etree.ElementTree as ET
+
+import httpx
+
+request_xml = """<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetBook>
+      <id>42</id>
+    </GetBook>
+  </soap:Body>
+</soap:Envelope>"""
+
+response = httpx.post(
+    "http://127.0.0.1:8000/books",
+    content=request_xml,
+    headers={
+        "Content-Type": "text/xml; charset=utf-8",
+        "SOAPAction": '"GetBook"'
+    }
+)
+envelope = ET.fromstring(response.content)
+
+print(response.status_code)
+print(envelope.find(".//book/title").text)
+print(envelope.find(".//book/author/first_name").text)
+```
+
+</td>
+<td valign="top">
+
+```python
+import httpx
+
+query = "{ book(id: 42) { title author { first_name last_name } } }"
+
+response = httpx.post(
+    "http://127.0.0.1:8000/books",
+    json={"query": query}
+)
+book = response.json()["data"]["book"]
+
+print(response.status_code)
+print(book["title"])
+print(book["author"]["first_name"])
+```
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+`httpx.get` yalnızca adresi gönderiyor, gövde boş. Gelen yanıtı `response.json()` sözlüğe çeviriyor.
+
+</td>
+<td valign="top">
+
+`httpx.post` gövdeye XML metnini koyuyor. Bu metin bir **zarfın** (`Envelope`) içinde yazılıyor; SOAP mesajları hep böyle sarılı gelir. Gövde JSON olmadığı için `Content-Type` başlığını kendimiz yazıyoruz, işin adı da `SOAPAction` başlığında gidiyor.
+
+</td>
+<td valign="top">
+
+`httpx.post` gövdeye GraphQL sorgusunu koyuyor, JSON içinde `json=` ile. Gelen yanıtta veriler hep `"data"` adlı alanın içinde.
+
+</td>
+</tr>
+</table>
+
+Üç istemcinin de ekran çıktısı aynıdır:
+
+```text
+200
+API Yolculuğu
+Deniz
+```
+
+### 7.3 Sunucuya giden istek
+
+Kodların gönderdiği HTTP mesajları. Kısalık için yalnızca `Host` başlığını ve gövdeyle ilgili başlıkları gösteriyoruz.
+
+<table>
+<tr>
+<th>REST</th>
+<th>SOAP</th>
+<th>GraphQL</th>
+</tr>
+<tr>
+<td valign="top">
 
 ```http
 GET /books/42 HTTP/1.1
 Host: 127.0.0.1:8000
 ```
 
-Yanıt (bizim API'mizin gerçek yanıtı):
-
-```json
-{"id":42,"title":"API Yolculuğu","author":{"first_name":"Deniz","last_name":"Kaya"},"available":true,"tags":["software","education"],"rating":null}
-```
-
-### 7.2 SOAP
-
-SOAP'ta bütün istekler genellikle aynı yola (`/BookService`), POST ile gönderilir. Hangi işlemin istendiği XML biçimindeki mesajın içinde yazar:
+</td>
+<td valign="top">
 
 ```http
-POST /BookService HTTP/1.1
+POST /books HTTP/1.1
+Host: 127.0.0.1:8000
 Content-Type: text/xml; charset=utf-8
 SOAPAction: "GetBook"
 
@@ -931,61 +1205,130 @@ SOAPAction: "GetBook"
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetBook>
-      <BookId>42</BookId>
+      <id>42</id>
     </GetBook>
   </soap:Body>
 </soap:Envelope>
 ```
 
-Yanıt da XML'dir:
+</td>
+<td valign="top">
+
+```http
+POST /books HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+
+{"query": "{ book(id: 42) { title author { first_name last_name } } }"}
+```
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+İki bilgi de ilk satırda: "Ne yapılsın?" HTTP metodunda (`GET`), "Hangi kitap?" yolda (`/books/42`). Bu yüzden gövdeye gerek yok.
+
+</td>
+<td valign="top">
+
+İlk satır her istekte aynı: `POST /books`. İki bilgi de gövdedeki XML'de: `<GetBook>` ve `<id>42</id>`.
+
+</td>
+<td valign="top">
+
+İlk satır yine her istekte aynı: `POST /books`. İki bilgi de gövdedeki sorgu metninde: `book(id: 42)`.
+
+</td>
+</tr>
+</table>
+
+### 7.4 Gelen yanıtın gövdesi
+
+Okunması kolay olsun diye JSON yanıtları satırlara bölünmüş olarak gösteriyoruz.
+
+<table>
+<tr>
+<th>REST</th>
+<th>SOAP</th>
+<th>GraphQL</th>
+</tr>
+<tr>
+<td valign="top">
+
+```json
+{
+  "id": 42,
+  "title": "API Yolculuğu",
+  "author": {
+    "first_name": "Deniz",
+    "last_name": "Kaya"
+  }
+}
+```
+
+</td>
+<td valign="top">
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <GetBookResponse>
-      <Book>
-        <Id>42</Id>
-        <Title>API Yolculuğu</Title>
-        <AuthorFirstName>Deniz</AuthorFirstName>
-        <AuthorLastName>Kaya</AuthorLastName>
-      </Book>
+      <book>
+        <id>42</id>
+        <title>API Yolculuğu</title>
+        <author>
+          <first_name>Deniz</first_name>
+          <last_name>Kaya</last_name>
+        </author>
+      </book>
     </GetBookResponse>
   </soap:Body>
 </soap:Envelope>
 ```
 
-### 7.3 GraphQL
-
-GraphQL'de de istekler genellikle tek bir yola (`/graphql`), POST ile gönderilir. İstemci, istediği alanları bir **sorgu** ile kendisi seçer:
-
-```http
-POST /graphql HTTP/1.1
-Content-Type: application/json
-
-{"query": "{ book(id: 42) { title author { first_name last_name } } }"}
-```
-
-Yanıt JSON'dur ve yalnızca sorguda istenen alanları içerir:
+</td>
+<td valign="top">
 
 ```json
-{"data": {"book": {"title": "API Yolculuğu", "author": {"first_name": "Deniz", "last_name": "Kaya"}}}}
+{
+  "data": {
+    "book": {
+      "title": "API Yolculuğu",
+      "author": {
+        "first_name": "Deniz",
+        "last_name": "Kaya"
+      }
+    }
+  }
+}
 ```
 
-### 7.4 Üç yaklaşımın karşılaştırması
+</td>
+</tr>
+<tr>
+<td valign="top">
 
-|  | REST | SOAP | GraphQL |
-|---|---|---|---|
-| İşlem nasıl belirtilir? | HTTP metodu ve yol: `GET /books/42` | Mesajın içindeki işlem adı: `GetBook` | Sorgu metni: `book(id: 42)` |
-| Yol | Her kaynak için ayrı yol: `/books/42` | Genellikle tek yol: `/BookService` | Genellikle tek yol: `/graphql` |
-| HTTP metodu | İşe göre: GET, POST… | Genellikle POST | Genellikle POST |
-| Veri biçimi | Genellikle JSON | XML | JSON |
-| Yanıtta hangi alanlar gelir? | Sunucunun belirlediği alanlar | Sunucunun belirlediği alanlar | İstemcinin sorguda istediği alanlar |
-| Nerede karşılaşılır? | Bugünkü web API'lerinin çoğu | Bankacılık gibi alanlardaki daha eski kurumsal sistemler | Farklı verileri tek istekte almak isteyen web ve mobil uygulamalar |
+İstemci istekte "bana şu alanları gönder" diyemiyor. Sunucu ne göndermeye karar verdiyse o geliyor: `id`, `title`, `author`. İstemcimiz `id`'yi kullanmadı, ama yine de geldi.
 
-REST yanıtında kitabın bütün alanları geldi; `tags` ve `rating` alanlarını istemesek de. GraphQL'de ise istemci yalnızca istediği alanları aldı. Buna karşılık GraphQL'de sunucuyu kurmak ve sorguları işlemek daha fazla iş gerektirir.
+</td>
+<td valign="top">
 
-> **Ana fikir:** REST, SOAP ve GraphQL aynı işi farklı biçimlerde ister. REST'te işi HTTP metodu ve yol, SOAP'ta XML mesajındaki işlem adı, GraphQL'de istemcinin yazdığı sorgu belirtir. Bu derste REST yaklaşımıyla devam ediyoruz.
+REST'teki gibi alanları sunucu seçiyor; `id` burada da geldi. Fark biçimde: veri zarfın içinde, XML olarak geliyor.
+
+</td>
+<td valign="top">
+
+Alanları istemci seçiyor: Sorguda yalnızca `title` ve `author` vardı, sunucu da yalnızca bunları gönderdi. `id` istenmediği için gelmedi.
+
+</td>
+</tr>
+</table>
+
+Mesajların satır satır açıklaması ve üç yaklaşımın hataları nasıl bildirdiği [ek notta](03_Supplement_SOAP_GraphQL.md).
+
+> **Ana fikir:** REST, SOAP ve GraphQL aynı HTTP mesajını kullanır; fark, "ne istiyorum?" bilgisinin mesajın neresine yazıldığındadır. REST bunu HTTP metoduna ve yola, SOAP gövdedeki XML'e, GraphQL gövdedeki sorgu metnine yazar. Bu derste REST yaklaşımıyla devam ediyoruz.
 
 ---
 
