@@ -4,7 +4,7 @@
 
 REST, bir web API'sini nasıl düzenleyeceğimizi anlatan bir **kurallar bütünüdür**. Bir program, kütüphane ya da standart değildir; bir tasarım tarzıdır. Adı İngilizce *Representational State Transfer* sözcüklerinin kısaltması. Roy Fielding 2000 yılında doktora tezinde tanımladı. Fielding web'in neden bu kadar iyi çalıştığını incelemiş ve kurallarını yazıya dökmüştü.
 
-Günlük kullanımda "REST API" denince beş kural kastedilir.
+Günlük kullanımda "REST API" denince beş kural kastedilir. Fielding'in asıl tanımındaki altı kısıt [ek notta](07_Supplement_REST_Constraints.md).
 
 **1. Sunucudaki her şey bir kaynaktır ve her kaynağın bir yolu vardır.**
 
