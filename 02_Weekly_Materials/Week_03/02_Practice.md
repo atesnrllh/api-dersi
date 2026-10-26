@@ -909,17 +909,21 @@ Bu föy boyunca API'mizi REST yaklaşımıyla yazdık. API yazmanın başka yakl
 
 Bu deneyde aynı isteği, "42 numaralı kitabın adını ve yazarını getir", üç yaklaşımla yazan basit sunucu ve istemcileri yan yana koyuyoruz. Her bölümde önce kodlara, sonra altlarındaki açıklamalara bak.
 
-> **Not:** Bu deneydeki kodlar basit örneklerdir; derste çalıştırmıyoruz. Gerçek SOAP ve GraphQL sunucuları genellikle bu iş için yazılmış hazır paketlerle kurulur. GraphQL sunucusu, FastAPI belgelerinde önerilen **Strawberry** paketini kullanıyor; bu paket derste kurulu değil. Kitap bulunamazsa ne olacağını, kodlar kısa kalsın diye yazmadık.
+Her yaklaşımın sunucusunu iki hâliyle göstereceğiz. Önce **kapalı** hâli: Mesajı okuma ve yanıtı yazma işini hazır bir paket yapar (7.1). Sonra **açık** hâli: Aynı işi paketsiz, kendimiz yaparız (7.2). Böylece kodun uzunluğunun yaklaşımdan değil, işin ne kadarını paketin yaptığından geldiğini görürüz.
+
+> **Not:** Bu deneydeki kodlar basit örneklerdir; derste çalıştırmıyoruz. REST için FastAPI'yi zaten kullanıyoruz; SOAP için `spyne`, GraphQL için FastAPI belgelerinde önerilen **Strawberry** paketi derste kurulu değil. Açık sunucular yalnızca bu örnekteki isteği anlar. Kitap bulunamazsa ne olacağını, kodlar kısa kalsın diye yazmadık.
 
 **Adlar bilerek aynı seçildi.** Üç örnekte de yol `/books`, alanlar `id`, `title` ve `author`. Böylece gördüğün her fark yaklaşımdan gelir, adlardan gelmez. Gerçek uygulamalarda SOAP ve GraphQL'in tek yoluna genellikle `/BookService` ya da `/graphql` gibi adlar verilir.
 
-### 7.1 Sunucu
+### 7.1 Sunucu: kapalı hâli, hazır paketle
+
+Mesajı okuma ve yanıtı yazma işini hazır bir paket yapıyor; biz yalnızca kitabı bulan fonksiyonu ve verinin biçimini yazıyoruz.
 
 <table>
 <tr>
-<th>REST: <code>rest_server.py</code></th>
-<th>SOAP: <code>soap_server.py</code></th>
-<th>GraphQL: <code>graphql_server.py</code></th>
+<th>REST: FastAPI ile</th>
+<th>SOAP: <code>spyne</code> ile</th>
+<th>GraphQL: Strawberry ile</th>
 </tr>
 <tr>
 <td valign="top">
@@ -952,47 +956,53 @@ def get_book(book_id: int):
 <td valign="top">
 
 ```python
-import xml.etree.ElementTree as ET
+from wsgiref.simple_server import make_server
 
-from fastapi import Body, FastAPI, Response
+from spyne import Application, ComplexModel, Integer, ServiceBase, Unicode, rpc
+from spyne.protocol.soap import Soap11
+from spyne.server.wsgi import WsgiApplication
 
-app = FastAPI()
+
+class Author(ComplexModel):
+    first_name = Unicode
+    last_name = Unicode
+
+
+class Book(ComplexModel):
+    id = Integer
+    title = Unicode
+    author = Author
+
 
 books = [
-    {
-        "id": 42,
-        "title": "API Yolculuğu",
-        "author": {
-            "first_name": "Deniz",
-            "last_name": "Kaya"
-        }
-    }
+    Book(
+        id=42,
+        title="API Yolculuğu",
+        author=Author(
+            first_name="Deniz",
+            last_name="Kaya"
+        )
+    )
 ]
 
 
-@app.post("/books")
-def book_service(request_xml: bytes = Body()):
-    envelope = ET.fromstring(request_xml)
-    book_id = int(envelope.find(".//GetBook/id").text)
+class BookService(ServiceBase):
+    @rpc(Integer, _returns=Book)
+    def GetBook(ctx, id):
+        for book in books:
+            if book.id == id:
+                return book
 
-    for book in books:
-        if book["id"] == book_id:
-            response_xml = f"""<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <GetBookResponse>
-      <book>
-        <id>{book["id"]}</id>
-        <title>{book["title"]}</title>
-        <author>
-          <first_name>{book["author"]["first_name"]}</first_name>
-          <last_name>{book["author"]["last_name"]}</last_name>
-        </author>
-      </book>
-    </GetBookResponse>
-  </soap:Body>
-</soap:Envelope>"""
-            return Response(content=response_xml, media_type="text/xml")
+
+application = Application(
+    [BookService],
+    tns="books",
+    in_protocol=Soap11(),
+    out_protocol=Soap11()
+)
+
+server = make_server("127.0.0.1", 8000, WsgiApplication(application))
+server.serve_forever()
 ```
 
 </td>
@@ -1054,23 +1064,177 @@ app.include_router(GraphQLRouter(schema), prefix="/books")
 <tr>
 <td valign="top">
 
-Her işlemin kendi fonksiyonu var. İstek gelince FastAPI, HTTP metoduna ve yola bakıyor (`GET` + `/books/42`) ve `get_book` fonksiyonunu çağırıyor. Yoldaki `42`'yi `book_id` parametresine de kendisi koyuyor. Fonksiyon kitabı döndürüyor, FastAPI onu JSON'a çeviriyor.
+Yolu okumayı, `42`'yi `book_id` parametresine koymayı ve sözlüğü JSON'a çevirmeyi FastAPI yapıyor. Biz yalnızca kitabı bulan `get_book` fonksiyonunu yazıyoruz.
 
 </td>
 <td valign="top">
 
-Bütün istekler aynı yola (`/books`) geldiği için tek bir fonksiyon (`book_service`) hepsini karşılıyor. Hangi işin istendiğini ve kitabın kimliğini, gövdedeki XML'i okuyarak fonksiyon kendisi buluyor. Yanıtın XML'ini de kendimiz yazıyoruz.
+XML'i okumayı ve yazmayı `spyne` paketi yapıyor. Biz kitabın biçimini (`Author`, `Book`) ve `GetBook` işlemini yazıyoruz. `@rpc(Integer, _returns=Book)`, spyne'ın dekoratörü: işlemin bir tam sayı alıp bir `Book` döndürdüğünü söyler. Bu sunucu FastAPI ile değil, Python'un kendi küçük sunucusuyla (`wsgiref`) çalışır; `python soap_server.py` ile başlatılır.
 
 </td>
 <td valign="top">
 
-Yol yine tek. Gövdede gelen **GraphQL sorgusunu**, yani istemcinin ne istediğini tarif ettiği metni, Strawberry paketi çözüyor. Biz iki şey yazıyoruz: **şema**, yani sunucuda hangi verilerin ve alanların bulunduğunu söyleyen tanım (`Author`, `Book`); ve sorguda `book` yazılınca çalışacak fonksiyon. Yanıtı paket hazırlıyor.
+Gövdedeki **GraphQL sorgusunu**, yani istemcinin ne istediğini tarif ettiği metni, Strawberry çözüyor ve istenen alanları seçiyor. Biz **şemayı**, yani sunucuda hangi verilerin ve alanların bulunduğunu söyleyen tanımı (`Author`, `Book`), bir de sorguda `book` yazılınca çalışacak fonksiyonu yazıyoruz.
 
 </td>
 </tr>
 </table>
 
-### 7.2 İstemci
+Kitabı bulan fonksiyon üçünde de kısa ve aynı: bir `for` döngüsüyle kitabı bulup döndürüyor. SOAP ve GraphQL dosyalarının geri kalanı, paketin istediği tanımlardan oluşuyor: verinin biçimi (`Author`, `Book`) ve paketi başlatan satırlar. Mesajı okuyan ve yazan kod hiçbirinde yok; onu paket yapıyor.
+
+### 7.2 Sunucu: açık hâli, paketsiz
+
+Aynı sunucular, paketin yaptığı işi kendimiz yapınca böyle görünür.
+
+<table>
+<tr>
+<th>REST</th>
+<th>SOAP</th>
+<th>GraphQL</th>
+</tr>
+<tr>
+<td valign="top">
+
+```python
+import json
+
+from fastapi import FastAPI, Request, Response
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        }
+    }
+]
+
+
+@app.api_route("/{path:path}", methods=["GET", "POST"])
+def handle_request(path: str, request: Request):
+    method = request.method
+    parts = path.split("/")
+
+    if method == "GET" and len(parts) == 2 and parts[0] == "books":
+        book_id = int(parts[1])
+        for book in books:
+            if book["id"] == book_id:
+                response_json = json.dumps(book, ensure_ascii=False)
+                return Response(content=response_json, media_type="application/json")
+
+    return Response(status_code=404)
+```
+
+</td>
+<td valign="top">
+
+```python
+import xml.etree.ElementTree as ET
+
+from fastapi import Body, FastAPI, Response
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        }
+    }
+]
+
+
+@app.post("/books")
+def book_service(request_xml: bytes = Body()):
+    envelope = ET.fromstring(request_xml)
+    book_id = int(envelope.find(".//GetBook/id").text)
+
+    for book in books:
+        if book["id"] == book_id:
+            response_xml = f"""<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetBookResponse>
+      <book>
+        <id>{book["id"]}</id>
+        <title>{book["title"]}</title>
+        <author>
+          <first_name>{book["author"]["first_name"]}</first_name>
+          <last_name>{book["author"]["last_name"]}</last_name>
+        </author>
+      </book>
+    </GetBookResponse>
+  </soap:Body>
+</soap:Envelope>"""
+            return Response(content=response_xml, media_type="text/xml")
+```
+
+</td>
+<td valign="top">
+
+```python
+from fastapi import Body, FastAPI
+
+app = FastAPI()
+
+books = [
+    {
+        "id": 42,
+        "title": "API Yolculuğu",
+        "author": {
+            "first_name": "Deniz",
+            "last_name": "Kaya"
+        }
+    }
+]
+
+
+@app.post("/books")
+def graphql_service(request_data: dict = Body()):
+    query = request_data["query"]
+    book_id = int(query.split("id:")[1].split(")")[0])
+    fields_text = query.split(")")[1]
+
+    for book in books:
+        if book["id"] == book_id:
+            selected = {}
+            for field in ["id", "title", "author"]:
+                if field in fields_text:
+                    selected[field] = book[field]
+            return {"data": {"book": selected}}
+```
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+Her isteği tek bir fonksiyon karşılıyor. HTTP metodunu (`request.method`) ve yolu (`path.split("/")`) biz okuyoruz, kimliği biz sayıya çeviriyoruz, JSON'u `json.dumps` ile biz yazıyoruz.
+
+</td>
+<td valign="top">
+
+Bütün istekler aynı yola (`/books`) geldiği için tek bir fonksiyon (`book_service`) hepsini karşılıyor. Hangi işin istendiğini ve kitabın kimliğini, gövdedeki XML'i okuyarak biz buluyoruz. Yanıtın XML'ini de biz yazıyoruz.
+
+</td>
+<td valign="top">
+
+Gövdedeki sorgu metnini biz okuyoruz: kimliği `id:` yazısından sonrasından, istenen alanları parantezden sonrasından çıkarıyoruz. Bu kod yalnızca bu örnekteki sorgu biçimini anlar; gerçek bir GraphQL sorgusunu çözmek için Strawberry gibi bir paket gerekir.
+
+</td>
+</tr>
+</table>
+
+Açık hâllerde üç sunucu da aynı işi yapıyor: mesajı okuyor, kitabı buluyor, yanıtı yazıyor. Fark, bilginin mesajın neresinden okunduğunda: REST istek satırından (HTTP metodu ve yol), SOAP ve GraphQL gövdeden. SOAP kodunun daha uzun olması, XML'in JSON'dan uzun yazılmasındandır.
+
+### 7.3 İstemci
 
 <table>
 <tr>
@@ -1174,9 +1338,9 @@ API Yolculuğu
 Deniz
 ```
 
-### 7.3 Sunucuya giden istek
+### 7.4 Sunucuya giden istek
 
-Kodların gönderdiği HTTP mesajları. Kısalık için yalnızca `Host` başlığını ve gövdeyle ilgili başlıkları gösteriyoruz.
+İstemcilerin gönderdiği HTTP mesajları. Kısalık için yalnızca `Host` başlığını ve gövdeyle ilgili başlıkları gösteriyoruz. Mesajlar 7.2'deki açık sunucuların anladığı biçimde; hazır paketler XML'e ya da JSON'a kendi eklemelerini yapabilir, bu yüzden 7.1'deki sunucularda ayrıntılar biraz farklı olabilir.
 
 <table>
 <tr>
@@ -1243,7 +1407,7 @@ Content-Type: application/json
 </tr>
 </table>
 
-### 7.4 Gelen yanıtın gövdesi
+### 7.5 Gelen yanıtın gövdesi
 
 Okunması kolay olsun diye JSON yanıtları satırlara bölünmüş olarak gösteriyoruz.
 
@@ -1328,7 +1492,7 @@ Alanları istemci seçiyor: Sorguda yalnızca `title` ve `author` vardı, sunucu
 
 Mesajların satır satır açıklaması ve üç yaklaşımın hataları nasıl bildirdiği [ek notta](03_Supplement_SOAP_GraphQL.md).
 
-> **Ana fikir:** REST, SOAP ve GraphQL aynı HTTP mesajını kullanır; fark, "ne istiyorum?" bilgisinin mesajın neresine yazıldığındadır. REST bunu HTTP metoduna ve yola, SOAP gövdedeki XML'e, GraphQL gövdedeki sorgu metnine yazar. Bu derste REST yaklaşımıyla devam ediyoruz.
+> **Ana fikir:** REST, SOAP ve GraphQL aynı HTTP mesajını kullanır; fark, "ne istiyorum?" bilgisinin mesajın neresine yazıldığındadır. REST bunu HTTP metoduna ve yola, SOAP gövdedeki XML'e, GraphQL gövdedeki sorgu metnine yazar. Kodun kısa ya da uzun olması ise yaklaşımdan değil, işin ne kadarını hazır paketin yaptığından gelir. Bu derste REST yaklaşımıyla devam ediyoruz.
 
 ---
 
