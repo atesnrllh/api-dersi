@@ -453,6 +453,16 @@ Denemeden sonra `bad_get_server.py` sunucusunu durdur ve kendi sunucunu yeniden 
 
 **Amaç:** Hafta 1 ve 2'de öğrendiğimiz okuma ve ekleme işlemlerini **yeni bir kaynak** için yazmak: kitapların yorumları.
 
+Şimdiye kadar API'mizde tek tür kaynak vardı: kitaplar. Gerçek API'lerde kaynaklar çoğu zaman birbirine bağlıdır: bir kitabın yorumları, bir müşterinin siparişleri gibi. Bu deneyde kataloğumuza okuyucuların kitaplara yazdığı yorumları ekleyeceğiz.
+
+Bu deneyde üç şey göreceğiz:
+
+1. Kitaplar için kullandığımız kalıp (listele, ekle) yeni bir kaynakta da aynen işler.
+2. Bir kaynak başka bir kaynağa aitse, bu ilişki yolda gösterilebilir: `/books/42/reviews`.
+3. Bir fonksiyon bilgiyi aynı anda iki yerden alabilir: kitabın kimliğini yoldan, yorumun bilgilerini istek gövdesinden.
+
+Önce yolları seçeceğiz (5.1), sonra sunucuya yorumları ekleyip (5.2–5.4) istemciyle deneyeceğiz (5.5).
+
 ### 5.1 Yorumlar için yollar
 
 Her yorum bir kitaba aittir. Bu ilişkiyi yolda da gösteririz: Bir kitabın yorumları, o kitabın yolunun altında durur.
