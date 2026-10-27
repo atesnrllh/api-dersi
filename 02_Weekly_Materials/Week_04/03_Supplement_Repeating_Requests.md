@@ -118,8 +118,8 @@ Bir isteği birkaç kez göndermek, sunucudaki veriyi bir kez göndermekle aynı
 
 Tablodaki iki soru farklı şeyleri soruyor:
 
-- **İlk gönderimde veriyi değiştirir mi?** HTTP metodunun işi veriyi değiştirmek mi? Örneğin `GET` yalnızca okur, `DELETE` siler.
-- **İdempotent mi?** Aynı istek tekrar gönderilince veri aynı mı kalır? "Evet", ikinci gönderimin veriyi bir kez daha değiştirmediği demektir. 1. bölümdeki tablonun son sütunu bu soruyu soruyordu.
+- **İlk gönderimde veriyi değiştirir mi?** İstek bir kez gönderildiğinde sunucudaki kitaplarda bir şey değişiyor mu? 1. bölümde `GET /books/42` kitabı yalnızca okudu, kitaplarda hiçbir şey değişmedi: **Hayır.** `DELETE /books/57` ise kitabı listeden çıkardı: **Evet.**
+- **İdempotent mi?** Aynı istek ikinci kez gönderildiğinde kitaplar, ilk gönderimden sonraki hâliyle mi kalıyor? `DELETE /books/57` ikinci kez gönderilince kitap zaten yoktu, hiçbir şey değişmedi: **Evet.** `POST /books` ikinci kez gönderilince bir kitap daha eklendi: **Hayır.**
 
 | HTTP metodu | İlk gönderimde veriyi değiştirir mi? | İdempotent mi? |
 |---|---|---|
