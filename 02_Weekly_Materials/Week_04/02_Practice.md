@@ -453,9 +453,9 @@ class BookPublic(BaseModel):
     id: int
 ```
 
-Adındaki `Public`, bu modelin kitabın **istemciye gösterilen** hâli olduğunu söyler. Ad, `BookCreate` ve `BookUpdate` ile aynı düzende; ayrıca `books` listesi ve döngüdeki `book` değişkeniyle de karışmaz.
-
 İlk beş alan `BookCreate` modelinden geliyor, son alan bizim eklediğimiz. İki yazılış da aynı modeli tanımlar; kısa yazılışı seçiyoruz, çünkü `BookCreate` modeline ileride bir alan eklersek `BookPublic` modeli de onu kendiliğinden alır.
+
+Adındaki `Public`, bu modelin kitabın **istemciye gösterilen** hâli olduğunu söyler. Ad, `BookCreate` ve `BookUpdate` ile aynı düzende; ayrıca `books` listesi ve döngüdeki `book` değişkeniyle de karışmaz.
 
 `internal_note` bu modelde yok. 4.3'te yanıtı bu modele göre hazırlattığımızda, not bu yüzden yanıta girmeyecek.
 
@@ -495,15 +495,6 @@ Yani fonksiyon ne döndürürse döndürsün, istemciye ne gideceğine dekoratö
 | `@app.post("/books", status_code=201)` | `@app.post("/books", status_code=201, response_model=BookPublic)` |
 | `@app.put("/books/{book_id}")` | `@app.put("/books/{book_id}", response_model=BookPublic)` |
 | `@app.patch("/books/{book_id}")` | `@app.patch("/books/{book_id}", response_model=BookPublic)` |
-
-| Kod | Ne yapar? |
-|---|---|
-| `response_model=BookPublic` | FastAPI'ye şunu bildirir: "Fonksiyon ne döndürürse döndürsün, yanıtın gövdesine yalnızca `BookPublic` modelindeki alanları koy." Modelde olmayan alanlar yanıta girmez. |
-| `response_model=list[BookPublic]` | Kitap listesi için: Listedeki her kitap `BookPublic` modeline göre süzülür. |
-
-`internal_note` sunucudaki `books` listesinde durmaya devam ediyor; yalnızca yanıta girmiyor.
-
-`delete_book` fonksiyonuna yanıt modeli eklemiyoruz, çünkü `204` yanıtının gövdesi yok.
 
 ### 4.4 Tekrar dene
 
