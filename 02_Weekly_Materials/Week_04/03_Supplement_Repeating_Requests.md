@@ -114,20 +114,20 @@ Bu notta önemli olan ikinci soru. Beş istekten yalnızca `POST`, ikinci gönde
 
 ## 2. HTTP standardı ne söylüyor?
 
-Bir isteği birkaç kez göndermek, sunucudaki veriyi bir kez göndermekle aynı hâlde bırakıyorsa, HTTP standardı bu isteğe **idempotent** der. Türkçede yerleşmiş bir karşılığı yok; "tekrarlanınca sonucu değişmeyen" diye düşünebilirsin.
+1. bölümde her istek iki kez **aynen** gönderildi. Değişen tek şey, isteğin sunucuya geldiği andaki kitabın hâliydi:
 
-Tablodaki iki soru farklı şeyleri soruyor:
+- **İlk gönderimde** kitap henüz eski hâlindeydi. `PUT` ve `PATCH` onu gönderilen hâle getirdi, `DELETE` onu sildi; yani kitap değişti.
+- **İkinci gönderimde** kitap zaten o hâldeydi. Aynı istek, aynı hâli bir daha yazdı ya da zaten silinmiş kitabı bulamadı; yani kitap değişmedi.
 
-- **İlk gönderimde veriyi değiştirir mi?** İstek bir kez gönderildiğinde sunucudaki kitaplarda bir şey değişiyor mu? 1. bölümde `GET /books/42` kitabı yalnızca okudu, kitaplarda hiçbir şey değişmedi: **Hayır.** `DELETE /books/57` ise kitabı listeden çıkardı: **Evet.**
-- **İdempotent mi?** Aynı istek ikinci kez gönderildiğinde kitaplar, ilk gönderimden sonraki hâliyle mi kalıyor? `DELETE /books/57` ikinci kez gönderilince kitap zaten yoktu, hiçbir şey değişmedi: **Evet.** `POST /books` ikinci kez gönderilince bir kitap daha eklendi: **Hayır.**
+| HTTP metodu | İlk gönderimde ne oldu? | İkinci gönderimde ne oldu? | İdempotent mi? |
+|---|---|---|---|
+| `GET` | 42 numaralı kitap okundu; kitaplarda bir şey değişmedi. | Yine okundu; bir şey değişmedi. | Evet |
+| `PUT` | 73 numaralı kitabın etiketleri `python`, `api` iken `python`, `api`, `fastapi` oldu. | Etiketler zaten `python`, `api`, `fastapi` idi; bir şey değişmedi. | Evet |
+| `PATCH` | 42 numaralı kitabın `available` alanı `True` iken `False` oldu. | `available` zaten `False` idi; bir şey değişmedi. | Garanti edilmez (aşağıda) |
+| `DELETE` | 57 numaralı kitap silindi. | Kitap zaten yoktu; bir şey değişmedi. | Evet |
+| `POST` | Yeni kitap `74` kimliğiyle eklendi. | Aynı kitap `75` kimliğiyle bir daha eklendi. | **Hayır** |
 
-| HTTP metodu | İlk gönderimde veriyi değiştirir mi? | İdempotent mi? |
-|---|---|---|
-| `GET` | Hayır (Hafta 3, Deney 4: güvenli) | Evet |
-| `PUT` | Evet | Evet: Aynı kitabı iki kez göndermek, bir kez göndermekle aynı sonucu bırakır. |
-| `DELETE` | Evet | Evet: Silinmiş kitap ikinci istekte de silinmiş kalır. |
-| `POST` | Evet | **Hayır:** Her istek yeni bir kayıt oluşturabilir. |
-| `PATCH` | Evet | **Garanti edilmez.** |
+Aynı isteği birkaç kez göndermek, sunucudaki veriyi bir kez göndermekle aynı hâlde bırakıyorsa, HTTP standardı bu isteğe **idempotent** der. Türkçede yerleşmiş bir karşılığı yok; "tekrarlanınca sonucu değişmeyen" diye düşünebilirsin. Tablodaki `PUT` ve `DELETE` satırları buna örnek: İlk gönderim kitabı değiştirdi, sonrakiler hiçbir şey değiştirmedi. `POST` ise her gönderimde yeni bir kitap ekledi.
 
 `PATCH` 1. bölümdeki denemede tekrarlanınca bir şey değiştirmedi, çünkü `available` alanına aynı değeri yazdı. Ama bir `PATCH` isteği "stok sayısını bir artır" gibi bir iş de yapabilir; o zaman her tekrar veriyi yeniden değiştirir. Standart bu yüzden `PATCH` için bir şey garanti etmez; bu, API'yi yazan kişinin isteği nasıl tasarladığına bağlıdır.
 
