@@ -577,7 +577,14 @@ PowerShell kullanıyorsan Hafta 2 föyündeki 7.2.4 bölümüne bak: `curl.exe` 
 
 ### 5.2 `README.md` belgesine yeni işlemleri eklemek
 
-Hafta 3'te yazdığın `README.md` belgesinin işlemler tablosuna şu üç satırı ekle:
+Hafta 3'te yazdığın `README.md` belgesinde iki bölüm var: `## İşlemler` ve `## Örnekler`. Yeni bir ana başlık açmıyoruz; eklenecekler bu iki bölüme giriyor:
+
+| README'deki bölüm | Ne eklenecek? |
+|---|---|
+| `## İşlemler` | Bölümdeki tabloya aşağıdaki üç satır. |
+| `## Örnekler` | Her işlem için bir alt başlık; altına komut, durum kodu, yanıt ve hata durumları. |
+
+**1. `## İşlemler` tablosuna** şu üç satırı ekle:
 
 ```markdown
 | `PUT` | `/books/{book_id}` | Kitabın bütün bilgilerini gönderilenlerle değiştirir. |
@@ -585,7 +592,15 @@ Hafta 3'te yazdığın `README.md` belgesinin işlemler tablosuna şu üç satı
 | `DELETE` | `/books/{book_id}` | Kitabı siler. Yanıt `204 No Content` olur. |
 ```
 
-Sonra her biri için 5.1'deki komutu ve yanıtı, Hafta 3'teki örnekler gibi belgeye ekle. Hata durumlarını da yaz: Kitap yoksa üçünde de `404`; `PUT` isteğinde zorunlu bir alan eksikse `422`.
+**2. `## Örnekler` bölümüne** şu üç alt başlığı ekle. Adlar föydeki deney başlıklarıyla aynı; böylece aynı iş föyde ve belgede aynı adla geçer.
+
+```markdown
+### Kitabı tümüyle değiştirmek
+### Kitabın bir kısmını değiştirmek
+### Kitabı silmek
+```
+
+Her alt başlığın altına, Hafta 3'teki örnekler gibi, 5.1'deki komutu, durum kodunu ve yanıtı koy. Hata durumlarını da yaz: Kitap yoksa üçünde de `404`; `PUT` isteğinde zorunlu bir alan eksikse `422`.
 
 ### 5.3 Kendin yaz: bir yorumu silmek
 
