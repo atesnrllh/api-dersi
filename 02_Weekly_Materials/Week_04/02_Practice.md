@@ -436,7 +436,36 @@ class Book(BookCreate):
     id: int
 ```
 
-`class Book(BookCreate)` yazımı, `Book` modelinin `BookCreate` modelindeki bütün alanları aldığını söyler: `title`, `author`, `available`, `tags` ve `rating`. Altına yazılan `id: int` de bunlara kimliği ekler. Yani `Book`, istemcinin görmesi gereken kitap bilgilerinin tamamıdır. `internal_note` bu modelde yok.
+Bu iki satır şunu söylüyor:
+
+- **`class Book(BookCreate)`:** `Book` modeli, `BookCreate` modelindeki bütün alanları alır. Bu alanları yeniden yazmamıza gerek kalmaz.
+- **`id: int`:** O alanlara bir alan daha ekler: kitabın kimliği.
+
+Yani bu iki satır, aşağıdaki modelin kısa yazılışıdır:
+
+```python
+class Book(BaseModel):
+    title: str
+    author: Author
+    available: bool
+    tags: list[str]
+    rating: float | None = None
+    id: int
+```
+
+İlk beş alan `BookCreate` modelinden geliyor, son alan bizim eklediğimiz. İki yazılış da aynı modeli tanımlar; kısa yazılışı seçiyoruz, çünkü `BookCreate` modeline ileride bir alan eklersek `Book` modeli de onu kendiliğinden alır.
+
+`internal_note` bu modelde yok. 4.3'te yanıtı bu modele göre hazırlattığımızda, not bu yüzden yanıta girmeyecek.
+
+**Neden ayrı bir model?** `BookCreate` modelinde `id` yok, çünkü kitabı ekleyen istemci kimliği göndermiyor; kimliği sunucu veriyor (Hafta 2). Yanıttaki kitabın ise kimliği de görünmeli. Sunucumuzda artık her biri başka bir iş için kullanılan üç kitap modeli var:
+
+| Model | Nerede kullanılıyor? | Alanlar |
+|---|---|---|
+| `BookCreate` | İstekte: `POST` ile kitap eklerken ve `PUT` ile kitabı tümüyle değiştirirken | Kitabın bilgileri, `id` yok. `title`, `author`, `available` ve `tags` zorunlu. |
+| `BookUpdate` | İstekte: `PATCH` ile kitabın bir kısmını değiştirirken (Deney 3) | Aynı alanlar, ama hepsi isteğe bağlı. `id` yok. |
+| `Book` | Yanıtta: sunucu kitabı döndürürken | `BookCreate` modelinin bütün alanları ve `id`. |
+
+İlk iki model istemcinin **gönderdiğini**, üçüncüsü sunucunun **döndürdüğünü** tarif ediyor.
 
 ### 4.3 İşlemlere yanıt modelini ekle
 

@@ -7,84 +7,19 @@ changes = book_data.model_dump(exclude_unset=True)
 book.update(changes)
 ```
 
+`exclude_unset=True`, `changes` sözlüğüne yalnızca istemcinin gövdede **gönderdiği** alanları koyar; gönderilmeyen alanları koymaz. Gövdede `null` değeriyle gönderilen bir alan ise gönderilmiş sayılır ve sözlüğe girer.
+
 Bu notta üç soruyu cevaplıyoruz:
 
-1. `exclude_unset=True` tam olarak ne yapıyor?
-2. Bir alanı **hiç göndermemek** ile **`null` göndermek** arasında ne fark var?
-3. Bu satır yanlış yazılırsa ya da istemci beklenmedik bir değer gönderirse ne olur?
+1. Bir alanı **hiç göndermemek** ile **`null` göndermek** sunucuda ne fark yaratıyor?
+2. `exclude_unset=True` yazılmasaydı ne olurdu?
+3. İstemci zorunlu bir alana `null` gönderirse ne olur?
 
 ---
 
-## 1. `exclude_unset=True` ne yapıyor?
+## 1. Gönderilmeyen alan ile `null` gönderilen alan
 
-Bunu görmek için sunucuya gerek yok; modeli doğrudan Python'da oluşturabiliriz. Proje klasöründe `model_dump_demo.py` adlı ayrı bir dosya oluştur:
-
-```python
-from pydantic import BaseModel
-
-
-class Author(BaseModel):
-    first_name: str
-    last_name: str
-
-
-class BookUpdate(BaseModel):
-    title: str | None = None
-    author: Author | None = None
-    available: bool | None = None
-    tags: list[str] | None = None
-    rating: float | None = None
-
-
-# Gövde {"available": false} gibi: yalnızca available gönderildi.
-only_available = BookUpdate(available=False)
-
-# Gövde {"rating": null} gibi: rating gönderildi, değeri null.
-rating_null = BookUpdate(rating=None)
-
-print("only_available, model_dump():")
-print(only_available.model_dump())
-print("only_available, model_dump(exclude_unset=True):")
-print(only_available.model_dump(exclude_unset=True))
-print("rating_null, model_dump(exclude_unset=True):")
-print(rating_null.model_dump(exclude_unset=True))
-```
-
-`BookUpdate(available=False)` yazmak, FastAPI'nin `{"available": false}` gövdesinden oluşturduğu modelin aynısını oluşturur. Föyde bu işi FastAPI yapıyordu; burada kendimiz yapıyoruz.
-
-Dosyayı çalıştır:
-
-```bash
-python model_dump_demo.py
-```
-
-```text
-only_available, model_dump():
-{'title': None, 'author': None, 'available': False, 'tags': None, 'rating': None}
-only_available, model_dump(exclude_unset=True):
-{'available': False}
-rating_null, model_dump(exclude_unset=True):
-{'rating': None}
-```
-
-| Çıktı | Ne gösteriyor? |
-|---|---|
-| `model_dump()` | Modeldeki **bütün** alanları sözlüğe koyar. Gönderilmeyen alanlar da varsayılan değerleriyle, yani `None` olarak gelir. |
-| `model_dump(exclude_unset=True)` | Yalnızca **gönderilen** alanları sözlüğe koyar. Yalnızca `available` gönderildiği için sözlükte yalnızca o var. |
-| `rating_null` ile `exclude_unset=True` | `rating` gönderildi, değeri `None`. Gönderildiği için sözlüğe girdi. |
-
-Buradaki önemli nokta şu: `only_available` modelinde de `rating` alanının değeri `None`; `rating_null` modelinde de. Değerleri aynı. Ama Pydantic, alanın gönderilip gönderilmediğini ayrıca hatırlıyor. `exclude_unset=True` da bu bilgiye bakıyor:
-
-| | `rating` alanının değeri | `rating` gönderildi mi? | `exclude_unset=True` sözlüğünde `rating` var mı? |
-|---|---|---|---|
-| `{"available": false}` | `None` | Hayır | Yok |
-| `{"rating": null}` | `None` | Evet | Var: `'rating': None` |
-
----
-
-## 2. Sunucuda ne oluyor?
-
-Aynı farkı şimdi sunucuda görelim. Föyün Deney 4 sonundaki sunucuyu kullanıyoruz. 73 numaralı kitabın başlangıçtaki puanı `4.5`.
+Föyün Deney 4 sonundaki sunucuyu kullanıyoruz. 73 numaralı kitabın başlangıçtaki puanı `4.5`.
 
 `client.py` dosyasının içeriğini şununla değiştir:
 
@@ -135,7 +70,7 @@ Yani istemci için kural şu:
 
 ---
 
-## 3. `exclude_unset=True` yazılmasaydı
+## 2. `exclude_unset=True` yazılmasaydı
 
 `update_book` fonksiyonunda o satırı şöyle değiştirdiğimizi düşünelim:
 
@@ -156,17 +91,24 @@ curl -X PATCH http://127.0.0.1:8000/books/42 -H "Content-Type: application/json"
 Ne oldu, adım adım:
 
 1. Gövdede yalnızca `available` vardı.
-2. `model_dump()` bütün alanları sözlüğe koydu: `available` için `False`, gönderilmeyen öteki alanlar için `None` (1. bölümdeki ilk çıktı).
+2. `model_dump()` modeldeki bütün alanları sözlüğe koydu: `available` için `False`, gönderilmeyen öteki alanlar için varsayılan değerleri, yani `None`.
 3. `book.update(changes)` bu sözlükteki **her** alanı kitabın üzerine yazdı.
 4. Kitabın adı, yazarı ve etiketleri `None` oldu. Yalnızca ödünç durumunu değiştirmek istiyorduk; kitabın bilgilerinin çoğunu sildik.
 
-Aynı denemeyi **Deney 4 sonundaki** sunucuda, yani yanıt modeliyle yaparsan, bu kez yanıt `500` olur. Nedeni 4. bölümde.
+Aynı denemeyi **Deney 4 sonundaki** sunucuda, yani yanıt modeliyle yaparsan, bu kez yanıt `500` olur. Nedeni 3. bölümde.
 
 ---
 
-## 4. Zorunlu bir alana `null` göndermek
+## 3. Zorunlu bir alana `null` göndermek
 
-`BookUpdate` modelinde bütün alanlar `None` olabilir. Bu yüzden istemci `{"title": null}` da gönderebilir; model bunu kabul eder. Deney 4 sonundaki sunucuda denedik:
+Sunucumuzda kitabı iki ayrı model denetliyor:
+
+| Model | Ne zaman devreye giriyor? | `title` alanı `None` olabilir mi? |
+|---|---|---|
+| `BookUpdate` | İstek gelince, gövdeyi kontrol ederken (Deney 3) | **Evet.** PATCH'te her alan isteğe bağlı olsun diye `None` olabiliyor. |
+| `Book` | Yanıt hazırlanırken; dekoratördeki `response_model=Book` (Deney 4) | **Hayır.** Yanıttaki kitabın adı bir metin (`str`) olmak zorunda. |
+
+İki model `title` konusunda farklı şey söylüyor. İstemci `{"title": null}` gönderince bu fark sorun çıkarıyor. Deney 4 sonundaki sunucuda denedik:
 
 ```bash
 curl -i -X PATCH http://127.0.0.1:8000/books/42 -H "Content-Type: application/json" -d '{"title": null}'
@@ -178,15 +120,16 @@ HTTP/1.1 500 Internal Server Error
 Internal Server Error
 ```
 
-Ne oldu, adım adım:
+Sunucuda sırasıyla şunlar oldu:
 
-1. `BookUpdate` modeli `{"title": null}` gövdesini kabul etti, çünkü modelde `title` alanı `None` olabiliyor.
-2. `exclude_unset=True` sözlüğü `{'title': None}` oldu; `book.update` kitabın adını `None` yaptı.
-3. FastAPI yanıtı `Book` yanıt modeline göre hazırlamak istedi. Ama `Book` modelinde `title` bir metin (`str`) olmak zorunda.
-4. Yanıt hazırlanamadı ve sunucu `500` döndürdü.
+1. **İstek kabul edildi.** `BookUpdate` modeli `{"title": null}` gövdesine izin verdi.
+2. **Kitap değişti.** `changes` sözlüğü `{'title': None}` oldu; `book.update(changes)` listedeki kitabın adını `None` yaptı.
+3. **Yanıt hazırlanamadı.** FastAPI, değişen kitabı `Book` modeline göre yanıta koymak istedi. `title` alanında metin yerine `None` buldu ve yanıtı hazırlayamadı.
+4. **İstemciye `500` gitti.** **500 Internal Server Error**, "sunucuda bir hata oldu" demektir.
 
-Kitap da bozuk kaldı: Adı artık `None` olduğu için bundan sonra `GET /books/42` isteği de `500` alıyor.
+Burada iki sorun var:
 
-**500 Internal Server Error**, "sunucuda bir hata oldu" demektir. Sorunun istemcide değil sunucuda olduğunu söyler. Burada asıl sorun, sunucunun `null` değerli bir `title` alanını baştan kabul etmesi.
+- **İstemci yanlış bilgilendirildi.** Yanıt "hata oldu" diyor, ama kitap aslında değişti. İstemci isteğinin işe yarayıp yaramadığını yanıttan anlayamıyor.
+- **Kitap bozuk kaldı.** Adı artık `None` olduğu için bundan sonra bu kitabı döndüren her istek de `500` alıyor; örneğin `GET /books/42`.
 
-Bunu önlemek için `BookUpdate` modelinde "`title` gönderilmeyebilir, ama gönderilirse `null` olamaz" gibi kurallar yazmak gerekir. Böylece istek daha kitaba dokunmadan `422` ile reddedilir. Alanların kabul edeceği değerleri 5. haftada göreceğiz.
+Asıl hata, sunucunun `null` değerli bir `title` alanını baştan kabul etmesi. Doğrusu, böyle bir isteği **kitaba dokunmadan önce** `422` ile reddetmek: "`title` gönderilmeyebilir, ama gönderilirse `null` olamaz." Modellere bu tür kurallar yazmayı, yani alanların kabul edeceği değerleri, 5. haftada göreceğiz.
