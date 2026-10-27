@@ -37,7 +37,7 @@ Bir isteği birkaç kez göndermek, sunucudaki veriyi bir kez göndermekle aynı
 | `POST` | Evet | **Hayır:** Her istek yeni bir kayıt oluşturabilir. |
 | `PATCH` | Evet | **Garanti edilmez.** |
 
-`PATCH` bizim denememizde tekrarlanınca bir şey değiştirmedi, çünkü `available` alanına aynı değeri yazdı. Ama bir `PATCH` isteği "stok sayısını bir artır" gibi bir iş de yapabilir; o zaman her tekrar veriyi yeniden değiştirir. Standart bu yüzden `PATCH` için bir şey garanti etmez; bu, API'yi yazan kişinin isteği nasıl tasarladığına bağlıdır.
+`PATCH` 1. bölümdeki denemede tekrarlanınca bir şey değiştirmedi, çünkü `available` alanına aynı değeri yazdı. Ama bir `PATCH` isteği "stok sayısını bir artır" gibi bir iş de yapabilir; o zaman her tekrar veriyi yeniden değiştirir. Standart bu yüzden `PATCH` için bir şey garanti etmez; bu, API'yi yazan kişinin isteği nasıl tasarladığına bağlıdır.
 
 ---
 

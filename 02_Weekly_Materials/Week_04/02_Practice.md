@@ -4,9 +4,9 @@
 
 Bir veriyle yapılabilecek dört temel iş vardır: oluşturmak, okumak, güncellemek ve silmek. Bu dört işe İngilizce adlarının baş harfleriyle **CRUD** denir: *Create, Read, Update, Delete*. CRUD bir program ya da standart değildir; bu dört işin kısa adıdır.
 
-Bizim API'mizde bu dört iş şu isteklerle yapılır:
+Hafta 1'den beri yazdığımız kitap kataloğu API'sinde, yani `server.py` dosyasındaki sunucuda, bu dört iş şu isteklerle yapılır:
 
-| İş | İngilizcesi | HTTP metodu | Bizim API'mizde | Ne zaman yazdık? |
+| İş | İngilizcesi | HTTP metodu | Kitap kataloğu API'sinde | Ne zaman yazdık? |
 |---|---|---|---|---|
 | Oluşturmak | Create | `POST` | `POST /books` | Hafta 2 |
 | Okumak | Read | `GET` | `GET /books`, `GET /books/42` | Hafta 1 |
@@ -15,7 +15,7 @@ Bizim API'mizde bu dört iş şu isteklerle yapılır:
 
 HTTP metotlarının anlamı HTTP standardından gelir: `DELETE` "sil", `PUT` "bu yoldakini gönderdiğimle değiştir", `PATCH` "bu yoldakinin bir kısmını değiştir" demektir. CRUD'un dört işini bu metotlarla eşleştirmek ise REST API'lerinde yaygın bir alışkanlıktır.
 
-Bu hafta API'mize güncelleme ve silmeyi ekleyeceğiz:
+Bu hafta kitap kataloğu API'sine güncelleme ve silmeyi ekleyeceğiz:
 
 - **Deney 1:** Kitabı silmek (`DELETE`)
 - **Deney 2:** Kitabı tümüyle değiştirmek (`PUT`)
@@ -186,7 +186,7 @@ def replace_book(book_id: int, book_data: BookCreate):
 | `books[index] = new_book` | Listede eski kitabın yerine yenisini koyar. |
 | `return new_book` | Yanıtın gövdesinde kitabın yeni hâli gider. Durum kodu varsayılan `200`. |
 
-Bizim API'mizde olmayan bir kitaba `PUT` gönderilirse `404` döner. HTTP standardı, böyle bir istekle yeni bir kayıt oluşturulmasına da izin verir; biz bunu yapmıyoruz, çünkü kitap eklemek için `POST /books` var.
+`replace_book` fonksiyonu, olmayan bir kitaba `PUT` gönderilirse `404` döndürür. HTTP standardı, böyle bir istekle yeni bir kayıt oluşturulmasına da izin verir; biz bunu yapmıyoruz, çünkü kitap eklemek için `POST /books` var.
 
 ### 2.2 İstemciyle dene
 
@@ -365,7 +365,7 @@ Book 99: 404 {"detail":"Book not found"}
 | Gövdede ne gider? | Kitabın bütün bilgileri | Yalnızca değişecek alanlar |
 | Gönderilmeyen alana ne olur? | Zorunluysa `422`; varsayılan değeri varsa o değer yazılır | Eski değerini korur |
 | `{"available": false}` gövdesiyle | `422` | `200`, yalnızca `available` değişir |
-| Bizim sunucuda kullandığı model | `BookCreate` | `BookUpdate` |
+| `server.py` dosyasında kullandığı model | `BookCreate` | `BookUpdate` |
 | Ne zaman kullanılır? | Kaynağın tamamı yeniden gönderilecekse | Bir ya da birkaç alan değişecekse |
 
 > **Ana fikir:** `PATCH` isteği kaynağın yalnızca gövdede gönderilen alanlarını değiştirir. Bunun için sunucuda bütün alanları isteğe bağlı bir model ve yalnızca gönderilen alanları alan `exclude_unset=True` gerekir.
@@ -574,7 +574,7 @@ Kodunu yazıp denedikten sonra [ek nottaki cevapla](06_Supplement_Exercise_5_3_A
 
 ## 6. Kendini kontrol et: Bu haftanın altı sorusu
 
-1. CRUD'un dört işi bizim API'mizde hangi isteklerle yapılır?
+1. CRUD'un dört işi kitap kataloğu API'sinde hangi isteklerle yapılır?
 2. `DELETE` isteğinin yanıtı neden `204` ve gövdesi neden boş? Aynı isteği ikinci kez gönderince neden `404` gelir?
 3. 73 numaralı kitabı `PUT` ile `rating` göndermeden değiştirince puanı neden `None` oldu?
 4. `{"available": false}` gövdesi `PUT` ile `422`, `PATCH` ile `200` alıyor. Neden?

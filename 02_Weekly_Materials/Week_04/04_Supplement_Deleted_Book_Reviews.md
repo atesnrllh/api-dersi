@@ -28,13 +28,13 @@ Bir kitap silinince yorumlarına ne olacağı bir **tasarım kararıdır**. Yayg
 
 | Seçenek | Kitap silinince | Ne zaman uygun? |
 |---|---|---|
-| 1. Yorumlara dokunmamak | Yorumlar kalır, ama kitabı olmadığı için anlamsızlaşır. Bizim kodumuz şu an böyle. | Yorumların ayrıca saklanması gerekiyorsa; örneğin silinen kitapların yorumları sonra incelenecekse |
+| 1. Yorumlara dokunmamak | Yorumlar kalır, ama kitabı olmadığı için anlamsızlaşır. Föydeki `delete_book` fonksiyonu şu an böyle çalışıyor. | Yorumların ayrıca saklanması gerekiyorsa; örneğin silinen kitapların yorumları sonra incelenecekse |
 | 2. Yorumları da silmek | Kitapla birlikte yorumları da silinir. | Yorumlar kitap olmadan bir anlam taşımıyorsa |
 | 3. Silmeyi reddetmek | Yorumu olan kitap silinemez; sunucu `409 Conflict` döndürür. Önce yorumların silinmesi gerekir. | Bir şeyin yanlışlıkla silinmesi büyük sorunsa |
 
 `409` durum kodunu Hafta 2'nin [durum kodları notunda](../Week_02/07_Supplement_Status_Codes.md) "çakışma" olarak görmüştük.
 
-Bizim kitap kataloğumuzda 2. seçenek en mantıklısı: Kitabı olmayan bir yorumun okunmasının bir anlamı yok.
+Kitap kataloğu API'sinde 2. seçenek en mantıklısı: Kitabı olmayan bir yorumun okunmasının bir anlamı yok.
 
 ---
 
