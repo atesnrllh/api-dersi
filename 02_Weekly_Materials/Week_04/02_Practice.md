@@ -533,7 +533,11 @@ content-type: application/json
 
 ```
 
-Boş satırdan sonra hiçbir şey yok; yanıtın gövdesi boş.
+Bu çıktıda dikkat edilecek üç nokta:
+
+- **Boş satırdan sonra hiçbir şey yok.** `204 No Content` "işlem başarılı, gövde yok" demektir. curl başlıklardan sonra bir boş satır yazar ve durur; hemen ardından terminalin satır başı gelir.
+- **Gövde yok, ama `content-type: application/json` başlığı var.** Gövdenin biçimini söyleyen bu başlığı FastAPI kendiliğinden ekler. Gövde boş olduğu için bir etkisi yoktur; istemci okunacak bir şey bulamaz.
+- **Aynı komutu sunucuyu yeniden başlatmadan ikinci kez çalıştırırsan `404` gelir.** Kitap ilk istekte silindi; Deney 1'deki `Delete again: 404` satırı da bunu gösteriyordu.
 
 **Kitabı tümüyle değiştirmek:**
 
