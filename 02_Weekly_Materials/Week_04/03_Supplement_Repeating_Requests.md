@@ -116,7 +116,12 @@ Bu notta önemli olan ikinci soru. Beş istekten yalnızca `POST`, ikinci gönde
 
 Bir isteği birkaç kez göndermek, sunucudaki veriyi bir kez göndermekle aynı hâlde bırakıyorsa, HTTP standardı bu isteğe **idempotent** der. Türkçede yerleşmiş bir karşılığı yok; "tekrarlanınca sonucu değişmeyen" diye düşünebilirsin.
 
-| HTTP metodu | Veriyi değiştirir mi? | Standarda göre idempotent mi? |
+Tablodaki iki soru farklı şeyleri soruyor:
+
+- **İlk gönderimde veriyi değiştirir mi?** HTTP metodunun işi veriyi değiştirmek mi? Örneğin `GET` yalnızca okur, `DELETE` siler.
+- **İdempotent mi?** Aynı istek tekrar gönderilince veri aynı mı kalır? "Evet", ikinci gönderimin veriyi bir kez daha değiştirmediği demektir. 1. bölümdeki tablonun son sütunu bu soruyu soruyordu.
+
+| HTTP metodu | İlk gönderimde veriyi değiştirir mi? | İdempotent mi? |
 |---|---|---|
 | `GET` | Hayır (Hafta 3, Deney 4: güvenli) | Evet |
 | `PUT` | Evet | Evet: Aynı kitabı iki kez göndermek, bir kez göndermekle aynı sonucu bırakır. |
