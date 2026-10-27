@@ -6,22 +6,109 @@ Föyün Deney 1'inde aynı `DELETE` isteğini iki kez gönderdik. İlkinde `204`
 
 ## 1. Beş isteği ikişer kez göndermek
 
-Föyün Deney 4 sonundaki sunucuyu yeniden başlattık ve her isteği arka arkaya iki kez gönderdik:
+Yapacağımız şey şu: Beş HTTP metodunun her biriyle bir istek hazırlıyoruz ve **aynı isteği arka arkaya iki kez** gönderiyoruz. Her gönderimden sonra yanıtın durum koduna ve sunucudaki kitaplara bakıyoruz. Soru şu: İkinci gönderim, sunucudaki veriyi ilk gönderimden sonra bir kez daha değiştiriyor mu?
 
-| İstek | 1. gönderim | 2. gönderim | İkinci gönderim veriyi değiştirdi mi? |
-|---|---|---|---|
-| `GET /books/42` | `200` | `200` | Hayır. Kitap sayısı 3 kaldı. |
-| `POST /books` (aynı kitap) | `201`, kimlik `74` | `201`, kimlik `75` | **Evet.** Aynı kitap ikinci kez eklendi; kitap sayısı 4'ten 5'e çıktı. |
-| `PUT /books/73` (aynı gövde) | `200` | `200`, aynı yanıt | Hayır. Kitap zaten gönderilen hâldeydi. |
-| `PATCH /books/42` `{"available": false}` | `200` | `200`, aynı yanıt | Hayır. `available` zaten `false` idi. |
-| `DELETE /books/57` | `204` | `404` | Hayır. Kitap zaten silinmişti; kitap sayısı 4 kaldı. |
+Föyün Deney 4 sonundaki sunucuyu kullanıyoruz. Proje klasöründe `repeat_client.py` adlı ayrı bir dosya oluştur:
 
-Burada iki ayrı soruya bakıyoruz, karıştırmayalım:
+```python
+import httpx
 
-- **Yanıt aynı mı?** `DELETE` için hayır: önce `204`, sonra `404`.
-- **Sunucudaki veri aynı mı?** `DELETE` için evet: İki istekten sonra da kitap yok.
+base_url = "http://127.0.0.1:8000"
 
-Bu notta önemli olan ikinci soru.
+new_book = {
+    "title": "HTTP ile Yeni Bir Kitap",
+    "author": {
+        "first_name": "Ada",
+        "last_name": "Yıldız"
+    },
+    "available": True,
+    "tags": ["http", "python"],
+    "rating": None
+}
+
+new_version = {
+    "title": "Python ile Web API",
+    "author": {
+        "first_name": "Can",
+        "last_name": "Demir"
+    },
+    "available": True,
+    "tags": ["python", "api", "fastapi"]
+}
+
+
+def count_books():
+    return len(httpx.get(base_url + "/books").json())
+
+
+try:
+    print("Start:", count_books(), "books")
+
+    # GET: 42 numaralı kitabı iki kez oku.
+    for attempt in [1, 2]:
+        response = httpx.get(base_url + "/books/42")
+        print(f"GET    #{attempt}: {response.status_code}, books: {count_books()}")
+
+    # POST: aynı kitabı iki kez ekle.
+    for attempt in [1, 2]:
+        response = httpx.post(base_url + "/books", json=new_book)
+        print(f"POST   #{attempt}: {response.status_code}, new id: {response.json()['id']}, books: {count_books()}")
+
+    # PUT: 73 numaralı kitabı aynı gövdeyle iki kez değiştir.
+    for attempt in [1, 2]:
+        response = httpx.put(base_url + "/books/73", json=new_version)
+        print(f"PUT    #{attempt}: {response.status_code}, tags: {response.json()['tags']}")
+
+    # PATCH: 42 numaralı kitabı aynı gövdeyle iki kez değiştir.
+    for attempt in [1, 2]:
+        response = httpx.patch(base_url + "/books/42", json={"available": False})
+        print(f"PATCH  #{attempt}: {response.status_code}, available: {response.json()['available']}")
+
+    # DELETE: 57 numaralı kitabı iki kez sil.
+    for attempt in [1, 2]:
+        response = httpx.delete(base_url + "/books/57")
+        print(f"DELETE #{attempt}: {response.status_code}, books: {count_books()}")
+except httpx.ConnectError:
+    print("Connection failed: Check that the server is running.")
+```
+
+| Kod | Ne yapar? |
+|---|---|
+| `count_books()` | Kitap listesini isteyip kaç kitap olduğunu döndüren küçük bir yardımcı fonksiyon. Her gönderimden sonra kitap sayısına bakmak için. |
+| `for attempt in [1, 2]:` | İçindeki isteği iki kez gönderir. `attempt`, kaçıncı gönderim olduğunu tutar. |
+
+İstekler bu sırayla, aynı sunucuya gönderiliyor. Bu yüzden kitap sayısı bir istekten ötekine taşınıyor: POST'tan sonra 5 olan sayı, DELETE'ten sonra 4'e iniyor.
+
+Sunucuyu yeniden başlat ve istemciyi çalıştır:
+
+```text
+Start: 3 books
+GET    #1: 200, books: 3
+GET    #2: 200, books: 3
+POST   #1: 201, new id: 74, books: 4
+POST   #2: 201, new id: 75, books: 5
+PUT    #1: 200, tags: ['python', 'api', 'fastapi']
+PUT    #2: 200, tags: ['python', 'api', 'fastapi']
+PATCH  #1: 200, available: False
+PATCH  #2: 200, available: False
+DELETE #1: 204, books: 4
+DELETE #2: 404, books: 4
+```
+
+| İstek | Ne yapmak istiyor? | 1. gönderimde ne oldu? | 2. gönderimde ne oldu? | İkinci gönderim veriyi değiştirdi mi? |
+|---|---|---|---|---|
+| `GET /books/42` | 42 numaralı kitabı okumak | `200`; kitap okundu, kitap sayısı 3 | `200`; aynı kitap yine okundu, kitap sayısı 3 | **Hayır.** Okumak veriyi değiştirmez. |
+| `POST /books` | Yeni bir kitap eklemek | `201`; kitap `74` kimliğiyle eklendi, kitap sayısı 4 | `201`; aynı kitap bu kez `75` kimliğiyle **bir daha** eklendi, kitap sayısı 5 | **Evet.** Her gönderim yeni bir kitap ekledi. |
+| `PUT /books/73` | 73 numaralı kitabın etiketlerini `python`, `api`, `fastapi` yapmak | `200`; etiketler değişti | `200`; etiketler zaten öyleydi, aynı kaldı | **Hayır.** Kitap zaten gönderilen hâldeydi. |
+| `PATCH /books/42` | 42 numaralı kitabı ödünç verilmiş yapmak | `200`; `available` `False` oldu | `200`; `available` zaten `False` idi | **Hayır.** Aynı değer bir daha yazıldı. |
+| `DELETE /books/57` | 57 numaralı kitabı silmek | `204`; kitap silindi, kitap sayısı 4 | `404`; silinecek kitap yoktu, kitap sayısı 4 | **Hayır.** Kitap zaten silinmişti. |
+
+`DELETE` satırında iki ayrı soruya bakıyoruz, karıştırmayalım:
+
+- **Yanıt aynı mı?** Hayır: önce `204`, sonra `404`.
+- **Sunucudaki veri aynı mı?** Evet: İki istekten sonra da kitap yok, kitap sayısı 4.
+
+Bu notta önemli olan ikinci soru. Beş istekten yalnızca `POST`, ikinci gönderimde veriyi bir kez daha değiştirdi.
 
 ---
 
