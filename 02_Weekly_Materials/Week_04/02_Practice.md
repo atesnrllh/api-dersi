@@ -432,19 +432,19 @@ Görevlinin notu istemciye gitti. Sunucu sözlüğü olduğu gibi gönderdiği i
 **Yanıt modeli**, yanıtın gövdesinde hangi alanların bulunacağını söyleyen bir Pydantic modelidir. `server.py` dosyasında `BookCreate` modelinden sonra şunu ekle:
 
 ```python
-class Book(BookCreate):
+class BookPublic(BookCreate):
     id: int
 ```
 
 Bu iki satır şunu söylüyor:
 
-- **`class Book(BookCreate)`:** `Book` modeli, `BookCreate` modelindeki bütün alanları alır. Bu alanları yeniden yazmamıza gerek kalmaz.
+- **`class BookPublic(BookCreate)`:** `BookPublic` modeli, `BookCreate` modelindeki bütün alanları alır. Bu alanları yeniden yazmamıza gerek kalmaz.
 - **`id: int`:** O alanlara bir alan daha ekler: kitabın kimliği.
 
 Yani bu iki satır, aşağıdaki modelin kısa yazılışıdır:
 
 ```python
-class Book(BaseModel):
+class BookPublic(BaseModel):
     title: str
     author: Author
     available: bool
@@ -453,7 +453,9 @@ class Book(BaseModel):
     id: int
 ```
 
-İlk beş alan `BookCreate` modelinden geliyor, son alan bizim eklediğimiz. İki yazılış da aynı modeli tanımlar; kısa yazılışı seçiyoruz, çünkü `BookCreate` modeline ileride bir alan eklersek `Book` modeli de onu kendiliğinden alır.
+Adındaki `Public`, bu modelin kitabın **istemciye gösterilen** hâli olduğunu söyler. Ad, `BookCreate` ve `BookUpdate` ile aynı düzende; ayrıca `books` listesi ve döngüdeki `book` değişkeniyle de karışmaz.
+
+İlk beş alan `BookCreate` modelinden geliyor, son alan bizim eklediğimiz. İki yazılış da aynı modeli tanımlar; kısa yazılışı seçiyoruz, çünkü `BookCreate` modeline ileride bir alan eklersek `BookPublic` modeli de onu kendiliğinden alır.
 
 `internal_note` bu modelde yok. 4.3'te yanıtı bu modele göre hazırlattığımızda, not bu yüzden yanıta girmeyecek.
 
@@ -463,7 +465,7 @@ class Book(BaseModel):
 |---|---|---|
 | `BookCreate` | İstekte: `POST` ile kitap eklerken ve `PUT` ile kitabı tümüyle değiştirirken | Kitabın bilgileri, `id` yok. `title`, `author`, `available` ve `tags` zorunlu. |
 | `BookUpdate` | İstekte: `PATCH` ile kitabın bir kısmını değiştirirken (Deney 3) | Aynı alanlar, ama hepsi isteğe bağlı. `id` yok. |
-| `Book` | Yanıtta: sunucu kitabı döndürürken | `BookCreate` modelinin bütün alanları ve `id`. |
+| `BookPublic` | Yanıtta: sunucu kitabı döndürürken | `BookCreate` modelinin bütün alanları ve `id`. |
 
 İlk iki model istemcinin **gönderdiğini**, üçüncüsü sunucunun **döndürdüğünü** tarif ediyor.
 
@@ -473,16 +475,16 @@ class Book(BaseModel):
 
 | Eski satır | Yeni satır |
 |---|---|
-| `@app.get("/books")` | `@app.get("/books", response_model=list[Book])` |
-| `@app.get("/books/{book_id}")` | `@app.get("/books/{book_id}", response_model=Book)` |
-| `@app.post("/books", status_code=201)` | `@app.post("/books", status_code=201, response_model=Book)` |
-| `@app.put("/books/{book_id}")` | `@app.put("/books/{book_id}", response_model=Book)` |
-| `@app.patch("/books/{book_id}")` | `@app.patch("/books/{book_id}", response_model=Book)` |
+| `@app.get("/books")` | `@app.get("/books", response_model=list[BookPublic])` |
+| `@app.get("/books/{book_id}")` | `@app.get("/books/{book_id}", response_model=BookPublic)` |
+| `@app.post("/books", status_code=201)` | `@app.post("/books", status_code=201, response_model=BookPublic)` |
+| `@app.put("/books/{book_id}")` | `@app.put("/books/{book_id}", response_model=BookPublic)` |
+| `@app.patch("/books/{book_id}")` | `@app.patch("/books/{book_id}", response_model=BookPublic)` |
 
 | Kod | Ne yapar? |
 |---|---|
-| `response_model=Book` | FastAPI'ye şunu bildirir: "Fonksiyon ne döndürürse döndürsün, yanıtın gövdesine yalnızca `Book` modelindeki alanları koy." Modelde olmayan alanlar yanıta girmez. |
-| `response_model=list[Book]` | Kitap listesi için: Listedeki her kitap `Book` modeline göre süzülür. |
+| `response_model=BookPublic` | FastAPI'ye şunu bildirir: "Fonksiyon ne döndürürse döndürsün, yanıtın gövdesine yalnızca `BookPublic` modelindeki alanları koy." Modelde olmayan alanlar yanıta girmez. |
+| `response_model=list[BookPublic]` | Kitap listesi için: Listedeki her kitap `BookPublic` modeline göre süzülür. |
 
 Fonksiyonların içi değişmiyor. `internal_note` sunucudaki listede durmaya devam ediyor; yalnızca yanıta girmiyor.
 
@@ -497,7 +499,7 @@ Book 42: {'title': 'API Yolculuğu', 'author': {'first_name': 'Deniz', 'last_nam
 First in list: {'title': 'API Yolculuğu', 'author': {'first_name': 'Deniz', 'last_name': 'Kaya'}, 'available': True, 'tags': ['software', 'education'], 'rating': None, 'id': 42}
 ```
 
-`internal_note` iki yanıtta da yok. Alanların sırası da değişti: Artık `Book` modelindeki sırayla geliyor, `id` sonda.
+`internal_note` iki yanıtta da yok. Alanların sırası da değişti: Artık `BookPublic` modelindeki sırayla geliyor, `id` sonda.
 
 Yanıt modelinin bir yararı daha var: `http://127.0.0.1:8000/docs` sayfasında her işlemin yanıtında hangi alanların döneceği artık görünür. Hafta 3'te elle yazdığımız `README.md` belgesindeki bilginin bir kısmını FastAPI bu modelden kendisi üretir.
 
@@ -610,7 +612,7 @@ Kodunu yazıp denedikten sonra [ek nottaki cevapla](06_Supplement_Exercise_5_3_A
 3. 73 numaralı kitabı `PUT` ile `rating` göndermeden değiştirince puanı neden `None` oldu?
 4. `{"available": false}` gövdesi `PUT` ile `422`, `PATCH` ile `200` alıyor. Neden?
 5. `update_book` fonksiyonunda `exclude_unset=True` ne işe yarar?
-6. `response_model=Book` eklenince `internal_note` yanıttan kayboldu. Bu not sunucudaki listeden de silindi mi?
+6. `response_model=BookPublic` eklenince `internal_note` yanıttan kayboldu. Bu not sunucudaki listeden de silindi mi?
 
 ### 6.1 Soruların cevapları
 

@@ -106,7 +106,7 @@ Sunucumuzda kitabı iki ayrı model denetliyor:
 | Model | Ne zaman devreye giriyor? | `title` alanı `None` olabilir mi? |
 |---|---|---|
 | `BookUpdate` | İstek gelince, gövdeyi kontrol ederken (Deney 3) | **Evet.** PATCH'te her alan isteğe bağlı olsun diye `None` olabiliyor. |
-| `Book` | Yanıt hazırlanırken; dekoratördeki `response_model=Book` (Deney 4) | **Hayır.** Yanıttaki kitabın adı bir metin (`str`) olmak zorunda. |
+| `BookPublic` | Yanıt hazırlanırken; dekoratördeki `response_model=BookPublic` (Deney 4) | **Hayır.** Yanıttaki kitabın adı bir metin (`str`) olmak zorunda. |
 
 İki model `title` konusunda farklı şey söylüyor. İstemci `{"title": null}` gönderince bu fark sorun çıkarıyor. Deney 4 sonundaki sunucuda denedik:
 
@@ -124,7 +124,7 @@ Sunucuda sırasıyla şunlar oldu:
 
 1. **İstek kabul edildi.** `BookUpdate` modeli `{"title": null}` gövdesine izin verdi.
 2. **Kitap değişti.** `changes` sözlüğü `{'title': None}` oldu; `book.update(changes)` listedeki kitabın adını `None` yaptı.
-3. **Yanıt hazırlanamadı.** FastAPI, değişen kitabı `Book` modeline göre yanıta koymak istedi. `title` alanında metin yerine `None` buldu ve yanıtı hazırlayamadı.
+3. **Yanıt hazırlanamadı.** FastAPI, değişen kitabı `BookPublic` modeline göre yanıta koymak istedi. `title` alanında metin yerine `None` buldu ve yanıtı hazırlayamadı.
 4. **İstemciye `500` gitti.** **500 Internal Server Error**, "sunucuda bir hata oldu" demektir.
 
 Burada iki sorun var:
