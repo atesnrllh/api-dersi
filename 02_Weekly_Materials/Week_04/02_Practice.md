@@ -253,6 +253,8 @@ Book 99: 404 {"detail":"Book not found"}
 | `Only available: 422` | Gövdede `title`, `author` ve `tags` yok. `BookCreate` modelinde bu alanlar zorunlu olduğu için istek reddedildi. |
 | `Book 99: 404` | 99 numaralı kitap yok. |
 
+**422 Unprocessable Entity:** İstemcinin gönderdiği gövde, sunucunun beklediği modele uymuyor. Bir alan eksik ya da yanlış türde olabilir. Bu yanıtı FastAPI kendisi üretir ve fonksiyonu hiç çalıştırmaz; bu yüzden kitap değişmez.
+
 Puanın kaybolması `PUT` isteğinin nasıl çalıştığını gösteriyor. `PUT` kitabın bir kısmını değil, tamamını değiştirir. `rating` alanının `BookCreate` modelinde varsayılan değeri (`None`) olduğu için, göndermeyince hata almadık; ama eski puan da korunmadı, varsayılan değer yazıldı.
 
 > **Ana fikir:** `PUT` isteği kaynağın tamamını, gövdede gönderilen hâliyle değiştirir. Gönderilmeyen alan eski değerini korumaz: Zorunluysa istek reddedilir (`422`), varsayılan değeri varsa o değer yazılır.
