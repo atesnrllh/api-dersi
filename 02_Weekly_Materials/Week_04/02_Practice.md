@@ -471,6 +471,21 @@ Adındaki `Public`, bu modelin kitabın **istemciye gösterilen** hâli olduğun
 
 ### 4.3 İşlemlere yanıt modelini ekle
 
+`internal_note` alanını yanıttan çıkarmanın iki yolu var:
+
+| Yol | Ne yapılır? | Sorunu |
+|---|---|---|
+| Fonksiyonları değiştirmek | Kitap döndüren beş fonksiyonun her birinde, `return` satırından önce notu sözlükten çıkaran kod yazılır. | Beş fonksiyon değişir. Birinde unutulursa not o yanıtta görünür. |
+| Dekoratöre yanıt modelini yazmak | Beş dekoratöre `response_model=BookPublic` eklenir. Fonksiyonlara dokunulmaz. | Yok. Süzme işini FastAPI yapar. |
+
+İkinci yolu seçiyoruz. Bir istek geldiğinde artık şunlar oluyor:
+
+1. Fonksiyon kitabı her zamanki gibi döndürür. Sözlükte `internal_note` de vardır.
+2. FastAPI, yanıtı göndermeden önce bu sözlüğü dekoratörde yazan `BookPublic` modeline göre süzer: Modelde olan alanları alır, olmayanları bırakır.
+3. Süzülmüş kitap JSON'a çevrilip istemciye gönderilir.
+
+Yani fonksiyon ne döndürürse döndürsün, istemciye ne gideceğine dekoratör karar verir.
+
 `server.py` dosyasında kitap döndüren beş işlemin dekoratörünü değiştir:
 
 | Eski satır | Yeni satır |
@@ -486,7 +501,7 @@ Adındaki `Public`, bu modelin kitabın **istemciye gösterilen** hâli olduğun
 | `response_model=BookPublic` | FastAPI'ye şunu bildirir: "Fonksiyon ne döndürürse döndürsün, yanıtın gövdesine yalnızca `BookPublic` modelindeki alanları koy." Modelde olmayan alanlar yanıta girmez. |
 | `response_model=list[BookPublic]` | Kitap listesi için: Listedeki her kitap `BookPublic` modeline göre süzülür. |
 
-Fonksiyonların içi değişmiyor. `internal_note` sunucudaki listede durmaya devam ediyor; yalnızca yanıta girmiyor.
+`internal_note` sunucudaki `books` listesinde durmaya devam ediyor; yalnızca yanıta girmiyor.
 
 `delete_book` fonksiyonuna yanıt modeli eklemiyoruz, çünkü `204` yanıtının gövdesi yok.
 
