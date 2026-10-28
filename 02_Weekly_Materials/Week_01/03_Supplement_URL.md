@@ -349,7 +349,7 @@ Open-Meteo'nun yolundaki `v1`, API'nin **sürüm** numarasıdır. API ileride de
 6. Port yazmadan `http://127.0.0.1/book/42` adresine istek gönder. Hangi hata geldi? Neden?
 7. İnternet bağlantını kapatıp `weather_client.py`'yi çalıştır. Hangi mesaj çıktı?
 
-Denedikten sonra sonuçlarını [cevap notundakilerle](05_Supplement_URL_Answers.md) karşılaştır.
+Denedikten sonra sonuçlarını [cevap notundakilerle](04_Supplement_URL_Answers.md) karşılaştır.
 
 ---
 
@@ -363,7 +363,7 @@ Denedikten sonra sonuçlarını [cevap notundakilerle](05_Supplement_URL_Answers
 6. Kitap kimliği neden yolda, Open-Meteo'daki konum neden sorguda gönderiliyor?
 7. Hava durumu isteğinde `timeout` neden artırıldı?
 
-Kendi cevaplarını yazdıktan sonra [cevap notundakilerle](05_Supplement_URL_Answers.md) karşılaştır.
+Kendi cevaplarını yazdıktan sonra [cevap notundakilerle](04_Supplement_URL_Answers.md) karşılaştır.
 
 ---
 

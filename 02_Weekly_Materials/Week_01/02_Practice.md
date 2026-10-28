@@ -807,7 +807,7 @@ Merhaba!
 
 `@haber_ver`, fonksiyon tanımından sonra `selamla = haber_ver(selamla)` yazmanın kısa biçimidir. `haber_ver`, asıl `selamla` fonksiyonunu alır ve `yeni_fonksiyon` adlı sarmalayıcı fonksiyonu döndürür. Böylece `selamla()` çağrıldığında önce mesaj yazılır, ardından asıl fonksiyon çalışır. `fonksiyon()` çağırır; `return yeni_fonksiyon` ise parantezsiz olduğu için fonksiyonu çalıştırmadan geri verir.
 
-FastAPI'deki `@app.get(...)` de aynı Python özelliğini kullanır. Onun buradaki görevi, altındaki fonksiyonu belirli bir HTTP metodu ve yol için kaydetmektir; fonksiyonun gövdesi daha sonra uygun istek geldiğinde çalışır. Dekoratörü sade Python ile adım adım kuran örnekler [ek notta](04_Supplement_Decorator.md).
+FastAPI'deki `@app.get(...)` de aynı Python özelliğini kullanır. Onun buradaki görevi, altındaki fonksiyonu belirli bir HTTP metodu ve yol için kaydetmektir; fonksiyonun gövdesi daha sonra uygun istek geldiğinde çalışır. Dekoratörü sade Python ile adım adım kuran örnekler [ek notta](05_Supplement_Decorator.md).
 
 #### `@app.get(...)` fonksiyonun çalışmasıyla nasıl ilişkili?
 
