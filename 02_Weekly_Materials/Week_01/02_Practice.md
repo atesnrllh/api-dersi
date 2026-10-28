@@ -453,7 +453,7 @@ Kullanıcı adı, sistem adı ve klasör yolu kendi bilgisayarına göre değiş
 | `127.0.0.1` | Yerel geri dönüş (**loopback**) adresidir. Bu adresi kullanan programın kendi çalıştığı ağ ortamını gösterir. Bu derste sunucu ve istemci aynı WSL ortamında çalışır. |
 | `:8000` | Bağlanılacak portun `8000` olduğunu belirtir. **Port**, aynı ağ adresindeki hizmetlere ulaşmak için kullanılan numaralı bağlantı noktasıdır. İstemci bu numarayla bizim sunucumuza ulaşır. |
 
-Bu komutta adres ve port için ayrı seçenek vermedik. Uvicorn, varsayılan olarak `127.0.0.1` ve `8000` değerlerini kullanır. `13821` işletim sisteminin çalışan süreci tanıdığı numaradır; `8000` ise istemcinin bağlantı kurarken kullandığı port numarasıdır. [Uvicorn adres ve port ayarları](https://uvicorn.dev/settings/#socket-binding).
+Bu komutta adres ve port için ayrı seçenek vermedik. Uvicorn, varsayılan olarak `127.0.0.1` ve `8000` değerlerini kullanır. `13821` işletim sisteminin çalışan süreci tanıdığı numaradır; `8000` ise istemcinin bağlantı kurarken kullandığı port numarasıdır. [Uvicorn adres ve port ayarları](https://uvicorn.dev/settings/#socket-binding). Adresin parçalarını internetteki bir API'nin adresiyle karşılaştıran örnekler [ek notta](03_Supplement_URL.md).
 
 **Terminal neden yeni komut istemiyor?** Sunucu çalışmaya devam ederek istek bekler; bu nedenle terminal hemen yeniden `$` işaretini göstermez. Bu, programın takıldığı anlamına gelmez. Sunucu terminalini açık bırak ve bir sonraki bölümde istemciyi ikinci terminalden çalıştır. Ctrl+C ile sunucuyu durdurduğunda bu terminal tekrar komut almaya döner.
 
