@@ -349,6 +349,8 @@ Open-Meteo'nun yolundaki `v1`, API'nin **sürüm** numarasıdır. API ileride de
 6. Port yazmadan `http://127.0.0.1/book/42` adresine istek gönder. Hangi hata geldi? Neden?
 7. İnternet bağlantını kapatıp `weather_client.py`'yi çalıştır. Hangi mesaj çıktı?
 
+Denedikten sonra sonuçlarını [cevap notundakilerle](05_Supplement_URL_Answers.md) karşılaştır.
+
 ---
 
 ## 8. Tartışma soruları
@@ -361,25 +363,7 @@ Open-Meteo'nun yolundaki `v1`, API'nin **sürüm** numarasıdır. API ileride de
 6. Kitap kimliği neden yolda, Open-Meteo'daki konum neden sorguda gönderiliyor?
 7. Hava durumu isteğinde `timeout` neden artırıldı?
 
-### Cevaplarda aranacak noktalar
-
-**Dene:**
-
-2. Üç gün gelir; `daily` içindeki her dizi üç eleman içerir.
-4. `400` durum kodu ve `{"error":true,"reason":"Latitude must be in range of -90 to 90°. Given: 100.0."}` gövdesi gelir. Open-Meteo da gelen değeri kontrol ediyor; bu hata için `400` kullanıyor. FastAPI tür hatalarında `422` kullanır. Hangi durum kodunun kullanılacağına API'yi yazan karar verir; ortak nokta, hatanın istemcinin gönderdiği veriden kaynaklanmasıdır.
-5. Değişmez; `localhost` ile `127.0.0.1` aynı bilgisayarı gösterir.
-6. `ConnectError` gelir. Port yazılmadığı için istek 80 numaralı kapıya gider; orada bekleyen bir program yoktur.
-7. `Request failed: Check your internet connection.` mesajı çıkar. Alan adı çözülemediği ya da bağlantı kurulamadığı için `httpx.RequestError` yakalanır.
-
-**Tartışma soruları:**
-
-1. Yol `/v1/forecast`, sorgu `latitude=41.27976` kısmıdır.
-2. Şema `https` olduğu için varsayılan port `443` kullanılır.
-3. `127.0.0.1` bu bilgisayarı gösteren bir IP adresidir. `api.open-meteo.com` bir alan adıdır; DNS bu adı bağlanılacak IP adresine çevirir.
-4. Şema, sunucunun adresi ve port bağlantıyı kurmak için kullanılır. Yol ve sorgu istek mesajının içinde gider.
-5. Değişen yalnızca adres, sorgu parametreleri ve bekleme süresidir. İstek yine `httpx.get(...)` ile gönderilir, yanıt yine durum kodu ve JSON gövdeden oluşur, `response.json()` yine sözlük verir.
-6. Kitap kimliği hangi kaynağın istendiğini belirtir, bu yüzden yoldadır. Konum ise tahmin işleminin bir ayarıdır, bu yüzden sorgudadır. Bu bir tasarım tercihidir.
-7. İnternetteki bir sunucunun yanıtı ağın durumuna göre gecikebilir; varsayılan 5 saniye yetmeyebilir.
+Kendi cevaplarını yazdıktan sonra [cevap notundakilerle](05_Supplement_URL_Answers.md) karşılaştır.
 
 ---
 
