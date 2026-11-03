@@ -1,6 +1,6 @@
 # Ek Not — Pydantic Hangi Değerleri Kendiliğinden Çevirir?
 
-Föyün Deney 1'inde `"available": "yes"` gövdesi kabul edildi ve kitabın `available` alanı `True` oldu. Pydantic, varsayılan olarak bazı değerleri alanın türüne **çevirir**. Bu notta hangi değerlerin çevrildiğini ve Deney 3'teki `strict=True` ayarından sonra ne değiştiğini bir tabloda topluyoruz.
+Föyün Deney 1'inde `"available": "yes"` gövdesi kabul edildi ve kitabın `available` alanı `True` oldu. Pydantic, varsayılan olarak bazı değerleri alanın türüne **çevirir (coerce)**; bu davranışa **gevşek mod (lax mode)** denir. Bu notta hangi değerlerin çevrildiğini ve Deney 3'teki `strict=True` ayarından sonra ne değiştiğini bir tabloda topluyoruz.
 
 ---
 
@@ -56,11 +56,11 @@ Her satırda `POST /books` ya da `POST /books/42/reviews` isteğiyle tek bir ala
 
 ---
 
-## 3. Yol ve sorgudaki değerler
+## 3. Yol ve sorgu parametrelerinin değerleri
 
-Yoldaki ve sorgudaki değerler her zaman metin olarak gelir: `/books/42` içindeki `42` de, `?available=true` içindeki `true` da birer metindir. FastAPI bunları parametrenin türüne çevirmek zorundadır; çevirmeseydi `book_id: int` parametresi hiç çalışmazdı.
+Yol ve sorgu parametrelerinin değerleri her zaman metin olarak gelir: `/books/42` içindeki `42` de, `?available=true` içindeki `true` da birer metindir. FastAPI bunları parametrenin türüne çevirmek zorundadır; çevirmeseydi `book_id: int` parametresi hiç çalışmazdı.
 
-`strict=True` ayarını yalnızca istek modellerine (`BookCreate`, `BookUpdate`, `ReviewCreate`) yazdık. Fonksiyon parametreleri bu ayardan etkilenmez; `?available=true` sorgusu föyün sonundaki sunucuda da çalışır.
+`strict=True` ayarını yalnızca istek modellerine (`BookCreate`, `BookUpdate`, `ReviewCreate`) yazdık. Fonksiyon parametreleri bu ayardan etkilenmez; `?available=true` sorgu parametresi föyün sonundaki sunucuda da çalışır.
 
 ---
 
@@ -70,7 +70,7 @@ Yoldaki ve sorgudaki değerler her zaman metin olarak gelir: `/books/42` içinde
 
 | Davranış | Ne zaman uygun? |
 |---|---|
-| Çeviri yapmak (varsayılan) | Değerlerin metin olarak geldiği yerler: yol, sorgu, form alanları |
+| Çeviri yapmak (varsayılan) | Değerlerin metin olarak geldiği yerler: yol ve sorgu parametreleri, form alanları |
 | Sıkı mod (`strict=True`) | İstemcinin türleri ayırt edebildiği JSON gövdesi. Yanlış türde gönderilen değer büyük olasılıkla istemcideki bir hatadır; sessizce çevirmek bu hatayı gizler. |
 
 Kitap kataloğu API'sinde gövdeyi JSON ile alıyoruz; bu yüzden istek modellerinde sıkı modu seçtik.

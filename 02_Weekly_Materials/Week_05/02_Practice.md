@@ -129,7 +129,7 @@ Dokuz istekten yalnızca biri reddedildi:
 
 ### 1.2 Hata yanıtını okumak
 
-Reddedilen tek istek `"title": 123` idi. Şimdi hata yanıtının tamamına bakalım. Hata yalnızca gövdede değil, yolda ve sorguda da olabilir; üçünü birden gönderiyoruz.
+Reddedilen tek istek `"title": 123` idi. Şimdi hata yanıtının tamamına bakalım. Hata yalnızca gövdede değil, yol parametresinde ve sorgu parametresinde de olabilir (Hafta 1, Deney 8); üçünü birden gönderiyoruz.
 
 `client.py` dosyasının içeriğini şununla değiştir:
 
@@ -153,11 +153,11 @@ try:
     response = httpx.post(base_url + "/books", json=new_book)
     print("Body: ", response.status_code, response.json())
 
-    # Yolda hata: kitap kimliği sayı değil.
+    # Yol parametresinde hata: kitap kimliği sayı değil.
     response = httpx.get(base_url + "/books/abc")
     print("Path: ", response.status_code, response.json())
 
-    # Sorguda hata: available true ya da false değil.
+    # Sorgu parametresinde hata: available true ya da false değil.
     response = httpx.get(base_url + "/books", params={"available": "maybe"})
     print("Query:", response.status_code, response.json())
 except httpx.ConnectError:
@@ -183,13 +183,15 @@ Query: 422 {'detail': [{'type': 'bool_parsing', 'loc': ['query', 'available'], '
 
 `loc` alanının ilk öğesi, değerin isteğin hangi bölümünden geldiğini söylüyor:
 
-| `loc` | Değer nereden geldi? |
-|---|---|
-| `['body', 'title']` | Gövdeden: `json=` ile gönderilen kitabın `title` alanı |
-| `['path', 'book_id']` | Yoldan: `/books/abc` içindeki `abc` |
-| `['query', 'available']` | Sorgudan: `?available=maybe` |
+| `loc` içinde | Ne demek? | Bu örnekte |
+|---|---|---|
+| `body` | **Gövde (body):** `json=` ile gönderilen veri | Kitabın `title` alanı |
+| `path` | **Yol parametresi (path parameter):** adresin yolundaki değer | `/books/abc` içindeki `abc` |
+| `query` | **Sorgu parametresi (query parameter):** `params=` ile gönderilen, adresin `?` işaretinden sonraki değer | `?available=maybe` |
 
-Yol, sorgu ve gövde ayrımını Hafta 3'teki [sorgu ve gövde ek notunda](../Week_03/06_Supplement_Query_vs_Body.md) görmüştük. `detail` bir liste, çünkü bir istekte birden fazla hata olabilir; bunu Deney 2'de göreceğiz.
+Hafta 1'deki [URL ek notunda](../Week_01/03_Supplement_URL.md) adresin parçalarına ad vermiştik: `/books/abc` kısmı **yol (path)**, `?` işaretinden sonraki kısım **sorgu (query)**. Bu parçaların içindeki değerler de parametredir: `abc` bir yol parametresi, `available=maybe` bir sorgu parametresi. Bu yüzden "sorgudaki `available`" ile "`available` sorgu parametresi" aynı şeyi anlatır. Yol, sorgu ve gövde ayrımını Hafta 3'teki [sorgu ve gövde ek notunda](../Week_03/06_Supplement_Query_vs_Body.md) da görmüştük.
+
+`detail` bir liste, çünkü bir istekte birden fazla hata olabilir; bunu Deney 2'de göreceğiz.
 
 Bu hataların hepsinde durum kodu `422`. Kodun adı sunucunun terminalinde `422 Unprocessable Entity` olarak görünür; HTTP standardının güncel sürümü aynı koda `Unprocessable Content` diyor ve Python 3.13 ve sonrasıyla çalışan sunucular bu yeni adı yazar. İki ad aynı kodu anlatır. Bazı API'ler benzer hatalar için `400` kullanır; aradaki fark [ek notta](04_Supplement_400_vs_422.md).
 
@@ -251,8 +253,8 @@ class ReviewCreate(BaseModel):
 | Yazım | Anlamı |
 |---|---|
 | `Field(min_length=1)` | Metin en az 1 karakter olmalı. Boş metin `""` reddedilir. |
-| `Field(ge=0, le=5)` | Sayı 0'dan büyük ya da eşit (*greater than or equal*), 5'ten küçük ya da eşit (*less than or equal*) olmalı. |
-| `Field(default=None, ...)` | Alanın varsayılan değeri. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. |
+| `Field(ge=0, le=5)` | Sayı 0'dan büyük ya da eşit (greater than or equal), 5'ten küçük ya da eşit (less than or equal) olmalı. |
+| `Field(default=None, ...)` | Alanın **varsayılan değeri (default value)**. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. |
 
 Üç model için üç not:
 
@@ -366,11 +368,11 @@ class ReviewCreate(BaseModel):
 
 | Yazım | Anlamı |
 |---|---|
-| `model_config = ConfigDict(...)` | Modelin ayarları. Alanlardan biri değil; Pydantic'e bu modelin nasıl çalışacağını söyler. |
-| `strict=True` | **Sıkı mod:** Değer, alanın türünde gönderilmeli; Pydantic başka türden çeviri yapmaz. `"4.5"` metni `float` alanına, `"yes"` metni `bool` alanına artık girmez. |
-| `extra="forbid"` | Modelde olmayan bir alan gönderilirse istek reddedilir. Varsayılan davranış, böyle alanları sessizce süzmektir. |
+| `model_config = ConfigDict(...)` | **Modelin ayarları (model configuration).** Alanlardan biri değil; Pydantic'e bu modelin nasıl çalışacağını söyler. |
+| `strict=True` | **Sıkı mod (strict mode):** Değer, alanın türünde gönderilmeli; Pydantic başka türden çeviri yapmaz. `"4.5"` metni `float` alanına, `"yes"` metni `bool` alanına artık girmez. |
+| `extra="forbid"` | Modelde olmayan bir alan, yani bir **fazla alan (extra field)** gönderilirse istek reddedilir. Hata mesajındaki `Extra inputs` bu alanlardır. Varsayılan davranış, böyle alanları sessizce süzmektir. |
 
-Bu ayarlar yalnızca eklendiği modelleri etkiler. Sorgudaki `available` parametresi bir model alanı değil, fonksiyon parametresi olduğu için `?available=true` yazımı eskisi gibi çalışır.
+Bu ayarlar yalnızca eklendiği modelleri etkiler. `available` sorgu parametresi bir model alanı değil, fonksiyon parametresi olduğu için `?available=true` yazımı eskisi gibi çalışır.
 
 > **Bu bir tasarım seçimi.** Pydantic'in varsayılan davranışı (değerleri çevirmek, fazla alanları süzmek) yanlış değildir; birçok API bilerek böyle çalışır. Biz kitap kataloğunda istemcinin hatasını hemen öğrenmesini seçtik.
 
@@ -429,7 +431,7 @@ fastapi.exceptions.ResponseValidationError: 1 validation error:
   {'type': 'extra_forbidden', 'loc': ('response', 'internal_note'), 'msg': 'Extra inputs are not permitted', 'input': 'Kapağı yıpranmış, yenisi sipariş edildi.'}
 ```
 
-Hata bu kez istekte değil, yanıtta: `loc` alanının ilk öğesi `response`. Adım adım:
+Hatanın adındaki *Validation*, **doğrulama (validation)** demek: Bir değeri modeldeki kurallara göre kontrol etmek. `ResponseValidationError`, yanıtın doğrulanamadığını söylüyor. Hata bu kez istekte değil, yanıtta: `loc` alanının ilk öğesi `response`. Adım adım:
 
 1. `get_book` fonksiyonu 42 numaralı kitabı döndürdü. Sözlükte `internal_note` alanı da var (Hafta 4, Deney 4).
 2. FastAPI, yanıtı göndermeden önce bu sözlüğü `BookPublic` modeline göre hazırlamak istedi.
@@ -456,7 +458,7 @@ class BookPublic(BookCreate):
 
 Bu satır, `BookCreate` modelinden gelen iki ayarı değiştirir:
 
-- **`extra="ignore"`:** Fazla alanları süzer. Deney 1'de `isbn` alanına olan da buydu; Pydantic'in varsayılan davranışı budur.
+- **`extra="ignore"`:** Fazla alanları süzer; `ignore` İngilizcede "yok say" demek. Deney 1'de `isbn` alanına olan da buydu; Pydantic'in varsayılan davranışı budur.
 - **`strict=False`:** Sıkı modu kapatır. Yanıt modeli istemcinin değil, sunucunun kendi verisini kontrol ediyor; orada sıkı moda gerek yok.
 
 Alanların kuralları (`min_length`, `ge`, `le`) `BookPublic` modeline geçmeye devam eder.
@@ -577,7 +579,7 @@ Read book 42:  200 title: 'API Yolculuğu'
 
 ## Deney 5 — Kuralın yeri: model mi, fonksiyon mu?
 
-**Amaç:** Yoldaki kitap kimliğine bir kural eklemek ve kaydedilmiş veriye bakmayı gerektiren bir kuralı fonksiyonun içine yazmak.
+**Amaç:** Kitap kimliğini taşıyan yol parametresine bir kural eklemek ve kaydedilmiş veriye bakmayı gerektiren bir kuralı fonksiyonun içine yazmak.
 
 Şu ana kadar yazdığımız kuralların hepsi değerin kendisine bakıyordu. Bu deneyde iki yeni kural ekliyoruz: biri yine değere bakıyor, öteki sunucudaki veriye.
 
@@ -597,7 +599,7 @@ Kitap kimlikleri pozitif sayılar. `/books/-5` adresi hiçbir zaman bir kitap bu
 | `def get_reviews(book_id: int):` | `def get_reviews(book_id: int = Path(gt=0)):` |
 | `def create_review(book_id: int, review_data: ReviewCreate):` | `def create_review(review_data: ReviewCreate, book_id: int = Path(gt=0)):` |
 
-`Path`, `Field` fonksiyonunun yol parametreleri için olanıdır. `gt=0` "0'dan büyük" (*greater than*) demektir; `ge` gibi, ama sınırın kendisi dahil değil.
+`Path`, `Field` fonksiyonunun yol parametreleri için olanıdır. `gt=0` "0'dan büyük" (greater than) demektir; `ge` gibi, ama sınırın kendisi dahil değil.
 
 İki parametreli fonksiyonlarda `book_id` sona geçti. Python'da varsayılan değeri olan parametreler, varsayılan değeri olmayanlardan sonra gelmelidir; `= Path(gt=0)` yazımı da bir varsayılan değer gibi yazılıyor. FastAPI parametreleri sırasına göre değil adına göre eşleştirdiği için sıra değişikliği istekleri etkilemez. Sırayı değiştirmeyi unutursan sunucu başlamaz ve terminalde şu hata görünür:
 
@@ -1049,7 +1051,7 @@ Tarayıcı JSON'u düzenli gösterir; gerekirse sayfanın üstündeki **Pretty-p
 | `rating` | `{"type":"number","maximum":5.0,"minimum":0.0}` ya da `{"type":"null"}` | `float \| None = Field(default=None, ge=0, le=5)` |
 | Modelin kendisi | `"additionalProperties":false` | `extra="forbid"` |
 
-Aynı bilgiler `http://127.0.0.1:8000/docs` sayfasının altındaki **Schemas** bölümünde de görünür. Bu sayfada `POST /books` işleminde **Try it out** düğmesine bas, gövdedeki `rating` değerini `7` yap ve isteği gönder; `422` yanıtını ve `detail` listesini sayfada görürsün.
+Aynı bilgiler `http://127.0.0.1:8000/docs` sayfasının altındaki **Schemas** bölümünde de görünür. Bu sayfada `POST /books` işleminde **Try it out** düğmesine bas, gövdedeki `rating` değerini `7` yap ve isteği gönder; `422` yanıtını ve `detail` listesini sayfada görürsün. Sayfa bu yanıtı `Validation Error`, yani doğrulama hatası olarak adlandırır.
 
 ### 8.2 `README.md` belgesine alan kurallarını eklemek
 
@@ -1135,7 +1137,7 @@ Kodunu yazıp denedikten sonra [ek nottaki cevapla](10_Supplement_Exercise_8_4_A
 ### 9.1 Soruların cevapları
 
 1. Tür ve alanlar, değer ve veriye bağlı kontrol. Tür ve alan kontrolüyle değer kontrolünü FastAPI, Pydantic'i çağırarak, istek fonksiyona ulaşmadan yapar ve `422` döndürür. Veriye bağlı kontrolü fonksiyonun kendisi yapar ve `404` ya da `409` gibi bir durum koduyla bildirir.
-2. Hatanın yolda (`path`), `book_id` parametresinde olduğunu söyler.
+2. Hatanın bir yol parametresinde (`path`), `book_id` parametresinde olduğunu söyler.
 3. `BookPublic` modeli `BookCreate` modelinden türediği için kurallar yanıt modeline de geçer. 57 numaralı kitabın puanı `0`; yanıt hazırlanırken bu değer `ge=1` kuralına uymaz ve istemciye `500` gider.
 4. Pydantic, varsayılan olarak bazı değerleri alanın türüne çevirir; `"yes"` metnini `True` yapar. `strict=True` bu çeviriyi kapatır; değer alanın türünde gönderilmelidir.
 5. `BookPublic` modeli `BookCreate` modelinin `extra="forbid"` ayarını da aldı. 42 numaralı kitabın sözlüğünde modelde olmayan `internal_note` alanı vardı; yanıt modeli bu alanı süzmek yerine reddetti. `BookPublic` modeline `model_config = ConfigDict(strict=False, extra="ignore")` ekleyerek fazla alanların yine süzülmesini sağladık; sıkı modu da yanıt modelinde kapattık.
@@ -1149,8 +1151,8 @@ Kodunu yazıp denedikten sonra [ek nottaki cevapla](10_Supplement_Exercise_8_4_A
 - [FastAPI — Body: Fields](https://fastapi.tiangolo.com/tutorial/body-fields/)
 - [FastAPI — Path Parameters and Numeric Validations](https://fastapi.tiangolo.com/tutorial/path-params-numeric-validations/)
 - [FastAPI — Handling Errors](https://fastapi.tiangolo.com/tutorial/handling-errors/)
-- [Pydantic — Fields](https://docs.pydantic.dev/latest/concepts/fields/)
-- [Pydantic — Strict Mode](https://docs.pydantic.dev/latest/concepts/strict_mode/)
+- [Pydantic — Fields](https://docs.pydantic.dev/latest/concepts/fields/): Bu sayfada alanlara yazdığımız kurallara *constraint* denir.
+- [Pydantic — Strict Mode](https://docs.pydantic.dev/latest/concepts/strict_mode/): Bu sayfada varsayılan davranışa *lax mode*, değerlerin türe çevrilmesine *coerce* denir.
 - [Pydantic — Configuration: `extra`](https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.extra)
 - [MDN — 422 Unprocessable Content](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/422)
 - [MDN — 409 Conflict](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/409)
