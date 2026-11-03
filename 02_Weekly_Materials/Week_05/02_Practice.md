@@ -180,7 +180,7 @@ Query: 422 {'detail': [{'type': 'bool_parsing', 'loc': ['query', 'available'], '
 |---|---|---|
 | `type` | Hatanın türünün kısa adı | `string_type`: metin bekleniyordu. |
 | `loc` | Hatanın **nerede** olduğu. İlk öğe isteğin hangi bölümü, son öğe hangi alan ya da parametre. | `['body', 'title']`: gövdedeki `title` alanı |
-| `msg` | Hatanın insanların okuyacağı açıklaması | `Input should be a valid string` |
+| `msg` | Hatanın insanların okuyacağı açıklaması. Bu metni biz yazmadık; Pydantic üretir. | `Input should be a valid string` |
 | `input` | İstemcinin gönderdiği değer | `123` |
 
 `loc` alanının ilk öğesi, değerin isteğin hangi bölümünden geldiğini söylüyor:
@@ -279,6 +279,8 @@ Unknown field:    201 stored: None
 Title as number:  422 Input should be a valid string
 Review score 9:   422 String should have at least 1 character
 ```
+
+Çıktıdaki yeni mesajlar ne sunucuda ne istemcide yazıyor. Biz sunucuya yalnızca `le=5` gibi kuralı yazdık. Değer kurala uymayınca mesajı Pydantic kendisi üretiyor, FastAPI de onu yanıtın `msg` alanına koyuyor. İstemci bu metni `["detail"][0]["msg"]` ile alıp yazdırıyor.
 
 Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 
