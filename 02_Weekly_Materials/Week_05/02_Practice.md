@@ -290,9 +290,9 @@ Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 | `Blank title` | `"title": "   "` | `201` | `201`, değişmedi | Üç boşluk da bir metin ve uzunluğu 3; kurala uyuyor. Reddetmenin yolu [ek notta](06_Supplement_Blank_Strings.md). |
 | `Rating 7` | `"rating": 7` | `201` | `422` | `le=5`: Puan en fazla 5 olabilir. |
 | `Rating -1` | `"rating": -1` | `201` | `422` | `ge=0`: Puan en az 0 olabilir. |
-| `Rating as text` | `"rating": "4.5"` | `201` | `201`, değişmedi | Bu deneyin konusu değil; Deney 3'te. |
-| `Available 'yes'` | `"available": "yes"` | `201` | `201`, değişmedi | Deney 3'te. |
-| `Unknown field` | `"isbn": "..."` | `201` | `201`, değişmedi | Deney 3'te. |
+| `Rating as text` | `"rating": "4.5"` | `201` | `201`, değişmedi | Kural yalnızca sayının aralığına bakıyor. Metin önce `4.5` sayısına çevrildi; bu sayı 0 ile 5 arasında olduğu için kabul edildi. Çeviriyi durdurmak Deney 3'te. |
+| `Available 'yes'` | `"available": "yes"` | `201` | `201`, değişmedi | `available` alanına kural eklemedik. `"yes"` metni yine `True` yapıldı. Deney 3'te. |
+| `Unknown field` | `"isbn": "..."` | `201` | `201`, değişmedi | Kuralları yalnızca modeldeki alanlara yazdık. Modelde olmayan `isbn` yine sessizce süzüldü. Deney 3'te. |
 | `Title as number` | `"title": 123` | `422` | `422`, değişmedi | Tür kontrolü; zaten çalışıyordu. |
 | `Review score 9` | `"score": 9`, boş `reader` ve `comment` | `201` | `422` | Üç alan da kurala uymuyor. Çıktıda yalnızca ilk hata görünüyor; hepsine 2.3'te bakacağız. |
 
