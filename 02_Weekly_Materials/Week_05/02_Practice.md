@@ -113,17 +113,19 @@ Title as number:  422 Input should be a valid string
 Review score 9:   201 stored: {'reader': '', 'comment': '', 'score': 9, 'id': 2, 'book_id': 42}
 ```
 
-Dokuz istekten yalnızca biri reddedildi:
+Dokuz istekten yalnızca biri reddedildi. Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 
-| Gönderilen | Sunucu ne yaptı? | Sorun |
-|---|---|---|
-| `"title": ""` ve `"title": "   "` | Kitabı ekledi. | Adı olmayan bir kitap katalogda duruyor. |
-| `"rating": 7` ve `"rating": -1` | Kitabı ekledi. | Puan 0 ile 5 arasında olmalı. |
-| `"rating": "4.5"` | Metni sayıya çevirdi. | Sayı yerine metin gönderen istemci, hatasını fark etmiyor. |
-| `"available": "yes"` | `"yes"` metnini `True` yaptı. | Aynı durum: Metin, mantıksal değere çevrildi. |
-| `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. | İstemci alanın kaydedildiğini sanıyor; hata almıyor. |
-| `"title": 123` | `422` ile reddetti. | Yok. Tür kontrolü çalıştı. |
-| Yorum: `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. | Puan 1 ile 5 arasında olmalı; okur ve yorum boş olmamalı. |
+| Çıktıdaki satır | Gönderilen | Sunucu ne yaptı? | Sorun |
+|---|---|---|---|
+| `Empty title` | `"title": ""` | Kitabı ekledi. | Adı olmayan bir kitap katalogda duruyor. |
+| `Blank title` | `"title": "   "` | Kitabı ekledi. | Aynı sorun: Adı yalnızca boşluk. |
+| `Rating 7` | `"rating": 7` | Kitabı ekledi. | Puan 0 ile 5 arasında olmalı. |
+| `Rating -1` | `"rating": -1` | Kitabı ekledi. | Aynı sorun. |
+| `Rating as text` | `"rating": "4.5"` | Metni sayıya çevirdi. | Sayı yerine metin gönderen istemci, hatasını fark etmiyor. |
+| `Available 'yes'` | `"available": "yes"` | `"yes"` metnini `True` yaptı. | Aynı durum: Metin, mantıksal değere çevrildi. |
+| `Unknown field` | `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. | İstemci alanın kaydedildiğini sanıyor; hata almıyor. |
+| `Title as number` | `"title": 123` | `422` ile reddetti. | Yok. Tür kontrolü çalıştı. |
+| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. | Puan 1 ile 5 arasında olmalı; okur ve yorum boş olmamalı. |
 
 `"4.5"`, `"yes"` ve `isbn` satırlarındaki davranışlar bir hata değil, Pydantic'in bilinçli varsayılanları; Deney 3'te bizim API'miz için neden değiştirdiğimizi tartışacağız. `"4.5"` ve `"yes"` metinlerinin neden kabul edildiğini ve başka hangi değerlerin çevrildiğini [ek nottaki tabloda](03_Supplement_Lax_Type_Conversion.md) görebilirsin.
 
@@ -191,7 +193,7 @@ Query: 422 {'detail': [{'type': 'bool_parsing', 'loc': ['query', 'available'], '
 
 Hafta 1'deki [URL ek notunda](../Week_01/03_Supplement_URL.md) adresin parçalarına ad vermiştik: `/books/abc` kısmı **yol (path)**, `?` işaretinden sonraki kısım **sorgu (query)**. Bu parçaların içindeki değerler de parametredir: `abc` bir yol parametresi, `available=maybe` bir sorgu parametresi. Bu yüzden "sorgudaki `available`" ile "`available` sorgu parametresi" aynı şeyi anlatır. Yol, sorgu ve gövde ayrımını Hafta 3'teki [sorgu ve gövde ek notunda](../Week_03/06_Supplement_Query_vs_Body.md) da görmüştük.
 
-`detail` bir liste, çünkü bir istekte birden fazla hata olabilir; bunu Deney 2'de göreceğiz.
+`detail` alanının değeri `[` ile başlayıp `]` ile bitiyor; bu, onun bir liste olduğunu gösterir. Bu isteklerde tek hata olduğu için listelerde tek öğe var; bir istekte birden fazla hata olunca hepsi bu listede sıralanır. Bunu Deney 2'de göreceğiz.
 
 Bu hataların hepsinde durum kodu `422`. Kodun adı sunucunun terminalinde `422 Unprocessable Entity` olarak görünür; HTTP standardının güncel sürümü aynı koda `Unprocessable Content` diyor ve Python 3.13 ve sonrasıyla çalışan sunucular bu yeni adı yazar. İki ad aynı kodu anlatır. Bazı API'ler benzer hatalar için `400` kullanır; aradaki fark [ek notta](04_Supplement_400_vs_422.md).
 
@@ -278,15 +280,19 @@ Title as number:  422 Input should be a valid string
 Review score 9:   422 String should have at least 1 character
 ```
 
-| Gönderilen | Önce | Şimdi |
-|---|---|---|
-| `"title": ""` | `201` | `422`: en az 1 karakter olmalı. |
-| `"rating": 7` ve `"rating": -1` | `201` | `422`: 0 ile 5 arasında olmalı. |
-| Yorum: `"score": 9`, boş okur ve yorum | `201` | `422` |
-| `"title": "   "` | `201` | Hâlâ `201`. |
-| `"rating": "4.5"`, `"available": "yes"`, `"isbn"` | `201` | Hâlâ `201`; Deney 3'te düzelteceğiz. |
+Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 
-`"   "` hâlâ kabul ediliyor, çünkü üç boşluk karakteri de bir metindir ve uzunluğu 3'tür. Böyle adları da reddetmenin yolu [ek notta](06_Supplement_Blank_Strings.md).
+| Çıktıdaki satır | Gönderilen | Deney 1'de | Şimdi | Neden? |
+|---|---|---|---|---|
+| `Empty title` | `"title": ""` | `201` | `422` | `min_length=1`: Ad en az 1 karakter olmalı. |
+| `Blank title` | `"title": "   "` | `201` | `201`, değişmedi | Üç boşluk da bir metin ve uzunluğu 3; kurala uyuyor. Reddetmenin yolu [ek notta](06_Supplement_Blank_Strings.md). |
+| `Rating 7` | `"rating": 7` | `201` | `422` | `le=5`: Puan en fazla 5 olabilir. |
+| `Rating -1` | `"rating": -1` | `201` | `422` | `ge=0`: Puan en az 0 olabilir. |
+| `Rating as text` | `"rating": "4.5"` | `201` | `201`, değişmedi | Bu deneyin konusu değil; Deney 3'te. |
+| `Available 'yes'` | `"available": "yes"` | `201` | `201`, değişmedi | Deney 3'te. |
+| `Unknown field` | `"isbn": "..."` | `201` | `201`, değişmedi | Deney 3'te. |
+| `Title as number` | `"title": 123` | `422` | `422`, değişmedi | Tür kontrolü; zaten çalışıyordu. |
+| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | `201` | `422` | Üç alan da kurala uymuyor. Çıktıda yalnızca ilk hata görünüyor; hepsine 2.3'te bakacağız. |
 
 ### 2.3 Bir istekte birden fazla hata
 
@@ -484,6 +490,8 @@ Hafta 4'teki [`null` ek notunda](../Week_04/05_Supplement_Patch_Unset_vs_Null.md
 
 ### 4.1 `BookUpdate` modelinde `| None` yazımını kaldır
 
+`str | None` yazımındaki `|` işaretine **dikey çizgi (pipe)** denir; tür yazımında "ya da" anlamına gelir. `str | None` "metin ya da `None`" demek; Python buna **birleşim türü (union type)** der.
+
 İstediğimiz kural şu: `title` alanı **gönderilmeyebilir**, ama **gönderilirse** `null` olamaz. `server.py` dosyasında `BookUpdate` modelinin alanlarını şöyle değiştir:
 
 | Eski satır | Yeni satır |
@@ -565,13 +573,14 @@ Author null:   422 Input should be a valid dictionary or object to extract field
 Read book 42:  200 title: 'API Yolculuğu'
 ```
 
-| İstek | Sonuç |
-|---|---|
-| `{}` | `200`. Hiçbir alan gönderilmedi; kitap değişmedi. |
-| `{"rating": 4}`, sonra `{"rating": null}` | `200`. Puan önce `4.0` oldu, sonra silindi. |
-| `{"title": null}` | `422`. Hafta 4'te `500` alan ve kitabı bozan istek artık kitaba dokunulmadan reddediliyor. |
-| `{"author": null}` | `422`. Yazar da `null` olamaz. |
-| `GET /books/42` | `200`. Kitabın adı yerinde; kitap bozulmadı. |
+| Çıktıdaki satır | İstek | Sonuç |
+|---|---|---|
+| `Empty body` | `{}` | `200`. Hiçbir alan gönderilmedi; kitap değişmedi. |
+| `Rating 4` | `{"rating": 4}` | `200`. Puan `4.0` oldu. |
+| `Rating null` | `{"rating": null}` | `200`. Puan silindi; `rating` için `null` geçerli bir değer. |
+| `Title null` | `{"title": null}` | `422`. Hafta 4'te `500` alan ve kitabı bozan istek artık kitaba dokunulmadan reddediliyor. |
+| `Author null` | `{"author": null}` | `422`. Yazar da `null` olamaz. |
+| `Read book 42` | `GET /books/42` | `200`. Kitabın adı yerinde; kitap bozulmadı. |
 
 > **Ana fikir:** Bir alanın isteğe bağlı olması ile `null` olabilmesi ayrı şeylerdir. `title: str = None` yazımında alan gönderilmeyebilir, ama gönderilirse metin olmalıdır. `| None` yalnızca `null` değerinin anlamlı olduğu alanlarda kalmalı; bizim kitaplarımızda bu alan `rating`.
 
@@ -678,14 +687,14 @@ Can first:  201 {'reader': 'Can', 'comment': 'Örnekleri çalıştırdım.', 'sc
 Can again:  409 {'detail': 'This reader has already reviewed this book'}
 ```
 
-| İstek | Yanıt | Kim reddetti? | Neden? |
-|---|---|---|---|
-| `GET /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | `-5` hiçbir zaman kitap kimliği olamaz. Bunu bilmek için kitaplara bakmak gerekmez; fonksiyon hiç çalışmadı. |
-| `DELETE /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | Aynı kural silme işleminde de var. Burada `404` görüyorsan `delete_book` fonksiyonuna `Path(gt=0)` eklemeyi unutmuşsundur. |
-| `GET /books/43` | `404` | `get_book` fonksiyonu | `43` bir kitap kimliği olabilir, ama listede böyle bir kitap yok. Bunu bilmek için kitaplara bakmak gerekti. |
-| Ece'nin ikinci yorumu | `409` | `create_review` fonksiyonu | Ece'nin 42 numaralı kitaba yorumu sunucu başlarken zaten var. |
-| Can'ın ilk yorumu | `201` | Kimse | Can'ın bu kitaba yorumu yoktu. |
-| Can'ın ikinci yorumu | `409` | `create_review` fonksiyonu | Az önce eklenen yorumla çakışıyor. |
+| Çıktıdaki satır | İstek | Yanıt | Kim reddetti? | Neden? |
+|---|---|---|---|---|
+| `Book -5` | `GET /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | `-5` hiçbir zaman kitap kimliği olamaz. Bunu bilmek için kitaplara bakmak gerekmez; fonksiyon hiç çalışmadı. |
+| `Delete -5` | `DELETE /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | Aynı kural silme işleminde de var. Burada `404` görüyorsan `delete_book` fonksiyonuna `Path(gt=0)` eklemeyi unutmuşsundur. |
+| `Book 43` | `GET /books/43` | `404` | `get_book` fonksiyonu | `43` bir kitap kimliği olabilir, ama listede böyle bir kitap yok. Bunu bilmek için kitaplara bakmak gerekti. |
+| `Ece again` | Ece'nin ikinci yorumu | `409` | `create_review` fonksiyonu | Ece'nin 42 numaralı kitaba yorumu sunucu başlarken zaten var. |
+| `Can first` | Can'ın ilk yorumu | `201` | Kimse | Can'ın bu kitaba yorumu yoktu. |
+| `Can again` | Can'ın ikinci yorumu | `409` | `create_review` fonksiyonu | Az önce eklenen yorumla çakışıyor. |
 
 Bölüm 0'daki soruya, "Bir kuralı nereye yazmalıyım?" sorusuna, şimdi bu haftanın kurallarıyla cevap verebiliriz. Bir istek üç ayrı kontrolden geçebilir:
 
