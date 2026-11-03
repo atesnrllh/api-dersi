@@ -293,7 +293,7 @@ Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 | `Rating as text` | `"rating": "4.5"` | `201` | `201`, değişmedi | Kural yalnızca sayının aralığına bakıyor. Metin önce `4.5` sayısına çevrildi; bu sayı 0 ile 5 arasında olduğu için kabul edildi. Çeviriyi durdurmak Deney 3'te. |
 | `Available 'yes'` | `"available": "yes"` | `201` | `201`, değişmedi | `available` alanına kural eklemedik. `"yes"` metni yine `True` yapıldı. Deney 3'te. |
 | `Unknown field` | `"isbn": "..."` | `201` | `201`, değişmedi | Kuralları yalnızca modeldeki alanlara yazdık. Modelde olmayan `isbn` yine sessizce süzüldü. Deney 3'te. |
-| `Title as number` | `"title": 123` | `422` | `422`, değişmedi | Tür kontrolü; zaten çalışıyordu. |
+| `Title as number` | `"title": 123` | `422` | `422`, değişmedi | Modelde `title: str` yazıyor, yani ad bir metin olmalı. `123` ise bir sayı. Pydantic metni sayıya çevirebiliyor (`"4.5"` satırı), ama sayıyı metne çevirmiyor. Bu yüzden bu istek Deney 1'de de reddedilmişti; yeni kural bunu değiştirmedi. |
 | `Review score 9` | `"score": 9`, boş `reader` ve `comment` | `201` | `422` | Üç alan da kurala uymuyor. Çıktıda yalnızca ilk hata görünüyor; hepsine 2.3'te bakacağız. |
 
 ### 2.3 Bir istekte birden fazla hata
