@@ -370,6 +370,16 @@ Book 99: 404 {"detail":"Book not found"}
 | `server.py` dosyasında kullandığı model | `BookCreate` | `BookUpdate` |
 | Ne zaman kullanılır? | Kaynağın tamamı yeniden gönderilecekse | Bir ya da birkaç alan değişecekse |
 
+İki fonksiyon kitabı listede farklı yollarla değiştirir:
+
+| Kod | Listedeki kitaba ne olur? |
+|---|---|
+| `books[index] = new_book` | `replace_book` bu satırı kullanır. Listede eski sözlüğün yerine yeni bir sözlük konur. Eski sözlükteki anahtarlar yeni sözlüğe kendiliğinden geçmez; `id` alanını bu yüzden `new_book["id"] = book_id` satırıyla ekledik. Yeni sözlüğü listedeki yerine koyabilmek için kitabın sırası (`index`) gerekir; `enumerate` bu yüzden var. |
+| `book.update(changes)` | `update_book` bu satırı kullanır. Listedeki sözlüğün kendisi değişir; `changes` içinde olmayan anahtarlar, `id` de, yerinde kalır. Sözlüğün kendisi değiştiği için kitabın sırasına gerek yoktur. |
+| `book = new_book` | Hiçbir fonksiyonda kullanmadık. Listedeki kitap **değişmez**: Bu atama yalnızca döngüdeki `book` adını yeni sözlüğe bağlar. |
+
+Döngüdeki `book`, listedeki sözlüğün kopyası değil, kendisidir. Bu yüzden `book.update(...)` listedeki kitabı değiştirir, `book = ...` ise değiştirmez. Bir ada yeni değer atamak ile o adın gösterdiği sözlüğün içini değiştirmek arasındaki farkı Hafta 1 föyündeki "Neden fonksiyonun içine `global book` yazmadık?" bölümünde görmüştük. Deney 2 ile Deney 3'ün çıktılarındaki fark da buradan gelir: PUT'tan sonra `id` alanı sözlüğün sonuna geçer, PATCH'ten sonra başta kalır.
+
 > **Ana fikir:** `PATCH` isteği kaynağın yalnızca gövdede gönderilen alanlarını değiştirir. Bunun için sunucuda bütün alanları isteğe bağlı bir model ve yalnızca gönderilen alanları alan `exclude_unset=True` gerekir.
 
 ---
@@ -506,6 +516,8 @@ First in list: {'title': 'API Yolculuğu', 'author': {'first_name': 'Deniz', 'la
 ```
 
 `internal_note` iki yanıtta da yok. Alanların sırası da değişti: Artık `BookPublic` modelindeki sırayla geliyor, `id` sonda.
+
+**Bir yan etki:** `replace_book` kitabı yeni bir sözlükle değiştirdiği için, 42 numaralı kitaba bir `PUT` isteği gönderilirse `internal_note` sunucudaki listeden de silinir. Bu alan `BookCreate` modelinde olmadığı için `new_book` sözlüğüne girmez. `update_book` ise sözlüğün kendisini değiştirdiğinden notu korur. Yanıt modeli notu yanıttan zaten çıkardığı için, bu silinmeyi yanıta bakarak göremeyiz.
 
 Yanıt modelinin bir yararı daha var: `http://127.0.0.1:8000/docs` sayfasında her işlemin yanıtında hangi alanların döneceği artık görünür. Hafta 3'te elle yazdığımız `README.md` belgesindeki bilginin bir kısmını FastAPI bu modelden kendisi üretir.
 
