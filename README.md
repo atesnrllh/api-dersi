@@ -16,3 +16,4 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 | 07 | [Otomatik test ve hata ayıklama: pytest](02_Weekly_Materials/Week_07/) |
 | 08 | [Ara değerlendirme ve tekrar: yanıtı kim verdi, testler neyi koruyor?](02_Weekly_Materials/Week_08/) |
 | 09 | [Kullanıcıyı tanımak: giriş, token ve kaydın sahibi](02_Weekly_Materials/Week_09/) |
+| 10 | [Erişim denetimi: kim neyi yapabilir, kim neyi görebilir?](02_Weekly_Materials/Week_10/) |
