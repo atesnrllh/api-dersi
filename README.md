@@ -14,3 +14,4 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 | 05 | [Hatalı veriyi reddetmek: alan kuralları ve hata yanıtları](02_Weekly_Materials/Week_05/) |
 | 06 | [Veriyi kalıcı saklamak: PostgreSQL ve SQLModel](02_Weekly_Materials/Week_06/) |
 | 07 | [Otomatik test ve hata ayıklama: pytest](02_Weekly_Materials/Week_07/) |
+| 08 | [Ara değerlendirme ve tekrar: yanıtı kim verdi, testler neyi koruyor?](02_Weekly_Materials/Week_08/) |
