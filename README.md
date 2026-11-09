@@ -12,3 +12,4 @@ API geliştirmeyi çalışan örnekler üzerinden adım adım öğreniyoruz. Yen
 | 03 | [API'yi kaynaklara göre tasarlamak: REST](02_Weekly_Materials/Week_03/) |
 | 04 | [Kitapları güncellemek ve silmek: CRUD](02_Weekly_Materials/Week_04/) |
 | 05 | [Hatalı veriyi reddetmek: alan kuralları ve hata yanıtları](02_Weekly_Materials/Week_05/) |
+| 06 | [Veriyi kalıcı saklamak: PostgreSQL ve SQLModel](02_Weekly_Materials/Week_06/) |
