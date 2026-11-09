@@ -40,4 +40,6 @@ Föyde opak tokeni seçtik, çünkü tokenin ne olduğu tabloya bakınca görün
 
 ## 3. Eksik kalanlar
 
-Föydeki tokenlerin süresi hiç dolmuyor: Bir token, silinene kadar geçerli. Gerçek bir projede her tokenin bir geçerlilik süresi olur. Ayrıca giriş işlemi, aynı kullanıcı adı için arka arkaya yapılan yanlış denemeleri sınırlamıyor; bir saldırgan istediği kadar parola deneyebilir. Bir ayrıntı daha: Giriş işlemi, kullanıcı adı yoksa parolayı hiç özetlemeden yanıt veriyor. Açıklamalar aynı olsa da bu yanıt daha hızlı geliyor; yanıt sürelerini ölçen biri hangi adların kayıtlı olduğunu yine çıkarabilir. Gerçek projelerde kullanıcı bulunamadığında da bir özet hesaplanır. Bu iki konuya Hafta 10'da, erişim denetimi ve API güvenliği konusunda döneceğiz.
+Föydeki tokenlerin süresi hiç dolmuyor: Bir token, silinene kadar geçerli. Gerçek bir projede her tokenin bir geçerlilik süresi olur. Ayrıca giriş işlemi, aynı kullanıcı adı için arka arkaya yapılan yanlış denemeleri sınırlamıyor; bir saldırgan istediği kadar parola deneyebilir. Tokenin süresine ve yanlış denemelere Hafta 10'da, erişim denetimi ve API güvenliği konusunda döneceğiz.
+
+Bir ayrıntı daha: Giriş işlemi, kullanıcı adı yoksa parolayı hiç özetlemeden yanıt veriyor. Açıklamalar aynı olsa da bu yanıt daha hızlı geliyor; yanıt sürelerini ölçen biri hangi adların kayıtlı olduğunu yine çıkarabilir. Gerçek projelerde kullanıcı bulunamadığında da bir özet hesaplanır.
