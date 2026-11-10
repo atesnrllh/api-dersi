@@ -117,15 +117,15 @@ Dokuz istekten yalnızca biri reddedildi. Tablonun her satırı, çıktının ay
 
 | Çıktıdaki satır | Gönderilen | Sunucu ne yaptı? | Sorun |
 |---|---|---|---|
-| `Empty title` | `"title": ""` | Kitabı ekledi. | Adı olmayan bir kitap katalogda duruyor. |
-| `Blank title` | `"title": "   "` | Kitabı ekledi. | Aynı sorun: Adı yalnızca boşluk. |
-| `Rating 7` | `"rating": 7` | Kitabı ekledi. | Puan 0 ile 5 arasında olmalı. |
-| `Rating -1` | `"rating": -1` | Kitabı ekledi. | Aynı sorun. |
-| `Rating as text` | `"rating": "4.5"` | Metni sayıya çevirdi. | Sayı yerine metin gönderen istemci, hatasını fark etmiyor. |
-| `Available 'yes'` | `"available": "yes"` | `"yes"` metnini `True` yaptı. | Aynı durum: Metin, mantıksal değere çevrildi. |
-| `Unknown field` | `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. | İstemci alanın kaydedildiğini sanıyor; hata almıyor. |
-| `Title as number` | `"title": 123` | `422` ile reddetti. | Yok. Tür kontrolü çalıştı. |
-| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. | Puan 1 ile 5 arasında olmalı; okur ve yorum boş olmamalı. |
+| `Empty title` | `"title": ""` | Kitabı ekledi. | Katalogda adı olmayan bir kitap var. Kitap listesinde bu kitabın adının yeri boş görünür. Ada göre yapılan hiçbir aramada da çıkmaz. Hata istemcideydi, ama istemci `201` aldığı için kitabın doğru eklendiğini sanıyor. |
+| `Blank title` | `"title": "   "` | Kitabı ekledi. | Aynı sorun, ama fark etmesi daha zor. Ad ekranda boş görünür, ama Python için boş değildir: Üç boşluk karakterinden oluşan, uzunluğu 3 olan bir metindir. Bu yüzden yalnızca "metin boş mu?" diye bakan bir kontrol bu adı yakalayamaz. Bunu Deney 2'de göreceğiz. |
+| `Rating 7` | `"rating": 7` | Kitabı ekledi. | Puan 0 ile 5 arasında olmalı; 5 üzerinden 7 puan olmaz. Bu kitap, puanı gerçekten 5 olan kitaplardan daha iyi görünür. Puanları yıldızla gösteren bir istemci de 7 yıldız çizmeye çalışır. Sunucu isteği kabul ettiği için istemci yanlış puan gönderdiğini öğrenmiyor. |
+| `Rating -1` | `"rating": -1` | Kitabı ekledi. | Aynı sorun, aralığın öteki ucunda: Bu ölçekte eksi puan yok. Kitapların puan ortalamasını hesaplayan bir istemci, bu değer yüzünden gerçekte olandan daha düşük bir ortalama bulur. |
+| `Rating as text` | `"rating": "4.5"` | Metni sayıya çevirdi. | İstemci puanı sayı yerine tırnak içinde, metin olarak gönderdi. Bu, istemcinin kodundaki bir hata; büyük olasılıkla puanı bir metin kutusundan okuyup sayıya çevirmeyi unuttu. Sunucu metni sessizce çevirdiği için istemci bu hatayı fark etmiyor. Aynı istemci bir gün `"4,5"` gibi çevrilemeyen bir metin gönderirse `422` alır. Hata o zaman ortaya çıkar ve nedeni anlaşılmaz, çünkü `"4.5"` gönderirken her şey çalışıyordu. |
+| `Available 'yes'` | `"available": "yes"` | `"yes"` metnini `True` yaptı. | Aynı durum: `available` alanı `true` ya da `false` bekliyor, istemci ise metin gönderdi. Pydantic bazı İngilizce metinleri tanır: `"yes"`, `"on"` ve `"1"` metinlerini `True`; `"no"`, `"off"` ve `"0"` metinlerini `False` yapar. `"evet"` gibi tanımadığı bir metni ise reddeder. İstemci hangi metinlerin kabul edildiğini bilemez. Bugün `"yes"` ile çalışan kod, `"evet"` gönderildiği gün `422` alır. |
+| `Unknown field` | `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. | İstemci `201` aldığı için ISBN numarasının da kaydedildiğini sanıyor. Kitabı daha sonra okuduğunda `isbn` alanını bulamaz ve nedenini anlayamaz. Alan adını yanlış yazmak da aynı sonucu verir: `"rating"` yerine `"ratng"` gönderen istemcinin puanı sessizce kaybolur, kitabın puanı `None` olur ve istemci hiçbir hata almaz. |
+| `Title as number` | `"title": 123` | `422` ile reddetti. | Yok. Modelde `title: str` yazıyor, `123` ise bir metin değil. Pydantic metni sayıya çevirebiliyor (`"4.5"` satırı), ama sayıyı metne çevirmiyor. Bu yüzden tür kontrolü çalıştı ve istemci hatasını hemen öğrendi. |
+| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. | Üç sorun birden var. Yorum puanı 1 ile 5 arasında olmalı; 9 bu ölçekte anlamsız. Okurun adı boş olduğu için yorumu kimin yazdığı belli değil. Yorum metni de boş, yani okunacak bir şey yok. Sunucu üçünü de kaydetti; kitabın yorumlarını okuyan herkes bu boş yorumu görür. |
 
 `"4.5"`, `"yes"` ve `isbn` satırlarındaki davranışlar bir hata değil, Pydantic'in bilinçli varsayılanları; Deney 3'te bizim API'miz için neden değiştirdiğimizi tartışacağız. `"4.5"` ve `"yes"` metinlerinin neden kabul edildiğini ve başka hangi değerlerin çevrildiğini [ek nottaki tabloda](03_Supplement_Lax_Type_Conversion.md) görebilirsin.
 
