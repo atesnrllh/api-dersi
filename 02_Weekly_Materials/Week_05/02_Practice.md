@@ -4,7 +4,7 @@
 
 Hafta 2'den beri sunucumuz bazı hatalı istekleri `422` ile reddediyor. Örneğin kitabın adını metin yerine sayı olarak gönderince (`"title": 123`) kitap eklenmiyor. Ama sunucu bazı hatalı değerleri hâlâ kabul ediyor: Adı boş bir kitap ya da `9` puanlı bir yorum eklenebiliyor. Bu hafta bu değerleri reddeden kuralları yazacağız.
 
-Haftanın sonunda şu soruya cevap verebileceksin: **Bir kuralı nereye yazmalıyım?** Bazı kurallar için gelen değere bakmak yeter: `""` boş bir metindir, `9` beşten büyüktür. Bazıları içinse sunucudaki veriye bakmak gerekir: 43 numaralı bir kitap var mı? İlk türden kuralları FastAPI, fonksiyonumuz çalışmadan önce kontrol edebilir; ikinci türden kuralları yalnızca fonksiyonumuz bilebilir. Deney 5'in sonunda bu ayrımı bir tabloda toplayacağız.
+Haftanın sonunda şu soruya cevap verebileceksin: **Bir kuralı nereye yazmalıyım?** Bazı kurallar için gelen değere bakmak yeter: `""` boş bir metindir, `9` beşten büyüktür. Bazıları içinse sunucudaki veriye bakmak gerekir: 43 numaralı bir kitap var mı? İlk türden kuralları FastAPI, fonksiyonumuz çalışmadan önce kontrol edebilir; ikinci türden kuralları yalnızca fonksiyonumuz bilebilir, çünkü kitap listesi (`books`) bizim kodumuzda duruyor; FastAPI onu tanımıyor. Deney 5'in sonunda bu ayrımı bir tabloda toplayacağız.
 
 Bu hafta sırasıyla şunları yapacağız:
 
@@ -115,17 +115,17 @@ Review score 9:   201 stored: {'reader': '', 'comment': '', 'score': 9, 'id': 2,
 
 Dokuz istekten yalnızca biri reddedildi. Tablonun her satırı, çıktının aynı sıradaki satırını açıklıyor:
 
-| Çıktıdaki satır | Gönderilen | Sunucu ne yaptı? | Sorun |
+| Çıktıdaki satır | Gönderilen | Sunucu ne yaptı? Neden? | Sorun |
 |---|---|---|---|
-| `Empty title` | `"title": ""` | Kitabı ekledi. | Katalogda adı olmayan bir kitap var. Kitap listesinde bu kitabın adının yeri boş görünür. Ada göre yapılan hiçbir aramada da çıkmaz. Hata istemcideydi, ama istemci `201` aldığı için kitabın doğru eklendiğini sanıyor. |
-| `Blank title` | `"title": "   "` | Kitabı ekledi. | Aynı sorun, ama fark etmesi daha zor. Ad ekranda boş görünür, ama Python için boş değildir: Üç boşluk karakterinden oluşan, uzunluğu 3 olan bir metindir. Bu yüzden yalnızca "metin boş mu?" diye bakan bir kontrol bu adı yakalayamaz. Bunu Deney 2'de göreceğiz. |
-| `Rating 7` | `"rating": 7` | Kitabı ekledi. | Puan 0 ile 5 arasında olmalı; 5 üzerinden 7 puan olmaz. Bu kitap, puanı gerçekten 5 olan kitaplardan daha iyi görünür. Puanları yıldızla gösteren bir istemci de 7 yıldız çizmeye çalışır. Sunucu isteği kabul ettiği için istemci yanlış puan gönderdiğini öğrenmiyor. |
-| `Rating -1` | `"rating": -1` | Kitabı ekledi. | Aynı sorun, aralığın öteki ucunda: Bu ölçekte eksi puan yok. Kitapların puan ortalamasını hesaplayan bir istemci, bu değer yüzünden gerçekte olandan daha düşük bir ortalama bulur. |
-| `Rating as text` | `"rating": "4.5"` | Metni sayıya çevirdi. | İstemci puanı sayı yerine tırnak içinde, metin olarak gönderdi. Bu, istemcinin kodundaki bir hata; büyük olasılıkla puanı bir metin kutusundan okuyup sayıya çevirmeyi unuttu. Sunucu metni sessizce çevirdiği için istemci bu hatayı fark etmiyor. Aynı istemci bir gün `"4,5"` gibi çevrilemeyen bir metin gönderirse `422` alır. Hata o zaman ortaya çıkar ve nedeni anlaşılmaz, çünkü `"4.5"` gönderirken her şey çalışıyordu. |
-| `Available 'yes'` | `"available": "yes"` | `"yes"` metnini `True` yaptı. | Aynı durum: `available` alanı `true` ya da `false` bekliyor, istemci ise metin gönderdi. Pydantic bazı İngilizce metinleri tanır: `"yes"`, `"on"` ve `"1"` metinlerini `True`; `"no"`, `"off"` ve `"0"` metinlerini `False` yapar. `"evet"` gibi tanımadığı bir metni ise reddeder. İstemci hangi metinlerin kabul edildiğini bilemez. Bugün `"yes"` ile çalışan kod, `"evet"` gönderildiği gün `422` alır. |
-| `Unknown field` | `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. | İstemci `201` aldığı için ISBN numarasının da kaydedildiğini sanıyor. Kitabı daha sonra okuduğunda `isbn` alanını bulamaz ve nedenini anlayamaz. Alan adını yanlış yazmak da aynı sonucu verir: `"rating"` yerine `"ratng"` gönderen istemcinin puanı sessizce kaybolur, kitabın puanı `None` olur ve istemci hiçbir hata almaz. |
-| `Title as number` | `"title": 123` | `422` ile reddetti. | Yok. Modelde `title: str` yazıyor, `123` ise bir metin değil. Pydantic metni sayıya çevirebiliyor (`"4.5"` satırı), ama sayıyı metne çevirmiyor. Bu yüzden tür kontrolü çalıştı ve istemci hatasını hemen öğrendi. |
-| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. | Üç sorun birden var. Yorum puanı 1 ile 5 arasında olmalı; 9 bu ölçekte anlamsız. Okurun adı boş olduğu için yorumu kimin yazdığı belli değil. Yorum metni de boş, yani okunacak bir şey yok. Sunucu üçünü de kaydetti; kitabın yorumlarını okuyan herkes bu boş yorumu görür. |
+| `Empty title` | `"title": ""` | Kitabı ekledi. `title: str` yalnızca değerin metin olup olmadığına bakar. `""` de bir metindir; yalnızca içinde hiç karakter yoktur. | Katalogda adı olmayan bir kitap var. Kitap listesinde bu kitabın adının yeri boş görünür. Ada göre yapılan hiçbir aramada da çıkmaz. Hata istemcideydi, ama istemci `201` aldığı için kitabın doğru eklendiğini sanıyor. |
+| `Blank title` | `"title": "   "` | Kitabı ekledi. Üç boşluk da bir metindir. | Aynı sorun, ama fark etmesi daha zor. Ad ekranda boş görünür, ama Python için boş değildir: Üç boşluk karakterinden oluşan, uzunluğu 3 olan bir metindir. Bu yüzden yalnızca "metin boş mu?" diye bakan bir kontrol bu adı yakalayamaz. Bunu Deney 2'de göreceğiz. |
+| `Rating 7` | `"rating": 7` | Kitabı ekledi. `rating: float` yalnızca değerin sayı olup olmadığına bakar, aralığına bakmaz. `7` tam sayısı ondalıklı sayıya çevrildi; bu yüzden `7.0` kaydedildi. | Puan 0 ile 5 arasında olmalı; 5 üzerinden 7 puan olmaz. Bu kitap, puanı gerçekten 5 olan kitaplardan daha iyi görünür. Puanları yıldızla gösteren bir istemci de 7 yıldız çizmeye çalışır. Sunucu isteği kabul ettiği için istemci yanlış puan gönderdiğini öğrenmiyor. |
+| `Rating -1` | `"rating": -1` | Kitabı ekledi. `-1` de bir sayıdır. | Aynı sorun, aralığın öteki ucunda: Bu ölçekte eksi puan yok. Kitapların puan ortalamasını hesaplayan bir istemci, bu değer yüzünden gerçekte olandan daha düşük bir ortalama bulur. |
+| `Rating as text` | `"rating": "4.5"` | Metni sayıya çevirdi. Pydantic, sayı gibi okunabilen bir metni varsayılan olarak sayıya çevirir. | İstemci puanı sayı yerine tırnak içinde, metin olarak gönderdi. Bu, istemcinin kodundaki bir hata; büyük olasılıkla puanı bir metin kutusundan okuyup sayıya çevirmeyi unuttu. Sunucu metni sessizce çevirdiği için istemci bu hatayı fark etmiyor. Aynı istemci bir gün `"4,5"` gibi çevrilemeyen bir metin gönderirse `422` alır. Hata o zaman ortaya çıkar ve nedeni anlaşılmaz, çünkü `"4.5"` gönderirken her şey çalışıyordu. |
+| `Available 'yes'` | `"available": "yes"` | `"yes"` metnini `True` yaptı. Pydantic bazı metinleri varsayılan olarak mantıksal değer sayar. | Aynı durum: `available` alanı `true` ya da `false` bekliyor, istemci ise metin gönderdi. Pydantic bazı İngilizce metinleri tanır: `"yes"`, `"on"` ve `"1"` metinlerini `True`; `"no"`, `"off"` ve `"0"` metinlerini `False` yapar. `"evet"` gibi tanımadığı bir metni ise reddeder. İstemci hangi metinlerin kabul edildiğini bilemez. Bugün `"yes"` ile çalışan kod, `"evet"` gönderildiği gün `422` alır. |
+| `Unknown field` | `"isbn": "..."` | Kitabı ekledi, ama `isbn` alanını sessizce süzdü: Kaydedilen kitapta bu alan yok. Pydantic, modelde olmayan alanları varsayılan olarak hata vermeden atar. | İstemci `201` aldığı için ISBN numarasının da kaydedildiğini sanıyor. Kitabı daha sonra okuduğunda `isbn` alanını bulamaz ve nedenini anlayamaz. Alan adını yanlış yazmak da aynı sonucu verir: `"rating"` yerine `"ratng"` gönderen istemcinin puanı sessizce kaybolur, kitabın puanı `None` olur ve istemci hiçbir hata almaz. |
+| `Title as number` | `"title": 123` | `422` ile reddetti. `123` bir metin değil. Pydantic metni sayıya çevirebiliyor (`"4.5"` satırı), ama sayıyı metne çevirmiyor. | Yok. İstemci hatasını hemen öğrendi. |
+| `Review score 9` | `"score": 9`, boş `reader` ve `comment` | Yorumu ekledi. `score: int` yalnızca değerin tam sayı olup olmadığına bakar. `reader: str` ve `comment: str` de yalnızca metin olup olmadıklarına bakar. | Üç sorun birden var. Yorum puanı 1 ile 5 arasında olmalı; 9 bu ölçekte anlamsız. Okurun adı boş olduğu için yorumu kimin yazdığı belli değil. Yorum metni de boş, yani okunacak bir şey yok. Sunucu üçünü de kaydetti; kitabın yorumlarını okuyan herkes bu boş yorumu görür. |
 
 `"4.5"`, `"yes"` ve `isbn` satırlarındaki davranışlar bir hata değil, Pydantic'in bilinçli varsayılanları; Deney 3'te bizim API'miz için neden değiştirdiğimizi tartışacağız. `"4.5"` ve `"yes"` metinlerinin neden kabul edildiğini ve başka hangi değerlerin çevrildiğini [ek nottaki tabloda](03_Supplement_Lax_Type_Conversion.md) görebilirsin.
 
@@ -190,6 +190,10 @@ Query: 422 {'detail': [{'type': 'bool_parsing', 'loc': ['query', 'available'], '
 | `body` | **Gövde (body):** `json=` ile gönderilen veri | Kitabın `title` alanı |
 | `path` | **Yol parametresi (path parameter):** adresin yolundaki değer | `/books/abc` içindeki `abc` |
 | `query` | **Sorgu parametresi (query parameter):** `params=` ile gönderilen, adresin `?` işaretinden sonraki değer | `?available=maybe` |
+
+`loc` isteğin adresini değil, hatalı değerin durduğu yeri söyler. Birinci ve üçüncü isteğin yolu aynı, `/books`; ama hatalı değer birinde gövdede, ötekinde sorguda. İkinci istekte ise yolun kendisi bir değer taşıyor. Sunucudaki `@app.get("/books/{book_id}")` dekoratöründe `{book_id}`, "buraya bir değer gelecek" demek. FastAPI `abc` değerini `book_id: int` parametresine koymak istedi, ama `abc` tam sayıya çevrilemedi.
+
+Path ve Query satırlarında `input` değeri tırnak içinde: `'abc'` ve `'maybe'`. Adresteki değerler her zaman metin olarak gelir; FastAPI onları parametrenin türüne çevirmeye çalışır. Hata, bu çeviri yapılamayınca oluşur. Body satırındaki `123` ise tırnaksız, çünkü JSON gövdesinde sayı, sayı olarak gönderilebilir.
 
 Hafta 1'deki [URL ek notunda](../Week_01/03_Supplement_URL.md) adresin parçalarına ad vermiştik: `/books/abc` kısmı **yol (path)**, `?` işaretinden sonraki kısım **sorgu (query)**. Bu parçaların içindeki değerler de parametredir: `abc` bir yol parametresi, `available=maybe` bir sorgu parametresi. Bu yüzden "sorgudaki `available`" ile "`available` sorgu parametresi" aynı şeyi anlatır. Yol, sorgu ve gövde ayrımını Hafta 3'teki [sorgu ve gövde ek notunda](../Week_03/06_Supplement_Query_vs_Body.md) da görmüştük.
 
@@ -256,7 +260,7 @@ class ReviewCreate(BaseModel):
 |---|---|
 | `Field(min_length=1)` | Metin en az 1 karakter olmalı. Boş metin `""` reddedilir. |
 | `Field(ge=0, le=5)` | Sayı 0'dan büyük ya da eşit (greater than or equal), 5'ten küçük ya da eşit (less than or equal) olmalı. |
-| `Field(default=None, ...)` | Alanın **varsayılan değeri (default value)**. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. |
+| `Field(default=None, ...)` | Alanın **varsayılan değeri (default value)**. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. Eşittir işaretinin sağında artık `Field(...)` var ve oraya ikinci bir değer yazılamaz. |
 
 Üç model için üç not:
 
@@ -380,7 +384,7 @@ class ReviewCreate(BaseModel):
 | `strict=True` | **Sıkı mod (strict mode):** Değer, alanın türünde gönderilmeli; Pydantic başka türden çeviri yapmaz. `"4.5"` metni `float` alanına, `"yes"` metni `bool` alanına artık girmez. |
 | `extra="forbid"` | Modelde olmayan bir alan, yani bir **fazla alan (extra field)** gönderilirse istek reddedilir. Hata mesajındaki `Extra inputs` bu alanlardır. Varsayılan davranış, böyle alanları sessizce süzmektir. |
 
-Bu ayarlar yalnızca eklendiği modelleri etkiler. `available` sorgu parametresi bir model alanı değil, fonksiyon parametresi olduğu için `?available=true` yazımı eskisi gibi çalışır.
+Bu ayarlar yalnızca eklendiği modelleri etkiler. `available` sorgu parametresi bir model alanı değil, fonksiyon parametresi olduğu için `?available=true` yazımı eskisi gibi çalışır. Sorgu parametresinde sıkı mod zaten işe yaramazdı: Adresteki değerler her zaman metin olarak gelir (1.2); `true` da bir metindir.
 
 > **Bu bir tasarım seçimi.** Pydantic'in varsayılan davranışı (değerleri çevirmek, fazla alanları süzmek) yanlış değildir; birçok API bilerek böyle çalışır. Biz kitap kataloğunda istemcinin hatasını hemen öğrenmesini seçtik.
 
@@ -430,7 +434,11 @@ Book 42:   500 Internal Server Error
 Book list: 500
 ```
 
-Hafta 4'te çalışan iki istek artık `500` alıyor. Nedenini sunucunun çalıştığı terminalde görebiliriz. Uzun hata çıktısının içinde şu satırlar var:
+Hafta 4'te çalışan iki istek artık `500` alıyor.
+
+İstemci yalnızca `Internal Server Error` metnini görüyor; bu yanıtta `detail` listesi yok. Sorun istemcinin isteğinde değil, sunucuda olduğu için FastAPI ayrıntıyı istemciye göndermez, yalnızca sunucunun terminaline yazar. Yanıtın gövdesi JSON olmadığı için bu istemcide `response.json()` yerine `response.text` kullandık.
+
+Nedenini sunucunun çalıştığı terminalde görebiliriz. Uzun hata çıktısının içinde şu satırlar var:
 
 ```text
 INFO:     127.0.0.1:55002 - "GET /books/42 HTTP/1.1" 500 Internal Server Error
@@ -578,10 +586,10 @@ Read book 42:  200 title: 'API Yolculuğu'
 | Çıktıdaki satır | İstek | Sonuç |
 |---|---|---|
 | `Empty body` | `{}` | `200`. Hiçbir alan gönderilmedi; kitap değişmedi. |
-| `Rating 4` | `{"rating": 4}` | `200`. Puan `4.0` oldu. |
+| `Rating 4` | `{"rating": 4}` | `200`. Puan `4.0` oldu. Sıkı modda da tam sayı, ondalıklı sayı alanına yazılabilir. JSON'da `4` ile `4.0` aynı sayıdır; bu çeviride bilgi kaybolmaz. |
 | `Rating null` | `{"rating": null}` | `200`. Puan silindi; `rating` için `null` geçerli bir değer. |
 | `Title null` | `{"title": null}` | `422`. Hafta 4'te `500` alan ve kitabı bozan istek artık kitaba dokunulmadan reddediliyor. |
-| `Author null` | `{"author": null}` | `422`. Yazar da `null` olamaz. |
+| `Author null` | `{"author": null}` | `422`. Yazar da `null` olamaz. Mesajdaki *dictionary or object*, yazarın bir nesne olması gerektiğini söylüyor: `first_name` ve `last_name` alanları olan bir sözlük. |
 | `Read book 42` | `GET /books/42` | `200`. Kitabın adı yerinde; kitap bozulmadı. |
 
 > **Ana fikir:** Bir alanın isteğe bağlı olması ile `null` olabilmesi ayrı şeylerdir. `title: str = None` yazımında alan gönderilmeyebilir, ama gönderilirse metin olmalıdır. `| None` yalnızca `null` değerinin anlamlı olduğu alanlarda kalmalı; bizim kitaplarımızda bu alan `rating`.
@@ -617,6 +625,8 @@ Kitap kimlikleri pozitif sayılar. `/books/-5` adresi hiçbir zaman bir kitap bu
 ```text
 SyntaxError: non-default argument follows default argument
 ```
+
+Python'un yeni sürümlerinde mesajın metni farklı olabilir; önemli olan, hatanın `SyntaxError` olması ve sunucunun başlamaması.
 
 FastAPI belgelerinde aynı kuralın başka bir yazımını göreceksin; o yazım [ek notta](08_Supplement_Annotated.md).
 
