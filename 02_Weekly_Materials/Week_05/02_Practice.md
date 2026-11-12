@@ -417,7 +417,7 @@ class ReviewCreate(BaseModel):
 | `strict=True` | **Sıkı mod (strict mode):** Değer, alanın türünde gönderilmeli; Pydantic başka türden çeviri yapmaz. `"4.5"` metni `float` alanına, `"yes"` metni `bool` alanına artık girmez. |
 | `extra="forbid"` | Modelde olmayan bir alan, yani bir **fazla alan (extra field)** gönderilirse istek reddedilir. Hata mesajındaki `Extra inputs` bu alanlardır. Varsayılan davranış, böyle alanları sessizce süzmektir. |
 
-Bu ayarlar yalnızca eklendiği modelleri etkiler. `available` sorgu parametresi bir model alanı değil, fonksiyon parametresi olduğu için `?available=true` yazımı eskisi gibi çalışır. Sorgu parametresinde sıkı mod zaten işe yaramazdı: Adresteki değerler her zaman metin olarak gelir (1.2); `true` da bir metindir.
+Bu ayarlar yalnızca eklendikleri modelleri etkiler. Kitap listesini süzen `GET /books?available=true` isteğindeki `available` bir model alanı değil, `get_books` fonksiyonunun parametresi. Bu yüzden bu istek eskisi gibi çalışır. Sorgu parametresinde sıkı mod zaten işe yaramazdı: Adresteki değerler her zaman metin olarak gelir; `?available=true` içindeki `true` da bir metindir. FastAPI bu metni `bool` türüne çevirmek zorundadır. 1.2'deki `?available=maybe` isteği, bu çeviri yapılamadığı için `422` almıştı.
 
 > **Bu bir tasarım seçimi.** Pydantic'in varsayılan davranışı (değerleri çevirmek, fazla alanları süzmek) yanlış değildir; birçok API bilerek böyle çalışır. Biz kitap kataloğunda istemcinin hatasını hemen öğrenmesini seçtik.
 

@@ -474,7 +474,9 @@ Bu satırı parça parça okuyalım.
 
 `extra="forbid"`, fazla alanları yasaklar. Modelde olmayan bir alana **fazla alan (extra field)** diyoruz. Böyle bir alan gönderilirse istek reddedilir. *Forbid*, İngilizcede "yasakla" demek. Varsayılan davranış ise bu alanları sessizce atmaktı.
 
-Bu ayarlar yalnızca eklendikleri modelleri etkiler. `available` sorgu parametresi bir model alanı değil, fonksiyonun parametresi. Bu yüzden `?available=true` yazımı eskisi gibi çalışır. Zaten sorgu parametresinde sıkı mod işe yaramazdı. Deney 1.2'de gördüğümüz gibi, adresteki değerler her zaman metin olarak gelir. `true` da adreste bir metindir.
+Bu ayarlar yalnızca eklendikleri modelleri etkiler. Kitap listesini süzen `GET /books?available=true` isteğini düşün. Buradaki `available` bir model alanı değil, `get_books` fonksiyonunun parametresi. Bu yüzden bu istek eskisi gibi çalışır.
+
+Zaten sorgu parametresinde sıkı mod işe yaramazdı. Adresteki değerler her zaman metin olarak gelir. `?available=true` içindeki `true` da bir metindir. FastAPI bu metni `bool` türüne çevirmek zorundadır. Deney 1.2'deki `?available=maybe` isteği, bu çeviri yapılamadığı için `422` almıştı.
 
 Bir not daha: Bu bir **tasarım seçimi**. Pydantic'in varsayılan davranışı yanlış değil. Değerleri çevirmek ve fazla alanları atmak, birçok API'nin bilerek seçtiği bir yol. Biz kitap kataloğunda başka bir şey seçtik: İstemci hatasını hemen öğrensin.
 
