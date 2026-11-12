@@ -469,7 +469,7 @@ Book list: 500
 
 Hafta 4'te çalışan iki istek artık `500` alıyor.
 
-İstemci yalnızca `Internal Server Error` metnini görüyor; bu yanıtta `detail` listesi yok. Sorun istemcinin isteğinde değil, sunucuda olduğu için FastAPI ayrıntıyı istemciye göndermez, yalnızca sunucunun terminaline yazar. Yanıtın gövdesi JSON olmadığı için bu istemcide `response.json()` yerine `response.text` kullandık.
+İstemci yalnızca `Internal Server Error` metnini görüyor. Şimdiye kadarki yanıtların gövdesi hep JSON'du; hata yanıtlarında da `detail` alanı vardı. Bu yanıt farklı: Gövdesi JSON değil, yalnızca bu iki kelimelik düz bir metin. Sorun istemcinin isteğinde değil sunucuda olduğu için FastAPI ayrıntıyı istemciye göndermez, yalnızca sunucunun terminaline yazar. `response.json()` gövdeyi JSON olarak okumaya çalışır ve JSON olmayan bir gövdede hata verir. Bu yüzden bu istemcide gövdeyi olduğu gibi, metin olarak veren `response.text` kullandık.
 
 Nedenini sunucunun çalıştığı terminalde görebiliriz. Uzun hata çıktısının içinde şu satırlar var:
 
@@ -510,7 +510,12 @@ Bu satır, `BookCreate` modelinden gelen iki ayarı değiştirir:
 - **`extra="ignore"`:** Fazla alanları süzer; `ignore` İngilizcede "yok say" demek. Deney 1'de `isbn` alanına olan da buydu; Pydantic'in varsayılan davranışı budur.
 - **`strict=False`:** Sıkı modu kapatır. Yanıt modeli istemcinin değil, sunucunun kendi verisini kontrol ediyor; orada sıkı moda gerek yok.
 
-Alanların kuralları (`min_length`, `ge`, `le`) `BookPublic` modeline geçmeye devam eder.
+> Bu satır yalnızca modelin ayarlarını değiştirir; alanların kurallarına dokunmaz. İkisi modelde ayrı yerlere yazılır:
+>
+> - **Ayarlar** `model_config` satırında durur ve modelin bütün alanlarına birden uygulanır: `strict` ve `extra`. `BookPublic` kendi `model_config` satırını yazınca, `BookCreate` modelinden gelen bu iki ayarın yerine kendi değerleri geçer.
+> - **Kurallar** her alanın kendi satırında, `Field(...)` içinde durur: `title` için `min_length=1`, `rating` için `ge=0` ve `le=5`. `BookPublic` modelinde bu alanların satırları yeniden yazılmadı; modelde yalnızca `model_config` ve `id` var. Bu yüzden `title` ve `rating` alanları, kurallarıyla birlikte `BookCreate` modelinden olduğu gibi gelir.
+>
+> Yani yanıt hazırlanırken kitabın adı yine boş olmamalı, puanı da yine 0 ile 5 arasında olmalı. Kitap puanının alt sınırını Deney 2'de bu yüzden 0 yaptık.
 
 Sunucuyu yeniden başlat ve aynı istemciyi çalıştır:
 
