@@ -15,6 +15,8 @@ Bu hafta sırasıyla şunları yapacağız:
 - **Deney 5:** Kuralın modele mi, fonksiyona mı yazılacağına karar vermek
 - **Deney 6** (ödev): Hata yanıtını istemcide okunur biçimde göstermek
 
+> **Hataların listesi:** Bu hafta göreceğin bütün durum kodlarını, `422` yanıtındaki hata türlerini ve terminalde çıkan hataları [ek notta](11_Supplement_Errors.md) bir arada bulabilirsin. Bir deneyde bir hatanın ne demek olduğunu unutursan oraya bak.
+
 ### 0.1 Başlangıç dosyaları
 
 Hafta 4'ün sonundaki dosyalarla başla:
