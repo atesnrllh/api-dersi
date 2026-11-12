@@ -861,7 +861,7 @@ Can again:  409 {'detail': 'This reader has already reviewed this book'}
 | Çıktıdaki satır | İstek | Yanıt | Kim reddetti? | Neden? |
 |---|---|---|---|---|
 | `Book -5` | `GET /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | `-5` hiçbir zaman kitap kimliği olamaz. Bunu bilmek için kitaplara bakmak gerekmez; fonksiyon hiç çalışmadı. |
-| `Delete -5` | `DELETE /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | Aynı kural silme işleminde de var. Burada `404` görüyorsan `delete_book` fonksiyonuna `Path(gt=0)` eklemeyi unutmuşsundur. |
+| `Delete -5` | `DELETE /books/-5` | `422` | FastAPI, `Path(gt=0)` kuralıyla | Aynı kural silme işleminde de var. Burada `404` görüyorsan `delete_book` fonksiyonuna `Path(gt=0)` eklemeyi unutmuşsundur. `405` görüyorsan `delete_book` fonksiyonunun dekoratörü eksiktir; ayrıntısı [ek notta](12_Supplement_Missing_Decorator.md). |
 | `Book 43` | `GET /books/43` | `404` | `get_book` fonksiyonu | `43` bir kitap kimliği olabilir, ama listede böyle bir kitap yok. Bunu bilmek için kitaplara bakmak gerekti. |
 | `Ece again` | Ece'nin ikinci yorumu | `409` | `create_review` fonksiyonu | Ece'nin 42 numaralı kitaba yorumu sunucu başlarken zaten var. |
 | `Can first` | Can'ın ilk yorumu | `201` | Kimse | Can'ın bu kitaba yorumu yoktu. |

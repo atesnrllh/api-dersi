@@ -11,6 +11,7 @@ Yanıtın durum kodu, isteğin sonucunu bir sayıyla söyler. İstemcide `respon
 | Kod | Adı | Ne demek? | Kim döndürür? | Föyde nerede? |
 |---|---|---|---|---|
 | `404` | Not Found | İstenen kaynak sunucuda yok. | Bizim fonksiyonumuz: `raise HTTPException(status_code=404, ...)` | 5.1: `Path` kuralından önce `/books/-5`; 5.3: `/books/43` |
+| `405` | Method Not Allowed | Bu adres var, ama bu yöntemle kullanılamaz. | FastAPI, yolda bu yöntem için fonksiyon yoksa | Föyde beklenmiyor. 5.3'te `Delete -5` satırında görürsen [ek nota](12_Supplement_Missing_Decorator.md) bak. |
 | `409` | Conflict | İstek kendi içinde doğru, ama sunucudaki verinin şu anki hâliyle çakışıyor. | Bizim fonksiyonumuz: `raise HTTPException(status_code=409, ...)` | 5.2, 5.3: aynı okurun ikinci yorumu |
 | `422` | Unprocessable Content (eski adı Unprocessable Entity) | İstekteki bir değer, modelin ya da parametrenin kuralına uymuyor. Gövdedeki `detail` listesi hatanın ne olduğunu ve nerede olduğunu söyler. | FastAPI, fonksiyonumuz çalışmadan önce | Her deneyde |
 | `500` | Internal Server Error | Sorun istekte değil, sunucunun kendisinde. İstemci yalnızca `Internal Server Error` metnini görür; ayrıntı sunucunun terminalindedir. | FastAPI, sunucu kodu hata verince | 3.3: 42 numaralı kitabı okumak |
