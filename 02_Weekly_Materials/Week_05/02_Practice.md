@@ -207,9 +207,15 @@ Bu hataların hepsinde durum kodu `422`. Kodun adı sunucunun terminalinde `422 
 
 ## Deney 2 — Değer sınırları: `Field`
 
+**Amaç:** Modellere boş metinleri ve aralık dışı puanları reddeden kurallar eklemek.
+
+Önceki haftalarda iki kuralı bu haftaya bırakmıştık: Hafta 2'de "kitabın adı boş olmasın", Hafta 3'te "yorumun puanı 1 ile 5 arasında olsun". Bu tür kuralları Pydantic'in `Field` fonksiyonuyla modeldeki alanın yanına yazıyoruz.
+
+Kuralları yazmadan önce, 2.1'de değiştireceğimiz satırlardan birini yakından okuyalım.
+
 ### Önce bir hatırlatma: `rating: float | None = None` satırını okumak
 
-2.1'de değiştireceğimiz satırlardan biri, Hafta 2'de yazdığımız `rating: float | None = None`. Bu satır iki ayrı soruyu cevaplıyor. Python satırı üç parçaya ayırır:
+Hafta 2'de yazdığımız `rating: float | None = None` satırı iki ayrı soruyu cevaplıyor. Python satırı üç parçaya ayırır:
 
 | Parça | Bu satırda | Hangi soruyu cevaplar? |
 |---|---|---|
@@ -234,13 +240,9 @@ Satırda iki tane `None` var ve ikisi farklı işler yapıyor:
 
 `rating` için üçüncü yazımı seçiyoruz, çünkü puan için `null` anlamlı bir değer: "Bu kitabın puanı yok." 42 numaralı kitabın puanı da `null`. İkinci yazımın neden işe yaradığını Deney 4'te göreceğiz.
 
-2.1'de bu satırın türü değişmeyecek. Yalnızca varsayılan değer `Field` fonksiyonunun içine taşınacak: `= None` yazımı, `= Field(default=None, ...)` olacak.
+**Kısacası:** Varsayılan değer (`= None`), alanın gönderilmeyebileceğini söyler. Türdeki `| None` ise `null` gönderilebileceğini söyler. `rating` alanında ikisi de var.
 
-> **Ana fikir:** Varsayılan değer (`= None`), alanın gönderilmeyebileceğini söyler. Türdeki `| None` ise `null` gönderilebileceğini söyler. İkisi ayrı şeylerdir; `rating` alanında ikisi de var.
-
-**Amaç:** Modellere boş metinleri ve aralık dışı puanları reddeden kurallar eklemek.
-
-Önceki haftalarda iki kuralı bu haftaya bırakmıştık: Hafta 2'de "kitabın adı boş olmasın", Hafta 3'te "yorumun puanı 1 ile 5 arasında olsun". Bu tür kuralları Pydantic'in `Field` fonksiyonuyla modeldeki alanın yanına yazıyoruz.
+2.1'de bu satırın türü değişmeyecek. Yalnızca varsayılan değer `Field` fonksiyonunun içine taşınacak: `= None` yazımı, `= Field(default=None, ...)` olacak. Şimdi bu satıra ve öteki alanlara kuralları ekleyelim.
 
 ### 2.1 Modellere kuralları ekle
 

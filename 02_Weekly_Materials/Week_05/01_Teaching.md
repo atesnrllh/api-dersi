@@ -260,6 +260,36 @@ Deney 1'de sunucunun yalnızca türe baktığını gördük. Şimdi türün yan�
 
 Bu kuralları önceki haftalarda bu haftaya bırakmıştık. Hafta 2'de "kitabın adı boş olmasın" demiştik. Hafta 3'te de "yorumun puanı 1 ile 5 arasında olsun" demiştik. Bu tür kuralları Pydantic'in `Field` fonksiyonuyla yazıyoruz. Kural, modeldeki alanın hemen yanına yazılır.
 
+Kuralları yazmadan önce, 2.1'de değiştireceğimiz satırlardan birini yakından okuyalım.
+
+### Önce bir hatırlatma: `rating: float | None = None` satırını okumak
+
+Bu satırı Hafta 2'de yazmıştık. İçinde iki ayrı soru cevaplanıyor. Python satırı üç parçaya ayırır.
+
+**Alanın adı:** `rating`.
+
+**Alanın türü:** İki noktadan sonra gelen `float | None`. Bu parça şu soruyu cevaplar: İstemci bu alana `null` gönderebilir mi? Cevap evet.
+
+**Varsayılan değer (default value):** Eşittir işaretinden sonra gelen `None`. Bu parça başka bir soruyu cevaplar: İstemci bu alanı hiç göndermeyebilir mi? Cevap yine evet. Alan gönderilmezse değeri `None` olur.
+
+Türdeki `|` işaretine **dikey çizgi (pipe)** denir. Tür yazımında "ya da" anlamına gelir. `float | None`, "ondalıklı sayı ya da `None`" demek. Python bu yazıma **birleşim türü (union type)** der.
+
+Dikkat et, satırda iki tane `None` var. İkisi aynı yazılıyor ama farklı işler yapıyor. Dikey çizgiden sonraki `None` türün bir parçası; "`null` da kabul edilir" diyor. Eşittirden sonraki `None` ise varsayılan değer. O yalnızca dikey çizgiden sonraki `None`'a bağlı değil, bütün alana ait. "Gönderilmezse değer `None` olsun" diyor.
+
+Şimdi üç yazımı karşılaştıralım.
+
+**`available: bool`** Varsayılan değer yok, dikey çizgi de yok. Alan gönderilmek zorunda ve `null` olamaz. `BookCreate` modelindeki `available` böyle.
+
+**`available: bool = None`** Alan gönderilmeyebilir, ama `null` olamaz. Deney 4'te `BookUpdate` modeline bu yazımı getireceğiz. Neden işe yaradığını orada göreceğiz.
+
+**`rating: float | None = None`** Alan gönderilmeyebilir ve `null` da olabilir. `BookCreate` ve `BookUpdate` modellerindeki `rating` böyle.
+
+`rating` için üçüncü yazımı seçiyoruz. Çünkü puan için `null` anlamlı bir değer: "Bu kitabın puanı yok." 42 numaralı kitabın puanı da `null`.
+
+Kısacası: Varsayılan değer, alanın gönderilmeyebileceğini söyler. Türdeki `| None` ise `null` gönderilebileceğini söyler. `rating` alanında ikisi de var.
+
+2.1'de bu satırın türü değişmeyecek. Yalnızca varsayılan değer `Field` fonksiyonunun içine taşınacak. Şimdi bu satıra ve öteki alanlara kuralları ekleyelim.
+
 ### 2.1 Modellere kuralları ekle
 
 `server.py` dosyasında önce import satırını değiştiriyoruz:
@@ -304,7 +334,7 @@ Kuralların anlamına bakalım.
 
 `Field(ge=0, le=5)`, sayının 0 ile 5 arasında olması gerektiğini söyler. `ge`, İngilizce *greater than or equal* sözlerinin kısaltması: "büyük ya da eşit". `le` ise *less than or equal*: "küçük ya da eşit". Sınırların kendisi de kabul edilir; yani 0 da 5 de geçerli.
 
-`Field(default=None, ...)` ise alanın **varsayılan değeri (default value)**. Eskiden `= None` yazıyorduk. Şimdi eşittir işaretinin sağında `Field(...)` var ve oraya ikinci bir değer yazılamaz. Bu yüzden varsayılan değer `Field` içine, `default=None` olarak giriyor. Anlamı değişmedi: Alan gönderilmezse değeri `None` olur.
+`Field(default=None, ...)` ise alanın varsayılan değeri. Hatırlatma bölümünde gördüğümüz gibi, eskiden `= None` yazıyorduk. Şimdi eşittir işaretinin sağında `Field(...)` var ve oraya ikinci bir değer yazılamaz. Bu yüzden varsayılan değer `Field` içine, `default=None` olarak giriyor. Anlamı değişmedi: Alan gönderilmezse değeri `None` olur.
 
 Şimdi üç soruya cevap verelim.
 
@@ -576,7 +606,7 @@ Deney 3'teki sıkı mod bu sorunu çözmedi. Çünkü `BookUpdate` modelinde `ti
 
 ### 4.1 `BookUpdate` modelinde `| None` yazımını kaldır
 
-Önce bir yazımı adlandıralım. `str | None` yazımındaki `|` işaretine **dikey çizgi (pipe)** denir. Tür yazımında "ya da" anlamına gelir. `str | None`, "metin ya da `None`" demek. Python buna **birleşim türü (union type)** der.
+Bu yazımı Deney 2'nin başında görmüştük. Türdeki `|` işareti "ya da" demek. `str | None`, "metin ya da `None`" anlamına gelir.
 
 İstediğimiz kural şu: `title` alanı **gönderilmeyebilir**. Ama **gönderilirse** `null` olamaz.
 
