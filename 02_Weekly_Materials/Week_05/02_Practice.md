@@ -532,15 +532,27 @@ Kitaplar yeniden okunuyor ve `internal_note` yanıtta yok.
 
 ## Deney 4 — PATCH: gönderilmeyebilir, ama `null` olamaz
 
-**Amaç:** `PATCH` isteğinde zorunlu bir alana `null` gönderildiğinde kitabın bozulmasını önlemek.
+**Amaç:** `PATCH` isteğinde şu kuralı kurmak: Bir alanı göndermek zorunlu değil, ama bir alan gönderilirse değeri `null` olamaz.
 
-Hafta 4'teki [`null` ek notunda](../Week_04/05_Supplement_Patch_Unset_vs_Null.md) şu sorunu görmüştük: `{"title": null}` gövdesiyle gönderilen `PATCH` isteği kabul ediliyor, kitabın adı `None` oluyor ve yanıt `500` dönüyordu. O notun sonunda doğrusunu da yazmıştık: Böyle bir istek kitaba dokunulmadan `422` ile reddedilmeli. Deney 3'teki sıkı mod bunu çözmedi; çünkü `None`, `str | None` türünün kabul ettiği bir değer.
+Kuralın iki yarısı var:
+
+- **Alanı göndermek zorunlu değil.** `PATCH` kitabın yalnızca gönderilen alanlarını değiştirir (Hafta 4). İstemci yalnızca değiştirmek istediği alanları gönderir. Örneğin yalnızca puanı değiştirmek isteyen, kitabın adını göndermez; ad olduğu gibi kalır.
+- **Gönderilen alan `null` olamaz.** Bir alanı göndermek, ona yeni bir değer vermek demektir. `{"title": null}` göndermek "kitabın adını sil" demek olur. Oysa adı olmayan bir kitap olamaz; bu yüzden böyle bir istek reddedilmeli. Bunun tek istisnası `rating`: Puan için `null` anlamlı bir değer, "Bu kitabın puanı yok." demek.
+
+Sunucumuz bugün kuralın yalnızca ilk yarısını uyguluyor. Hafta 4'teki [`null` ek notunda](../Week_04/05_Supplement_Patch_Unset_vs_Null.md) `{"title": null}` gövdesiyle bir `PATCH` isteği göndermiştik. Sunucu bu isteği kabul etti ve kitabın adını `None` yaptı. Ardından FastAPI yanıtı hazırlamak istedi ve takıldı: Yanıt modeli `BookPublic`'te kitabın adı bir metin olmak zorunda, `None` ise metin değil. İstemciye `500` gitti. Ama kitabın adı yanıt hazırlanmadan önce `None` olmuştu ve bu değişiklik geri alınmadı. Bu yüzden kitap bozuk kaldı: Bu kitabı okuyan sonraki istekler de, örneğin `GET /books/42`, `500` aldı.
+
+Doğrusu, böyle bir isteği kitaba dokunmadan önce `422` ile reddetmek.
+
+Deney 3'teki sıkı mod bunu çözmedi. Sıkı mod yalnızca bir türden ötekine çeviri yapılmasını engeller. `None` ise `str | None` türünün zaten izin verdiği bir değer.
 
 ### 4.1 `BookUpdate` modelinde `| None` yazımını kaldır
 
-Deney 2'nin başında gördüğümüz gibi, türdeki `|` işareti "ya da" demek: `str | None` "metin ya da `None`" anlamına gelir.
+Deney 2'nin başında, bir alan satırının iki ayrı soruyu cevapladığını görmüştük. Kuralın iki yarısı bu iki soruya karşılık geliyor:
 
-İstediğimiz kural şu: `title` alanı **gönderilmeyebilir**, ama **gönderilirse** `null` olamaz. `server.py` dosyasında `BookUpdate` modelinin alanlarını şöyle değiştir:
+- **"Alan gönderilmeyebilir mi?"** sorusunu varsayılan değer cevaplıyor. Cevap "evet" olmalı; bu yüzden varsayılan değeri **bırakıyoruz**.
+- **"Alan `null` olabilir mi?"** sorusunu türdeki `| None` cevaplıyor. Cevap "hayır" olmalı; bu yüzden `| None` kısmını **kaldırıyoruz**.
+
+`server.py` dosyasında `BookUpdate` modelinin alanlarını şöyle değiştir:
 
 | Eski satır | Yeni satır |
 |---|---|
