@@ -763,6 +763,50 @@ Fonksiyonun üstündeki yorumu da güncelle:
 # Yeni yorum: kitaba ekler, 201 döner; kitap yoksa 404, okurun bu kitaba yorumu varsa 409.
 ```
 
+İki değişiklikten sonra `create_review` fonksiyonunun tamamı şöyle görünmeli:
+
+```python
+# Yeni yorum: kitaba ekler, 201 döner; kitap yoksa 404, okurun bu kitaba yorumu varsa 409.
+@app.post("/books/{book_id}/reviews", status_code=201)
+def create_review(review_data: ReviewCreate, book_id: int = Path(gt=0)):
+    book_exists = False
+    for book in books:
+        if book["id"] == book_id:
+            book_exists = True
+
+    if not book_exists:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    for review in reviews:
+        if review["book_id"] == book_id and review["reader"] == review_data.reader:
+            raise HTTPException(status_code=409, detail="This reader has already reviewed this book")
+
+    new_id = 1
+    for review in reviews:
+        if review["id"] >= new_id:
+            new_id = review["id"] + 1
+
+    created_review = review_data.model_dump()
+    created_review["id"] = new_id
+    created_review["book_id"] = book_id
+    reviews.append(created_review)
+    return created_review
+```
+
+Fonksiyon isteği sırasıyla üç adımda işliyor:
+
+1. **Kitap var mı?** `books` listesinde bu kimlikte bir kitap yoksa `404` döner. Bu kısım zaten vardı.
+2. **Bu okur bu kitaba daha önce yorum yazmış mı?** Bu kısım yeni. Fonksiyon `reviews` listesindeki her yorumda iki şeye bakar:
+   - Yorum bu kitaba mı ait? Bunu `review["book_id"] == book_id` kontrol eder.
+   - Yorumu yazan, yeni yorumu gönderen okur mu? Bunu `review["reader"] == review_data.reader` kontrol eder.
+
+   İkisi birden doğruysa `409` döner ve yorum eklenmez.
+3. **Yorumu ekle.** Fonksiyon, en büyük yorum kimliğinin bir fazlasını yeni yorumun kimliği yapar. Sonra yorumu listeye ekler ve döndürür. Bu kısım da zaten vardı.
+
+`409` kontrolü, yorumu ekleyen satırlardan önce gelmeli. Sonra gelseydi ikinci yorum listeye çoktan eklenmiş olurdu.
+
+Parametrelerin sırası 5.1'de değişmişti: `review_data` önce, `book_id: int = Path(gt=0)` sonra.
+
 Bu kural okuru adından tanıyor; `"Ece"` ile `"ece"` iki ayrı okur sayılır. Gerçek bir sistemde okur, oturum açmış kullanıcının kimliğinden tanınır; bunu 9. haftada göreceğiz.
 
 **409 Conflict**, "istek, sunucudaki verinin şu anki hâliyle çakışıyor" demektir. Hafta 2'nin [durum kodları notunda](../Week_02/07_Supplement_Status_Codes.md) görmüştük. İstek kendi içinde doğru; sorun, sunucuda zaten var olan bir yorum.
