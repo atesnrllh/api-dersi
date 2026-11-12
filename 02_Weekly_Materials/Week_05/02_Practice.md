@@ -661,7 +661,44 @@ Deneyin sonunda bu iki tür kuralın nereye yazıldığını bir tabloda toplaya
 
 ### 5.1 Yol parametresine kural: `Path`
 
-Kitap kimlikleri pozitif sayılar. `/books/-5` adresi hiçbir zaman bir kitap bulamaz. Bu kuralı, yolunda `book_id` olan **bütün** fonksiyonların parametresine yazıyoruz; yoksa `GET /books/-5` isteği `422`, `DELETE /books/-5` isteği `404` alır ve aynı adres işleme göre farklı davranır.
+Deney 1.2'de yol parametresinin de kontrol edildiğini görmüştük: `/books/abc` isteği `422` aldı, çünkü `book_id` bir tam sayı olmalı. Ama bu yalnızca bir tür kontrolü. `/books/-5` adresindeki `-5` bir tam sayı olduğu için bu kontrolden geçer.
+
+Bugün `GET /books/-5` isteğinde ne olduğuna `get_book` fonksiyonunun şu anki hâli üzerinden bakalım:
+
+```python
+@app.get("/books/{book_id}", response_model=BookPublic)
+def get_book(book_id: int):
+    for book in books:
+        if book["id"] == book_id:
+            return book
+
+    raise HTTPException(status_code=404, detail="Book not found")
+```
+
+1. FastAPI adresteki `-5` metnini tam sayıya çevirir. Tür doğru olduğu için istek fonksiyona ulaşır.
+2. `get_book` fonksiyonu `books` listesindeki üç kitabın (42, 57, 73) kimliğine tek tek bakar. Hiçbiri `-5` değil.
+3. Döngü bitince `raise HTTPException(status_code=404, ...)` satırı çalışır ve istemciye `404` gider: `{'detail': 'Book not found'}`.
+
+Yani fonksiyon, değere bakarak hemen anlaşılabilecek bir şeyi öğrenmek için bütün listeyi dolaştı. Üstelik `404` yanıtı "bu kitap bulunamadı" diyor. Bu da istemciye böyle bir kitabın olabileceğini düşündürüyor. Oysa kitap kimlikleri pozitif sayılar; `-5` hiçbir zaman bir kitap bulamaz.
+
+Bu durumu Deney 1'den tanıyoruz. Orada `"title": ""` gönderdiğimizde, ad bir metin olduğu için tür kontrolünden geçmişti. `"rating": 7` de bir sayı olduğu için geçmişti. İkisinin de türü doğruydu ama değeri anlamsızdı: Adı boş bir kitap olmaz, puan da 5'ten büyük olamaz. Sunucu yine de ikisini kabul etmişti (`201`).
+
+Deney 2'de bu sorunu, modeldeki alanın türünden sonra `Field(...)` ile bir değer kuralı yazarak çözdük:
+
+```python
+title: str = Field(min_length=1)
+rating: float | None = Field(default=None, ge=0, le=5)
+```
+
+Bu kurallardan sonra FastAPI değeri, fonksiyon çalışmadan önce kontrol etti. Boş ad `String should have at least 1 character` mesajıyla, `7` puan da `Input should be less than or equal to 5` mesajıyla `422` aldı. `create_book` fonksiyonu hiç çalışmadı.
+
+`/books/-5` için de aynısını istiyoruz: `-5` değeri `get_book` fonksiyonuna ulaşmadan, yalnızca değere bakılarak `422` ile reddedilsin. Yol parametresine de kural, aynı biçimde türden sonra yazılır. Yalnızca fonksiyonun adı farklı: `Field` yerine, onun yol parametreleri için olan karşılığı `Path`:
+
+```python
+def get_book(book_id: int = Path(gt=0)):
+```
+
+Bu kuralı, yolunda `book_id` olan **bütün** fonksiyonların parametresine yazıyoruz; yoksa `GET /books/-5` isteği `422`, `DELETE /books/-5` isteği `404` alır ve aynı adres işleme göre farklı davranır.
 
 `server.py` dosyasında şu satırları değiştir:
 
@@ -675,7 +712,7 @@ Kitap kimlikleri pozitif sayılar. `/books/-5` adresi hiçbir zaman bir kitap bu
 | `def get_reviews(book_id: int):` | `def get_reviews(book_id: int = Path(gt=0)):` |
 | `def create_review(book_id: int, review_data: ReviewCreate):` | `def create_review(review_data: ReviewCreate, book_id: int = Path(gt=0)):` |
 
-`Path`, `Field` fonksiyonunun yol parametreleri için olanıdır. `gt=0` "0'dan büyük" (greater than) demektir; `ge` gibi, ama sınırın kendisi dahil değil.
+`gt=0` "0'dan büyük" (greater than) demektir; `ge` gibi, ama sınırın kendisi dahil değil.
 
 İki parametreli fonksiyonlarda `book_id` sona geçti. Python'da varsayılan değeri olan parametreler, varsayılan değeri olmayanlardan sonra gelmelidir; `= Path(gt=0)` yazımı da bir varsayılan değer gibi yazılıyor. FastAPI parametreleri sırasına göre değil adına göre eşleştirdiği için sıra değişikliği istekleri etkilemez. Sırayı değiştirmeyi unutursan sunucu başlamaz ve terminalde şu hata görünür:
 
