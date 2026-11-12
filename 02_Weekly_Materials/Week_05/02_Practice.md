@@ -650,7 +650,14 @@ Read book 42:  200 title: 'API Yolculuğu'
 
 **Amaç:** Kitap kimliğini taşıyan yol parametresine bir kural eklemek ve kaydedilmiş veriye bakmayı gerektiren bir kuralı fonksiyonun içine yazmak.
 
-Şu ana kadar yazdığımız kuralların hepsi değerin kendisine bakıyordu. Bu deneyde iki yeni kural ekliyoruz: biri yine değere bakıyor, öteki sunucudaki veriye.
+Şu ana kadar yazdığımız kuralların hepsi, karar vermek için yalnızca istemcinin gönderdiği değere bakıyordu. Örneğin boş bir adı reddetmek için adın kendisine bakmak yetiyordu; sunucudaki kitaplara bakmak gerekmiyordu. Bölüm 0'da bunları "gelen değere bakmak yeter" diye ayırmıştık.
+
+Bu deneyde iki yeni kural ekliyoruz:
+
+- **Kitap kimliği 0'dan büyük olmalı (5.1).** Bu kural da yalnızca değere bakıyor: `-5` sayısının bir kitap kimliği olamayacağını anlamak için kitap listesine bakmak gerekmez. Yeni olan, kuralın gövdedeki bir alana değil, adresteki yol parametresine yazılması.
+- **Bir okur bir kitaba yalnızca bir yorum yazabilir (5.2).** Bu kural değere bakarak karar veremez. `"Ece"` adında yanlış bir şey yok. Ece'nin bu kitaba daha önce yorum yazıp yazmadığını öğrenmek için sunucudaki `reviews` listesine bakmak gerekir.
+
+Deneyin sonunda bu iki tür kuralın nereye yazıldığını bir tabloda toplayacağız.
 
 ### 5.1 Yol parametresine kural: `Path`
 
