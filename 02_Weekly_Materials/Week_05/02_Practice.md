@@ -207,6 +207,37 @@ Bu hataların hepsinde durum kodu `422`. Kodun adı sunucunun terminalinde `422 
 
 ## Deney 2 — Değer sınırları: `Field`
 
+### Önce bir hatırlatma: `rating: float | None = None` satırını okumak
+
+2.1'de değiştireceğimiz satırlardan biri, Hafta 2'de yazdığımız `rating: float | None = None`. Bu satır iki ayrı soruyu cevaplıyor. Python satırı üç parçaya ayırır:
+
+| Parça | Bu satırda | Hangi soruyu cevaplar? |
+|---|---|---|
+| Alanın adı | `rating` | |
+| Alanın türü | `float \| None` | İstemci bu alana `null` gönderebilir mi? Evet. |
+| **Varsayılan değer (default value)** | `= None` | İstemci bu alanı hiç göndermeyebilir mi? Evet. Gönderilmezse değeri `None` olur. |
+
+Türdeki `|` işaretine **dikey çizgi (pipe)** denir. Tür yazımında "ya da" anlamına gelir: `float | None` "ondalıklı sayı ya da `None`" demek. Python bu yazıma **birleşim türü (union type)** der.
+
+Satırda iki tane `None` var ve ikisi farklı işler yapıyor:
+
+- `|` işaretinden sonraki `None` türün bir parçası. "`null` da kabul edilir" diyor.
+- `=` işaretinden sonraki `None` varsayılan değer. Yalnızca dikey çizgiden sonraki `None`'a değil, bütün alana ait. "Gönderilmezse değer `None` olsun" diyor.
+
+Üç yazımı karşılaştıralım:
+
+| Yazım | Gönderilmeyebilir mi? | `null` olabilir mi? | Nerede? |
+|---|---|---|---|
+| `available: bool` | Hayır, zorunlu | Hayır | `BookCreate` |
+| `available: bool = None` | Evet | Hayır | `BookUpdate`, Deney 4'ten sonra |
+| `rating: float \| None = None` | Evet | Evet | `BookCreate` ve `BookUpdate` |
+
+`rating` için üçüncü yazımı seçiyoruz, çünkü puan için `null` anlamlı bir değer: "Bu kitabın puanı yok." 42 numaralı kitabın puanı da `null`. İkinci yazımın neden işe yaradığını Deney 4'te göreceğiz.
+
+2.1'de bu satırın türü değişmeyecek. Yalnızca varsayılan değer `Field` fonksiyonunun içine taşınacak: `= None` yazımı, `= Field(default=None, ...)` olacak.
+
+> **Ana fikir:** Varsayılan değer (`= None`), alanın gönderilmeyebileceğini söyler. Türdeki `| None` ise `null` gönderilebileceğini söyler. İkisi ayrı şeylerdir; `rating` alanında ikisi de var.
+
 **Amaç:** Modellere boş metinleri ve aralık dışı puanları reddeden kurallar eklemek.
 
 Önceki haftalarda iki kuralı bu haftaya bırakmıştık: Hafta 2'de "kitabın adı boş olmasın", Hafta 3'te "yorumun puanı 1 ile 5 arasında olsun". Bu tür kuralları Pydantic'in `Field` fonksiyonuyla modeldeki alanın yanına yazıyoruz.
@@ -260,7 +291,7 @@ class ReviewCreate(BaseModel):
 |---|---|
 | `Field(min_length=1)` | Metin en az 1 karakter olmalı. Boş metin `""` reddedilir. |
 | `Field(ge=0, le=5)` | Sayı 0'dan büyük ya da eşit (greater than or equal), 5'ten küçük ya da eşit (less than or equal) olmalı. |
-| `Field(default=None, ...)` | Alanın **varsayılan değeri (default value)**. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. Eşittir işaretinin sağında artık `Field(...)` var ve oraya ikinci bir değer yazılamaz. |
+| `Field(default=None, ...)` | Alanın varsayılan değeri. Eskiden `= None` diye yazdığımız değer artık `Field` içinde `default=None` olarak yazılıyor. Eşittir işaretinin sağında artık `Field(...)` var ve oraya ikinci bir değer yazılamaz. |
 
 Üç model için üç not:
 
@@ -500,7 +531,7 @@ Hafta 4'teki [`null` ek notunda](../Week_04/05_Supplement_Patch_Unset_vs_Null.md
 
 ### 4.1 `BookUpdate` modelinde `| None` yazımını kaldır
 
-`str | None` yazımındaki `|` işaretine **dikey çizgi (pipe)** denir; tür yazımında "ya da" anlamına gelir. `str | None` "metin ya da `None`" demek; Python buna **birleşim türü (union type)** der.
+Deney 2'nin başında gördüğümüz gibi, türdeki `|` işareti "ya da" demek: `str | None` "metin ya da `None`" anlamına gelir.
 
 İstediğimiz kural şu: `title` alanı **gönderilmeyebilir**, ama **gönderilirse** `null` olamaz. `server.py` dosyasında `BookUpdate` modelinin alanlarını şöyle değiştir:
 
