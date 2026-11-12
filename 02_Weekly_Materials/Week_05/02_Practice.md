@@ -714,7 +714,26 @@ Bu kuralı, yolunda `book_id` olan **bütün** fonksiyonların parametresine yaz
 
 `gt=0` "0'dan büyük" (greater than) demektir; `ge` gibi, ama sınırın kendisi dahil değil.
 
-İki parametreli fonksiyonlarda `book_id` sona geçti. Python'da varsayılan değeri olan parametreler, varsayılan değeri olmayanlardan sonra gelmelidir; `= Path(gt=0)` yazımı da bir varsayılan değer gibi yazılıyor. FastAPI parametreleri sırasına göre değil adına göre eşleştirdiği için sıra değişikliği istekleri etkilemez. Sırayı değiştirmeyi unutursan sunucu başlamaz ve terminalde şu hata görünür:
+İki parametreli fonksiyonlarda `book_id` parametresini sona taşıdık. Örneğin `update_book`:
+
+```python
+# Önce
+def update_book(book_id: int, book_data: BookUpdate):
+
+# Sonra
+def update_book(book_data: BookUpdate, book_id: int = Path(gt=0)):
+```
+
+**Neden taşıdık?** Python'un bir kuralı yüzünden: Varsayılan değeri olan parametreler, varsayılan değeri olmayanlardan sonra gelmelidir. `= Path(gt=0)` yazımı bir varsayılan değer gibi yazılıyor. `book_data` parametresinin ise varsayılan değeri yok. Bu yüzden `book_id` sona geçmeli.
+
+**Taşımak istekleri bozar mı?** Hayır. FastAPI, gelen isteğin parçalarını fonksiyonun parametrelerine sıraya bakarak değil, adlarına ve türlerine bakarak dağıtır:
+
+- **İsteğin adresindeki değer**, yani `/books/42` içindeki `42`, fonksiyonda adı `book_id` olan parametreye gider. Çünkü dekoratördeki yolda bu değerin adı `{book_id}`.
+- **İsteğin gövdesi**, yani istemcinin `json=` ile gönderdiği veri, türü bir model olan parametreye gider. Burada bu parametre `book_data: BookUpdate`.
+
+Parametrelerin fonksiyondaki sırası bu eşleşmeyi değiştirmez. İstekler eskisi gibi çalışır.
+
+**Taşımayı unutursan ne olur?** Örneğin şöyle yazdığını düşün: `def update_book(book_id: int = Path(gt=0), book_data: BookUpdate):`. Bu satır Python'un kuralına uymaz. Hata, bir istek gönderdiğinde değil, daha sunucu başlarken çıkar: Python `server.py` dosyasını okuyamaz, sunucu hiç başlamaz ve sunucuyu başlattığın terminalde şu hata görünür:
 
 ```text
 SyntaxError: non-default argument follows default argument
